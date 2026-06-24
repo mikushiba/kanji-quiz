@@ -196,19 +196,54 @@
 
   .earned{display:none; margin:8px 0 4px; font-size:1rem; font-weight:700; color:#c46a23;}
   .comboBest{font-size:.95rem; color:#9a7b5e; margin-bottom:6px;}
+  .coinResult{font-size:1.02rem; font-weight:800; color:#e08a00; margin:6px 0 10px;}
+
+  /* 称号バッジ（タイトル下） */
+  #titleBadge{text-align:center; font-size:.86rem; font-weight:800; color:var(--accent);
+    margin:-8px 0 14px; line-height:1.4;}
+  #titleBadge .mc{font-weight:600; color:#9a7b5e; font-size:.78rem;}
+
+  /* あいぼう（コインで進化） */
+  .buddy{display:flex; align-items:center; gap:14px; margin-bottom:12px;
+    background:linear-gradient(135deg,#fff3e0,#ffe7d2); border:2px solid var(--line);
+    border-radius:18px; padding:12px 14px;}
+  .buddy .bi{font-size:2.7rem; line-height:1; min-width:1.4em; text-align:center;}
+  .buddy .bb{flex:1; min-width:0;}
+  .buddy .bn{font-weight:800; font-size:.96rem; color:#c46a23;}
+  .buddy .bc{font-size:.82rem; font-weight:700; color:#e08a00; margin:2px 0 5px;}
+  .buddy .bbar{height:10px; background:#f3e4d3; border-radius:99px; overflow:hidden;}
+  .buddy .bbar > i{display:block; height:100%; width:0; transition:width .4s;
+    background:linear-gradient(90deg,#ffb03d,#ff7a3d);}
+  .buddy .bnext{font-size:.72rem; color:#9a7b5e; margin-top:4px;}
+
+  /* ホーム上部の よこ並びボタン（あそびかた／おと） */
+  .topRow{display:flex; gap:10px; margin-bottom:12px;}
+  .topBtn{flex:1; border:1px solid var(--line); background:#fff; color:#9a7b5e;
+    border-radius:99px; padding:10px 10px; font-size:.86rem; font-weight:700; cursor:pointer;}
+  .topBtn:active{transform:translateY(1px);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>同じ読みの かん字クイズ</h1>
   <div class="sub">― 文を読んで、正しいかん字をえらぼう ―</div>
+  <div id="titleBadge"></div>
 
   <!-- スタート画面 -->
   <div id="home" class="card">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-      <button id="soundToggle" type="button" style="border:1px solid var(--line);background:#fff;color:#9a7b5e;border-radius:99px;padding:7px 14px;font-size:.82rem;font-weight:700;cursor:pointer;">🔊 おと ON</button>
+    <div class="topRow">
+      <button class="topBtn" id="openHelp" type="button">❓ あそびかた</button>
+      <button class="topBtn" id="soundToggle" type="button">🔊 おと ON</button>
     </div>
-    <button class="helpBtn" id="openHelp" type="button">❓ はじめての人は「あそびかた」を見てね</button>
+    <div class="buddy" id="buddy">
+      <div class="bi" id="buddyIcon">🥚</div>
+      <div class="bb">
+        <div class="bn" id="buddyName">たまご</div>
+        <div class="bc" id="buddyCoin">🪙 0 まい</div>
+        <div class="bbar"><i id="buddyBar"></i></div>
+        <div class="bnext" id="buddyNext"></div>
+      </div>
+    </div>
     <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
     <div class="gradeSel">
       <div class="gradeLabel">学年（がくねん）をえらぶ</div>
@@ -276,6 +311,7 @@
     <div class="stars" id="stars"></div>
     <div class="score" id="finalScore"></div>
     <div class="comboBest" id="comboBest"></div>
+    <div class="coinResult" id="coinResult"></div>
     <div id="comment" style="margin-bottom:12px;"></div>
     <div class="earned" id="earned"></div>
     <div class="review" id="review"></div>
@@ -333,7 +369,10 @@
     <ul>
       <li><b>📖 かん字ずかん</b>… 正かいした かん字が カードに なって ふえる。3かい 正かいで <b>★マスター</b>！</li>
       <li><b>🔥 コンボ</b>… れんぞくで 正かいすると もりあがるよ。</li>
-      <li><b>🏅 メダル</b>… いろいろ がんばると もらえる。ぜんぶで 20こ！</li>
+      <li><b>🏅 メダル</b>… いろいろ がんばると もらえる。ぜんぶで 100こ！</li>
+      <li><b>🪙 コイン</b>… 正かいすると たまる。パーフェクトや 新メダルで たくさん もらえるよ。</li>
+      <li><b>🥚 あいぼう</b>… コインが たまると たまご→ひよこ→…→ドラゴンと <b>しんか</b>するよ。</li>
+      <li><b>🎖️ 称号（しょうごう）</b>… メダルが ふえると 「漢字 名人」「漢字 達人」など 上の なまえが かわるよ。</li>
     </ul>
 
     <h3>もっと あそぶ</h3>
@@ -2486,7 +2525,7 @@ const BANK = [
 const $ = id => document.getElementById(id);
 let deck = [], idx = 0, answers = [], order = [], wrongQuestions = [];
 let currentMode = 'all', currentGrade = 'all', currentCount = '10';
-let combo = 0, sessionMaxCombo = 0;
+let combo = 0, sessionMaxCombo = 0, sessionComebacks = 0;
 const scoreCount = ()=> answers.filter(a => a && a.correct).length;
 
 /* ===== セーブ（localStorage）と コレクション ===== */
@@ -2510,6 +2549,7 @@ store.dailyTotal   = store.dailyTotal   || 0;   // デイリーを やった の
 store.daily   = store.daily   || { streak:0, bestStreak:0, lastDay:null };
 store.unlocked3 = store.unlocked3 || false;     // 3年生 解放ずみか
 store.soundOn = (store.soundOn === undefined) ? true : store.soundOn;  // 音声 ON/OFF（初期ON）
+store.coins = store.coins || 0;                 // コイン（正解で貯まる／相棒の進化に使う）
 const SAVE_VERSION = 3;
 store.version = SAVE_VERSION;                    // セーブの版（将来の移行用）
 saveStore();
@@ -2671,6 +2711,44 @@ function checkMedals(){
   return newly;
 }
 
+/* ===== コインで進化する あいぼう（累計コインで段階アップ） ===== */
+const EVOLVE = [
+  {coin:0,    icon:'🥚',  name:'たまご'},
+  {coin:50,   icon:'🐣',  name:'うまれた'},
+  {coin:150,  icon:'🐥',  name:'ひよこ'},
+  {coin:350,  icon:'🐦',  name:'ことり'},
+  {coin:700,  icon:'🦜',  name:'いんこ'},
+  {coin:1200, icon:'🦅',  name:'わし'},
+  {coin:2000, icon:'🐲',  name:'こりゅう'},
+  {coin:3500, icon:'🐉',  name:'ドラゴン'},
+  {coin:5500, icon:'🦄',  name:'ユニコーン'},
+  {coin:8000, icon:'👑🐉',name:'でんせつ'},
+];
+function buddyStage(coins){
+  let s = 0;
+  EVOLVE.forEach((e,i)=>{ if(coins >= e.coin) s = i; });
+  return s;
+}
+
+/* ===== メダル枚数で もらえる 称号 ===== */
+const TITLES = [
+  {m:0,   name:'みならい'},
+  {m:8,   name:'かけだし'},
+  {m:15,  name:'がんばりや'},
+  {m:25,  name:'じょうず'},
+  {m:40,  name:'もの知り'},
+  {m:55,  name:'はかせ'},
+  {m:70,  name:'名人'},
+  {m:85,  name:'達人'},
+  {m:100, name:'グランドマスター'},
+];
+function currentTitle(){
+  const got = MEDALS.filter(m=>store.medals[m.id]).length;
+  let t = TITLES[0];
+  TITLES.forEach(x=>{ if(got >= x.m) t = x; });
+  return { title:t, got };
+}
+
 /* ===== 音（Web Audio：音声ファイル不要・オフラインでも鳴る） ===== */
 let audioCtx = null;
 function getCtx(){
@@ -2774,7 +2852,7 @@ function startDaily(){
   const maxC = grade3Unlocked() ? 3 : 2;   // 解放ぶんだけ出題
   const pool = BANK.filter(q => q.choices.every(c=>wordGrade(c)<=maxC) && wordGrade(q.answer)<=maxC);
   deck = seededShuffle(pool, todayIndex()).slice(0, 10);
-  idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0;
+  idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0; sessionComebacks = 0;
   showOnly('quiz'); render();
 }
 function updateDailyStreak(){
@@ -2835,7 +2913,7 @@ function startWithDeck(questions){
   isDaily = false;
   deck = shuffle(questions);
   idx = 0; answers = []; order = [];
-  combo = 0; sessionMaxCombo = 0;
+  combo = 0; sessionMaxCombo = 0; sessionComebacks = 0;
   showOnly('quiz');
   render();
 }
@@ -2921,7 +2999,7 @@ function choose(btn, picked, q){
     sessionMaxCombo = Math.max(sessionMaxCombo, combo);
     if(combo > store.bestCombo) store.bestCombo = combo;
     store.totalCorrect++;
-    if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; }  // 復習で克服
+    if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; sessionComebacks++; }  // 復習で克服
     recordCorrect(q.answer);          // 図鑑に記録（saveStoreも実行）
     showCombo(combo);
     if(combo===3 || combo===5 || combo>=10 && combo%5===0) confettiBurst(14);
@@ -2980,9 +3058,24 @@ function showResult(){
   const newly = checkMedals();
   if(justUnlocked) confettiBurst(36);
 
+  // コイン獲得 と あいぼうの進化
+  const coinBefore = store.coins || 0;
+  let earnedCoins = correct;               // 正解1問 = 1コイン
+  if(rate===1)  earnedCoins += 10;         // パーフェクト ボーナス
+  if(isDaily)   earnedCoins += 5;          // デイリー ボーナス
+  earnedCoins += sessionComebacks * 2;     // まちがい克服 ボーナス
+  earnedCoins += newly.length * 20;        // 新メダル ボーナス
+  store.coins = coinBefore + earnedCoins;
+  const stBefore = buddyStage(coinBefore), stAfter = buddyStage(store.coins);
+  const evolvedUp = stAfter > stBefore;
+  saveStore();
+  if(evolvedUp) confettiBurst(30);
+  $('coinResult').textContent = `🪙 コイン +${earnedCoins}（ぜんぶで ${store.coins}まい）`;
+
   $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
   const em = $('earned');
-  const banner = justUnlocked ? '🎉 3年生が かいきん！　' : '';
+  const evoMsg = evolvedUp ? `✨ あいぼうが しんか！ ${EVOLVE[stAfter].icon}${EVOLVE[stAfter].name} になった！　` : '';
+  const banner = (justUnlocked ? '🎉 3年生が かいきん！　' : '') + evoMsg;
   if(banner || newly.length){
     em.style.display = 'block';
     em.innerHTML = banner + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
@@ -3104,10 +3197,35 @@ function refreshHome(){
     }
   }
   refreshSoundBtn();
+  renderBuddy();
+  renderTitle();
 }
 function refreshSoundBtn(){
   const b = $('soundToggle');
   if(b) b.textContent = store.soundOn ? '🔊 おと ON' : '🔇 おと OFF';
+}
+// あいぼう（コインで進化）の表示
+function renderBuddy(){
+  const coins = store.coins || 0;
+  const s = buddyStage(coins);
+  const cur = EVOLVE[s], nxt = EVOLVE[s+1];
+  $('buddyIcon').textContent = cur.icon;
+  $('buddyName').textContent = `${cur.name}（Lv.${s+1}）`;
+  $('buddyCoin').textContent = `🪙 ${coins} まい`;
+  if(nxt){
+    const span = nxt.coin - cur.coin;
+    const prog = Math.max(0, Math.min(100, Math.floor((coins - cur.coin) / span * 100)));
+    $('buddyBar').style.width = prog + '%';
+    $('buddyNext').textContent = `つぎ ${nxt.icon}${nxt.name} まで あと 🪙${nxt.coin - coins}`;
+  } else {
+    $('buddyBar').style.width = '100%';
+    $('buddyNext').textContent = 'さいだいまで そだった！🎉';
+  }
+}
+// 称号（メダル枚数で変化）の表示
+function renderTitle(){
+  const { title, got } = currentTitle();
+  $('titleBadge').innerHTML = `あなたは 漢字${title.name}！ <span class="mc">🏅${got}/${MEDALS.length}</span>`;
 }
 function goHome(){ refreshHome(); showOnly('home'); }
 $('next').onclick = next;
