@@ -2703,9 +2703,12 @@ function playSound(name){
     tone(2637, 0,    0.30, 'sine', 0.08);  // 倍音
     tone(1047, 0.18, 0.70, 'sine', 0.26);  // ポーン（C6）
     tone(2093, 0.18, 0.35, 'sine', 0.08);  // 倍音
-  } else if(name === 'wrong'){         // 不正解「ブッ ブー」（低いブザー）
-    tone(160, 0,    0.20, 'square', 0.14); // ブッ
-    tone(150, 0.24, 0.42, 'square', 0.14); // ブー（少し低く長く）
+  } else if(name === 'wrong'){         // 不正解「ブッ ブー」（番組風の濁ったブザー）
+    // 半音ちがいの2音を重ねて、わざと濁った（不協和な）ブザーにする
+    tone(233, 0,    0.20, 'sawtooth', 0.11); // ブッ
+    tone(220, 0,    0.20, 'sawtooth', 0.11);
+    tone(220, 0.26, 0.55, 'sawtooth', 0.11); // ブー（少し下げて長く）
+    tone(207, 0.26, 0.55, 'sawtooth', 0.11);
   } else if(name === 'cracker'){       // クラッカー「パン！」＋キラキラ
     const dur = 0.16;
     const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate * dur), ctx.sampleRate);
