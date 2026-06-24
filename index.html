@@ -141,6 +141,21 @@
   .confetti{position:fixed; top:-30px; pointer-events:none; z-index:50; will-change:transform;}
   @keyframes fall{to{transform:translateY(110vh) rotate(360deg); opacity:.15;}}
 
+  /* あそびかた */
+  .helpBtn{
+    width:100%; border:2px dashed var(--accent); background:#fff7ef; color:#c46a23;
+    border-radius:14px; padding:11px; margin-bottom:12px;
+    font-size:.92rem; font-weight:700; cursor:pointer;
+  }
+  .helpBtn:active{transform:translateY(1px);}
+  .help h2{font-size:1.2rem; margin:2px 0 12px;}
+  .help h3{font-size:1.02rem; color:var(--accent); margin:18px 0 6px;}
+  .help p, .help li{font-size:.98rem; line-height:1.85;}
+  .help ol, .help ul{margin:6px 0; padding-left:1.3em;}
+  .help .tip{background:#fff7ef; border:2px solid var(--line); border-radius:12px;
+             padding:10px 12px; margin:8px 0; font-size:.92rem; line-height:1.8;}
+  .help .big{font-size:1.05rem; font-weight:700;}
+
   /* デイリーチャレンジ */
   .dailyBtn{
     width:100%; border:none; border-radius:16px; padding:16px; margin-bottom:12px;
@@ -190,6 +205,7 @@
 
   <!-- スタート画面 -->
   <div id="home" class="card">
+    <button class="helpBtn" id="openHelp" type="button">❓ はじめての人は「あそびかた」を見てね</button>
     <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
     <div class="gradeSel">
       <div class="gradeLabel">学年（がくねん）をえらぶ</div>
@@ -278,6 +294,52 @@
     <button class="backBtn" id="medalsBack">← もどる</button>
     <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
     <div class="medalList" id="medalList"></div>
+  </div>
+
+  <!-- あそびかた画面 -->
+  <div id="help" class="card help" style="display:none;">
+    <button class="backBtn" id="helpBack">← もどる</button>
+    <h2>❓ あそびかた</h2>
+
+    <p class="big">文（ぶん）を よんで、□に 入る ただしい かん字を えらぶ ゲームだよ。</p>
+
+    <h3>1. じゅんびを する</h3>
+    <ul>
+      <li><b>学年（がくねん）</b>… 1年・2年・ぜんぶ から えらぶ（3年は ずかんを ぜんぶ あつめると ひらくよ）。</li>
+      <li><b>もんだいの 数</b>… 10もん・20もん・ぜんぶ から えらぶ。</li>
+    </ul>
+
+    <h3>2. もんだいを はじめる</h3>
+    <ul>
+      <li><b>① つかい分け</b>… 「会う」と「合う」みたいに、同じ よみで いみが ちがう かん字を えらぶ。</li>
+      <li><b>② 同じ読み</b>… 「ほし＝星」みたいに、よみに あう かん字を えらぶ。</li>
+      <li><b>③ ぜんぶ まとめて</b>… ①と②を まぜて 出すよ。</li>
+    </ul>
+
+    <h3>3. こたえる</h3>
+    <ol>
+      <li>文の <b>よみ（ひらがな）</b>を 見て、ボタンで かん字を えらぶ。</li>
+      <li>⭕か ❌が 出て、<b>正かいと いみ</b>が わかるよ。</li>
+      <li><b>「つぎへ →」</b>で 次の もんだい。</li>
+      <li>ぜんぶ おわると <b>てんすう</b>と ⭐が 出るよ。</li>
+    </ol>
+    <div class="tip">じょうの ボタン：<b>🏠 HOME</b>＝さいしょへ／<b>← 前へ</b>＝1つ もどる。</div>
+
+    <h3>あつめて たのしもう</h3>
+    <ul>
+      <li><b>📖 かん字ずかん</b>… 正かいした かん字が カードに なって ふえる。3かい 正かいで <b>★マスター</b>！</li>
+      <li><b>🔥 コンボ</b>… れんぞくで 正かいすると もりあがるよ。</li>
+      <li><b>🏅 メダル</b>… いろいろ がんばると もらえる。ぜんぶで 20こ！</li>
+    </ul>
+
+    <h3>もっと あそぶ</h3>
+    <ul>
+      <li><b>📅 きょうの チャレンジ</b>… まい日 10もん。れんぞくで あそぶと 日数が ふえるよ。</li>
+      <li><b>🔁 まちがい ふくしゅう</b>… まちがえた もんだいだけ もう一回。正かいすると きえる。</li>
+    </ul>
+    <div class="tip">👨‍👩‍👧 おうちの 人へ：<b>💾 きろくを ほぞん</b>で バックアップ、<b>📂 よみこむ</b>で もどせます（べつの たんまつへ うつす ときに）。</div>
+
+    <button class="again" id="helpStart" style="margin-top:16px;">わかった！ はじめる</button>
   </div>
 </div>
 
@@ -456,6 +518,11 @@ const KANJI = {
   '図':{g:2,s:7,on:['ズ','ト'],kun:['はか(る)']},
   '戸':{g:2,s:4,on:['コ'],kun:['と']},
   '古':{g:2,s:5,on:['コ'],kun:['ふる(い)','ふる(す)']},
+  '楽':{g:2,s:13,on:['ガク','ラク'],kun:['たの(しい)','たの(しむ)']},
+  '方':{g:2,s:4,on:['ホウ'],kun:['かた']},
+  '多':{g:2,s:6,on:['タ'],kun:['おお(い)']},
+  '才':{g:2,s:3,on:['サイ'],kun:[]},
+  '切':{g:2,s:4,on:['セツ','サイ'],kun:['き(る)','き(れる)']},
   '明':{g:2,s:8,on:['メイ','ミョウ'],kun:['あ(かるい)','あ(ける)','あ(く)']},
 
   // ── 3年生（解放後に使う字。同じ書式で拡張可）──
@@ -529,6 +596,36 @@ const KANJI = {
   '勝':{g:3,s:12,on:['ショウ'],kun:['か(つ)','まさ(る)']},
   '湖':{g:3,s:12,on:['コ'],kun:['みずうみ']},
   '植':{g:3,s:12,on:['ショク'],kun:['う(える)','う(わる)']},
+  '血':{g:3,s:6,on:['ケツ'],kun:['ち']},
+  '決':{g:3,s:7,on:['ケツ'],kun:['き(める)','き(まる)']},
+  '落':{g:3,s:12,on:['ラク'],kun:['お(ちる)','お(とす)']},
+  '緑':{g:3,s:14,on:['リョク','ロク'],kun:['みどり']},
+  '放':{g:3,s:8,on:['ホウ'],kun:['はな(す)','はな(つ)']},
+  '氷':{g:3,s:5,on:['ヒョウ'],kun:['こおり','ひ']},
+  '表':{g:3,s:8,on:['ヒョウ'],kun:['おもて','あらわ(す)']},
+  '起':{g:3,s:10,on:['キ'],kun:['お(きる)','お(こる)']},
+  '送':{g:3,s:9,on:['ソウ'],kun:['おく(る)']},
+  '苦':{g:3,s:8,on:['ク'],kun:['くる(しい)','にが(い)']},
+  '他':{g:3,s:5,on:['タ'],kun:['ほか']},
+  '祭':{g:3,s:11,on:['サイ'],kun:['まつ(り)','まつ(る)']},
+  '転':{g:3,s:11,on:['テン'],kun:['ころ(がる)','ころ(ぶ)']},
+  '鉄':{g:3,s:13,on:['テツ'],kun:[]},
+  '物':{g:3,s:8,on:['ブツ','モツ'],kun:['もの']},
+  '者':{g:3,s:8,on:['シャ'],kun:['もの']},
+  '着':{g:3,s:12,on:['チャク','ジャク'],kun:['き(る)','つ(く)']},
+  '庭':{g:3,s:10,on:['テイ'],kun:['にわ']},
+  '定':{g:3,s:8,on:['テイ','ジョウ'],kun:['さだ(める)']},
+  '陽':{g:3,s:12,on:['ヨウ'],kun:[]},
+  '飲':{g:3,s:12,on:['イン'],kun:['の(む)']},
+  '員':{g:3,s:10,on:['イン'],kun:[]},
+  '院':{g:3,s:10,on:['イン'],kun:[]},
+  '横':{g:3,s:15,on:['オウ'],kun:['よこ']},
+  '央':{g:3,s:5,on:['オウ'],kun:[]},
+  '寒':{g:3,s:12,on:['カン'],kun:['さむ(い)']},
+  '館':{g:3,s:16,on:['カン'],kun:['やかた']},
+  '感':{g:3,s:13,on:['カン'],kun:[]},
+  '岸':{g:3,s:8,on:['ガン'],kun:['きし']},
+  '区':{g:3,s:4,on:['ク'],kun:[]},
 };
 
 /* 単語から漢字の最大学年を求める（送りがなは無視） */
@@ -1672,6 +1769,145 @@ const BANK = [
     sentence:'にわに 木を @@ える。', read:'う',
     answer:'植', choices:['植','食','色'],
     meaning:{'植':'うえる','食':'たべる','色':'いろ'} },
+
+  // ── 3年生の「同じ読み」グループ（つづき・第3波）──
+  // けつ（血・決）
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'ころんで けがして @@ が 出る。', read:'ち',
+    answer:'血', choices:['血','決'],
+    meaning:{'血':'ち','決':'きめる'} },
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'やる ことを @@ める。', read:'き',
+    answer:'決', choices:['決','血'],
+    meaning:{'決':'きめる','血':'ち'} },
+
+  // らく（落・楽）
+  { type:'onaji', tag:'同じ読み：らく',
+    sentence:'ボールが ゆかに @@ ちる。', read:'お',
+    answer:'落', choices:['落','楽'],
+    meaning:{'落':'おちる','楽':'たのしい'} },
+  { type:'onaji', tag:'同じ読み：らく',
+    sentence:'とても @@ しい 一日だった。', read:'たの',
+    answer:'楽', choices:['楽','落'],
+    meaning:{'楽':'たのしい','落':'おちる'} },
+
+  // りょく（緑・力）
+  { type:'onaji', tag:'同じ読み：りょく',
+    sentence:'@@ いろの クレヨンで かく。', read:'みどり',
+    answer:'緑', choices:['緑','力'],
+    meaning:{'緑':'みどり','力':'ちから'} },
+  { type:'onaji', tag:'同じ読み：りょく',
+    sentence:'うでに @@ を 入れる。', read:'ちから',
+    answer:'力', choices:['力','緑'],
+    meaning:{'力':'ちから','緑':'みどり'} },
+
+  // ほう（放・方）
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'とりを 空に @@ す。', read:'はな',
+    answer:'放', choices:['放','方'],
+    meaning:{'放':'はなす','方':'ほう（むき）'} },
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'右の @@ を 見る。', read:'ほう',
+    answer:'方', choices:['方','放'],
+    meaning:{'方':'ほう（むき）','放':'はなす'} },
+
+  // ひょう（氷・表）
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'@@ は つめたい。', read:'こおり',
+    answer:'氷', choices:['氷','表'],
+    meaning:{'氷':'こおり','表':'おもて'} },
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'ノートの @@ がわに 名前を 書く。', read:'おもて',
+    answer:'表', choices:['表','氷'],
+    meaning:{'表':'おもて','氷':'こおり'} },
+
+  // き（起・帰・記）
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'朝 6時に @@ きる。', read:'お',
+    answer:'起', choices:['起','帰','記'],
+    meaning:{'起':'おきる','帰':'かえる','記':'しるす'} },
+
+  // そう（送・草・早）
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'友だちに プレゼントを @@ る。', read:'おく',
+    answer:'送', choices:['送','草','早'],
+    meaning:{'送':'おくる','草':'くさ','早':'はやい'} },
+
+  // く（苦・区）
+  { type:'onaji', tag:'同じ読み：く',
+    sentence:'この くすりは とても @@ い。', read:'にが',
+    answer:'苦', choices:['苦','区'],
+    meaning:{'苦':'にがい・くるしい','区':'く（地いきの区）'} },
+
+  // た（他・多）
+  { type:'onaji', tag:'同じ読み：た',
+    sentence:'@@ の クラスの 子と あそぶ。', read:'ほか',
+    answer:'他', choices:['他','多'],
+    meaning:{'他':'ほか','多':'おおい'} },
+
+  // さい（祭・才・西）
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'夏の おまつり、夏 @@ り。', read:'まつ',
+    answer:'祭', choices:['祭','才','西'],
+    meaning:{'祭':'まつり','才':'さい（年れいの才）','西':'にし'} },
+
+  // てん（転・鉄）
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'ボールが ころころ @@ がる。', read:'ころ',
+    answer:'転', choices:['転','鉄'],
+    meaning:{'転':'ころがる','鉄':'てつ（金ぞくの鉄）'} },
+
+  // もの（物・者）
+  { type:'onaji', tag:'同じ読み：もの',
+    sentence:'お店で 買い @@ を する。', read:'もの',
+    answer:'物', choices:['物','者'],
+    meaning:{'物':'もの（しなもの）','者':'もの（人）'} },
+
+  // 使い分け：きる（切る／着る）
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'はさみで 紙を @@ る。', read:'き',
+    answer:'切', choices:['切','着'],
+    meaning:{'切':'切る＝はさみなどで わける','着':'着る＝ふくを 身につける'} },
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'あたらしい ふくを @@ る。', read:'き',
+    answer:'着', choices:['着','切'],
+    meaning:{'着':'着る＝ふくを 身につける','切':'切る＝はさみなどで わける'} },
+
+  // てい（庭・定）
+  { type:'onaji', tag:'同じ読み：てい',
+    sentence:'@@ で 犬と あそぶ。', read:'にわ',
+    answer:'庭', choices:['庭','定'],
+    meaning:{'庭':'にわ','定':'てい（さだめる）'} },
+
+  // よう（陽・羊・葉）
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'東の 空に 太 @@ が のぼる。', read:'よう',
+    answer:'陽', choices:['陽','羊','葉'],
+    meaning:{'陽':'よう（太陽の陽）','羊':'ひつじ','葉':'はっぱ'} },
+
+  // いん（飲・員・院）
+  { type:'onaji', tag:'同じ読み：いん',
+    sentence:'コップで 水を @@ む。', read:'の',
+    answer:'飲', choices:['飲','員','院'],
+    meaning:{'飲':'のむ','員':'いん（店員の員）','院':'いん（病院の院）'} },
+
+  // おう（横・央）
+  { type:'onaji', tag:'同じ読み：おう',
+    sentence:'みんなで @@ に ならぶ。', read:'よこ',
+    answer:'横', choices:['横','央'],
+    meaning:{'横':'よこ','央':'おう（中央の央）'} },
+
+  // かん（寒・館・感）
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'冬の 朝は とても @@ い。', read:'さむ',
+    answer:'寒', choices:['寒','館','感'],
+    meaning:{'寒':'さむい','館':'かん（図書館の館）','感':'かん（かんじる）'} },
+
+  // がん（岸・岩・顔）
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'川の @@ べを あるく。', read:'きし',
+    answer:'岸', choices:['岸','岩','顔'],
+    meaning:{'岸':'きし','岩':'いわ','顔':'かお'} },
 ];
 
 /* ============ ゲーム処理 ============ */
@@ -2122,7 +2358,7 @@ function renderMedals(){
 }
 
 function showOnly(id){
-  ['home','quiz','result','dex','medals'].forEach(s=>{
+  ['home','quiz','result','dex','medals','help'].forEach(s=>{
     $(s).style.display = (s===id) ? 'block' : 'none';
   });
 }
@@ -2172,6 +2408,11 @@ function importSave(file){
 }
 $('exportSave').onclick = exportSave;
 $('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) importSave(f); e.target.value=''; };
+
+// あそびかた
+$('openHelp').onclick = ()=> showOnly('help');
+$('helpBack').onclick = goHome;
+$('helpStart').onclick = goHome;
 
 // デイリー・復習
 $('openDaily').onclick  = startDaily;
