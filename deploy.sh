@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 
 MSG="${1:-クイズを更新}"
 
-if git diff --quiet && git diff --cached --quiet; then
+if [ -z "$(git status --porcelain)" ]; then
   echo "変更はありません。"
   exit 0
 fi
