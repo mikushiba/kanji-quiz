@@ -131,6 +131,15 @@
   .confetti{position:fixed; top:-30px; pointer-events:none; z-index:50; will-change:transform;}
   @keyframes fall{to{transform:translateY(110vh) rotate(360deg); opacity:.15;}}
 
+  /* デイリーチャレンジ */
+  .dailyBtn{
+    width:100%; border:none; border-radius:16px; padding:16px; margin-bottom:12px;
+    font-size:1.05rem; font-weight:800; color:#fff; cursor:pointer;
+    background:linear-gradient(135deg,#ffb03d,#ff7a3d); box-shadow:0 4px 0 rgba(0,0,0,.12);
+  }
+  .dailyBtn:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12);}
+  #dailyInfo{display:block; font-size:.78rem; font-weight:600; opacity:.95; margin-top:3px;}
+
   /* コレクション入口 */
   .collbar{display:flex; gap:12px; margin-top:14px;}
   .collbar button{flex:1; border:2px solid var(--line); background:#fff; color:#c46a23;
@@ -171,6 +180,7 @@
 
   <!-- スタート画面 -->
   <div id="home" class="card">
+    <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
     <div class="gradeSel">
       <div class="gradeLabel">学年（がくねん）をえらぶ</div>
       <div class="seg" id="seg">
@@ -201,6 +211,7 @@
         <small>①と②を シャッフルして 出題</small>
       </button>
     </div>
+    <button class="dailyBtn" id="openReview" type="button" style="background:linear-gradient(135deg,#7bc47b,#3da35a);margin-top:14px;">🔁 まちがい ふくしゅう<span id="reviewInfo"></span></button>
     <div class="collbar">
       <button id="openDex" type="button">📖 かん字ずかん</button>
       <button id="openMedals" type="button">🏅 メダル</button>
@@ -1227,9 +1238,17 @@ function saveStore(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(store
 let store = loadStore();
 store.kanji   = store.kanji   || {};   // { 漢字: 正解した回数 }
 store.medals  = store.medals  || {};   // { メダルID: true }
+store.wrong   = store.wrong   || {};   // { 問題ID: true } まちがえた問題（復習リスト）
 store.bestCombo = store.bestCombo || 0;
 store.plays   = store.plays   || 0;
 store.perfect = store.perfect || false;
+store.totalCorrect = store.totalCorrect || 0;  // 累計 正解数
+store.perfectCount = store.perfectCount || 0;   // 全問正解した回数
+store.comebacks    = store.comebacks    || 0;   // まちがいを なおした回数
+store.daily   = store.daily   || { streak:0, bestStreak:0, lastDay:null };
+
+// 問題に固定ID（BANKの並びは静的なので index をIDにする）
+BANK.forEach((q,i)=>{ q.id = i; });
 
 // 集めらる漢字＝問題の「正解」に出てくる漢字（学年→画数順）
 const COLLECTIBLE = [...new Set(
@@ -1249,14 +1268,33 @@ function recordCorrect(answer){
 
 // メダル定義
 const MEDALS = [
-  {id:'firstClear', icon:'🎫', name:'はじめの一歩', desc:'1かい あそんだ',        test:()=> store.plays>=1},
+  // あそぶ
+  {id:'firstClear', icon:'🎫', name:'はじめの一歩',  desc:'1かい あそんだ',       test:()=> store.plays>=1},
+  {id:'play5',      icon:'🎮', name:'5かい あそんだ', desc:'5かい あそんだ',       test:()=> store.plays>=5},
+  {id:'play20',     icon:'🕹️', name:'20かい あそんだ',desc:'20かい あそんだ',      test:()=> store.plays>=20},
+  // せいかい
   {id:'perfect',    icon:'💯', name:'ぜんもん せいかい', desc:'1かいで ぜんぶ正かい', test:()=> store.perfect},
-  {id:'combo5',     icon:'🔥', name:'コンボ 5',     desc:'5れんぞく 正かい',       test:()=> store.bestCombo>=5},
-  {id:'combo10',    icon:'⚡', name:'コンボ 10',    desc:'10れんぞく 正かい',      test:()=> store.bestCombo>=10},
-  {id:'dex10',      icon:'📗', name:'ずかん 10字',  desc:'図かんに 10字',          test:()=> dexCount()>=10},
-  {id:'dex50',      icon:'📚', name:'ずかん 50字',  desc:'図かんに 50字',          test:()=> dexCount()>=50},
-  {id:'master10',   icon:'⭐', name:'マスター 10字', desc:'★を 10字 あつめた',      test:()=> masterCount()>=10},
-  {id:'dexAll',     icon:'👑', name:'ずかん コンプリート', desc:'ぜんぶ 図かんに',  test:()=> dexCount()>=COLLECTIBLE.length},
+  {id:'perfect5',   icon:'🏆', name:'全問正かい 5かい', desc:'ぜんもん正かいを 5かい', test:()=> store.perfectCount>=5},
+  {id:'correct100', icon:'✏️', name:'100もん 正かい', desc:'ぜんぶで 100もん正かい', test:()=> store.totalCorrect>=100},
+  {id:'correct500', icon:'🖊️', name:'500もん 正かい', desc:'ぜんぶで 500もん正かい', test:()=> store.totalCorrect>=500},
+  // コンボ
+  {id:'combo5',     icon:'🔥', name:'コンボ 5',  desc:'5れんぞく 正かい',  test:()=> store.bestCombo>=5},
+  {id:'combo10',    icon:'⚡', name:'コンボ 10', desc:'10れんぞく 正かい', test:()=> store.bestCombo>=10},
+  {id:'combo20',    icon:'🌈', name:'コンボ 20', desc:'20れんぞく 正かい', test:()=> store.bestCombo>=20},
+  // ふくしゅう
+  {id:'comeback10', icon:'🔁', name:'まちがい なおし', desc:'まちがいを 10もん なおした', test:()=> store.comebacks>=10},
+  // ずかん
+  {id:'dex10',      icon:'📗', name:'ずかん 10字',  desc:'図かんに 10字',  test:()=> dexCount()>=10},
+  {id:'dex50',      icon:'📚', name:'ずかん 50字',  desc:'図かんに 50字',  test:()=> dexCount()>=50},
+  {id:'dex100',     icon:'📕', name:'ずかん 100字', desc:'図かんに 100字', test:()=> dexCount()>=100},
+  {id:'dexAll',     icon:'👑', name:'ずかん コンプリート', desc:'ぜんぶ 図かんに', test:()=> dexCount()>=COLLECTIBLE.length},
+  // マスター
+  {id:'master10',   icon:'⭐', name:'マスター 10字', desc:'★を 10字',  test:()=> masterCount()>=10},
+  {id:'master50',   icon:'🌟', name:'マスター 50字', desc:'★を 50字',  test:()=> masterCount()>=50},
+  {id:'masterAll',  icon:'✨', name:'ぜんぶ マスター', desc:'ぜんぶ ★に', test:()=> masterCount()>=COLLECTIBLE.length},
+  // デイリー
+  {id:'daily3',     icon:'📅', name:'3日 れんぞく', desc:'チャレンジ 3日れんぞく', test:()=> (store.daily?.bestStreak||0)>=3},
+  {id:'daily7',     icon:'🗓️', name:'7日 れんぞく', desc:'チャレンジ 7日れんぞく', test:()=> (store.daily?.bestStreak||0)>=7},
 ];
 function checkMedals(){
   const newly = [];
@@ -1289,6 +1327,57 @@ function shuffle(a){
   return a;
 }
 
+/* ===== デイリーチャレンジ ===== */
+let isDaily = false;
+// その日のローカル日付を「epochからの日数」で（連続日数の計算用）
+function todayIndex(){
+  const d = new Date();
+  return Math.floor((d.getTime() - d.getTimezoneOffset()*60000) / 86400000);
+}
+// 日付をタネにした決定的シャッフル（同じ日は全員・何回でも同じ10問）
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a>>>15, 1 | a);
+    t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+function seededShuffle(arr, seed){
+  const r = mulberry32(seed); const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function startDaily(){
+  isDaily = true;
+  deck = seededShuffle(BANK, todayIndex()).slice(0, 10);
+  idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0;
+  showOnly('quiz'); render();
+}
+function updateDailyStreak(){
+  const dy = store.daily, ti = todayIndex();
+  if(dy.lastDay !== ti){
+    dy.streak = (dy.lastDay === ti-1) ? (dy.streak||0)+1 : 1;
+    dy.lastDay = ti;
+    dy.bestStreak = Math.max(dy.bestStreak||0, dy.streak);
+    saveStore();
+  }
+}
+
+/* ===== 復習（まちがえた問題） ===== */
+const reviewList = ()=> BANK.filter(q => store.wrong[q.id]);
+function startReview(){
+  let pool = reviewList();
+  if(pool.length === 0){
+    alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。');
+    return;
+  }
+  isDaily = false;
+  let d = shuffle(pool);
+  if(d.length > 20) d = d.slice(0, 20);   // 1回は最大20問
+  startWithDeck(d);
+}
+
 /* 学年フィルタ：選んだ学年で「習った字だけ」を出す
    - maxG までの字しか選択肢に出さない（知らない字を見せない）
    - 単一学年（1 or 2）のときは、正解の字がその学年のものに限定 */
@@ -1310,6 +1399,7 @@ function startMode(mode){
     alert('この 学年と モードの くみあわせには まだ もんだいが ありません。\nべつの 学年か モードを えらんでね。');
     return;
   }
+  isDaily = false;
   let d = shuffle(pool);
   if(currentCount !== 'all') d = d.slice(0, Number(currentCount));
   startWithDeck(d);
@@ -1317,6 +1407,7 @@ function startMode(mode){
 
 // 任意の問題リストでクイズを開始（まちがい復習でも使う）
 function startWithDeck(questions){
+  isDaily = false;
   deck = shuffle(questions);
   idx = 0; answers = []; order = [];
   combo = 0; sessionMaxCombo = 0;
@@ -1403,11 +1494,15 @@ function choose(btn, picked, q){
     combo++;
     sessionMaxCombo = Math.max(sessionMaxCombo, combo);
     if(combo > store.bestCombo) store.bestCombo = combo;
+    store.totalCorrect++;
+    if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; }  // 復習で克服
     recordCorrect(q.answer);          // 図鑑に記録（saveStoreも実行）
     showCombo(combo);
     if(combo===3 || combo===5 || combo>=10 && combo%5===0) confettiBurst(14);
   } else {
     combo = 0;
+    store.wrong[q.id] = true;         // 復習リストに追加
+    saveStore();
     btn.classList.add('ng');
     $('combo').textContent = '';
   }
@@ -1450,9 +1545,10 @@ function showResult(){
     rate>=0.4 ? 'もう少し！もう一回やってみよう' :
     'だいじょうぶ、くりかえせば できるよ！';
 
-  // セーブ更新（プレイ回数・全問正解フラグ）→ メダル判定
+  // セーブ更新（プレイ回数・全問正解フラグ・デイリー連続日数）→ メダル判定
   store.plays += 1;
-  if(rate===1){ store.perfect = true; confettiBurst(26); }
+  if(rate===1){ store.perfect = true; store.perfectCount++; confettiBurst(26); }
+  if(isDaily) updateDailyStreak();
   saveStore();
   const newly = checkMedals();
 
@@ -1542,7 +1638,17 @@ function showOnly(id){
     $(s).style.display = (s===id) ? 'block' : 'none';
   });
 }
-function goHome(){ showOnly('home'); }
+// ホームの デイリー／復習 の表示を最新化
+function refreshHome(){
+  const dy = store.daily, ti = todayIndex();
+  let info = '';
+  if((dy.streak||0)>0 && (dy.lastDay===ti || dy.lastDay===ti-1)) info += `🔥${dy.streak}日れんぞく　`;
+  info += (dy.lastDay===ti) ? 'きょうは クリア✓' : 'まいにち 10もん！';
+  $('dailyInfo').textContent = info;
+  const rc = reviewList().length;
+  $('reviewInfo').textContent = rc ? `のこり ${rc}問` : 'まちがいは ありません';
+}
+function goHome(){ refreshHome(); showOnly('home'); }
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('retry').onclick = ()=> startMode(currentMode);
@@ -1550,11 +1656,18 @@ $('retryWrong').onclick = ()=> startWithDeck(wrongQuestions);
 $('back').onclick = goHome;
 $('quizHome').onclick = goHome;
 
+// デイリー・復習
+$('openDaily').onclick  = startDaily;
+$('openReview').onclick = startReview;
+
 // コレクション画面
 $('openDex').onclick    = ()=>{ renderDex();    showOnly('dex'); };
 $('openMedals').onclick = ()=>{ renderMedals(); showOnly('medals'); };
 $('dexBack').onclick    = goHome;
 $('medalsBack').onclick = goHome;
+
+// 初期表示
+refreshHome();
 
 // キーボード操作（PC）：1〜4で選択、Enter/→で次へ、←で前へ
 document.addEventListener('keydown', e=>{
