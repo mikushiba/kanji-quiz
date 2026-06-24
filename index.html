@@ -2,8 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>同じ読みのかん字クイズ（小2）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>同じ読みのかん字クイズ</title>
+<meta name="description" content="小学1・2年生の漢字の同音異義語・同じ読みの漢字を、例文で意味を理解して使い分ける学習クイズ。">
+<meta name="theme-color" content="#ff8a3d">
 <style>
   :root{
     --bg:#fff7ed; --card:#ffffff; --ink:#3b2f2f; --accent:#ff8a3d;
@@ -14,7 +16,7 @@
     margin:0; font-family:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN",
       "Hiragino Sans","Yu Gothic",system-ui,sans-serif;
     background:var(--bg); color:var(--ink);
-    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
   }
   .wrap{width:100%; max-width:560px; padding:16px 14px 40px;}
   h1{font-size:1.35rem; text-align:center; margin:14px 0 4px;}
@@ -76,15 +78,19 @@
   .choice.ok{background:#e6f8ef; border-color:var(--ok); color:var(--ok);}
   .choice.ng{background:#fdeceb; border-color:var(--ng); color:var(--ng);}
   .choice:disabled{cursor:default;}
-  .word{font-size:.85rem; display:block; font-weight:400; color:#8a7a6a; margin-top:2px;}
 
   .feedback{margin-top:18px; padding:16px; border-radius:16px; display:none;}
   .feedback.show{display:block;}
   .feedback.good{background:#e6f8ef; border:2px solid var(--ok);}
   .feedback.bad{background:#fdeceb; border:2px solid var(--ng);}
   .fb-head{font-weight:700; font-size:1.1rem; margin-bottom:8px;}
+  .fb-sentence{font-size:1.05rem; line-height:1.7; margin-bottom:8px;}
+  .fb-sentence b{color:var(--accent); font-size:1.2rem;}
   .fb-line{font-size:.95rem; line-height:1.7;}
   .fb-line b{color:#c46a23;}
+  .fb-kanji{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
+            font-size:.9rem; line-height:1.8; color:#6b5a4a;}
+  .fb-kanji b{color:var(--ink); font-size:1.15rem;}
   .next{
     margin-top:14px; width:100%; border:none; border-radius:16px; padding:16px;
     font-size:1.1rem; font-weight:700; color:#fff; background:var(--accent2);
@@ -99,6 +105,22 @@
          color:#fff; background:var(--accent); cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.12); margin:6px;}
   .home{background:#9b59b6;}
   .stars{font-size:1.8rem; letter-spacing:4px;}
+
+  /* 結果の振り返り */
+  .review{display:none; text-align:left; margin:8px 0 16px; padding:14px;
+          background:#fdf6ee; border:2px solid var(--line); border-radius:14px;}
+  .rv-h{font-weight:700; color:#c46a23; margin-bottom:8px; text-align:center;}
+  .rv-i{font-size:1rem; line-height:1.9; padding:4px 0; border-bottom:1px dashed var(--line);}
+  .rv-i:last-child{border-bottom:none;}
+  .rv-i b{color:var(--accent); font-size:1.15rem;}
+  .retryWrong{background:var(--ng);}
+
+  /* キーボード操作のフォーカス可視化 */
+  :focus-visible{outline:3px solid var(--accent2); outline-offset:2px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
 </style>
 </head>
 <body>
@@ -114,6 +136,14 @@
         <button data-grade="1">1年</button>
         <button data-grade="2">2年</button>
         <button data-grade="12" class="active">1・2年</button>
+      </div>
+    </div>
+    <div class="gradeSel">
+      <div class="gradeLabel">もんだいの数（かず）</div>
+      <div class="seg" id="countSeg">
+        <button data-count="10" class="active">10もん</button>
+        <button data-count="20">20もん</button>
+        <button data-count="all">ぜんぶ</button>
       </div>
     </div>
     <div class="modes">
@@ -154,6 +184,8 @@
     <div class="stars" id="stars"></div>
     <div class="score" id="finalScore"></div>
     <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="review" id="review"></div>
+    <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
     <button class="again" id="retry">もう一回</button>
     <button class="again home" id="back">さいしょの画面</button>
   </div>
@@ -1118,7 +1150,8 @@ const BANK = [
 
 /* ============ ゲーム処理 ============ */
 const $ = id => document.getElementById(id);
-let deck = [], idx = 0, answers = [], currentMode = 'all', currentGrade = '12';
+let deck = [], idx = 0, answers = [], order = [], wrongQuestions = [];
+let currentMode = 'all', currentGrade = '12', currentCount = '10';
 const scoreCount = ()=> answers.filter(a => a && a.correct).length;
 
 function shuffle(a){
@@ -1148,25 +1181,49 @@ function startMode(mode){
     alert('この 学年と モードの くみあわせには まだ もんだいが ありません。\nべつの 学年か モードを えらんでね。');
     return;
   }
-  deck = shuffle(pool);
-  idx = 0; answers = [];
+  let d = shuffle(pool);
+  if(currentCount !== 'all') d = d.slice(0, Number(currentCount));
+  startWithDeck(d);
+}
+
+// 任意の問題リストでクイズを開始（まちがい復習でも使う）
+function startWithDeck(questions){
+  deck = shuffle(questions);
+  idx = 0; answers = []; order = [];
   $('home').style.display='none';
   $('result').style.display='none';
   $('quiz').style.display='block';
   render();
 }
 
+// 正解の漢字の 画数・音読み・訓読み を KANJI DB から作る
+function kanjiMemo(word){
+  const chars = [...word].filter(c => KANJI[c]);
+  if(!chars.length) return '';
+  return chars.map(c=>{
+    const k = KANJI[c];
+    const on  = k.on.length  ? '音:'+k.on.join('・')  : '';
+    const kun = k.kun.length ? '訓:'+k.kun.join('・') : '';
+    return `<b>${c}</b>（${k.s}画）` + [on,kun].filter(Boolean).join(' ／ ');
+  }).join('<br>');
+}
+
 function showFeedback(q, isOK){
   const fb = $('feedback');
   fb.className = 'feedback show ' + (isOK?'good':'bad');
   $('fbHead').textContent = isOK ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
-  // 解説：えらべた言葉ぜんぶの意味を出す
-  let lines = '';
+  // 完成した文（空らんに正解を入れたもの）
+  const parts = q.sentence.split('@@');
+  let html = `<div class="fb-sentence">${parts[0]}<b>${q.answer}</b>${parts[1]}</div>`;
+  // 解説：えらべた言葉ぜんぶの意味
   q.choices.forEach(c=>{
     const mark = (c===q.answer)?'✅':'　';
-    lines += `<div>${mark} <b>${c}</b>… ${q.meaning[c]}</div>`;
+    html += `<div class="fb-line">${mark} <b>${c}</b>… ${q.meaning[c]}</div>`;
   });
-  $('fbBody').innerHTML = lines;
+  // 漢字メモ（画数・音訓）
+  const memo = kanjiMemo(q.answer);
+  if(memo) html += `<div class="fb-kanji">📖 ${memo}</div>`;
+  $('fbBody').innerHTML = html;
 }
 
 function render(){
@@ -1174,7 +1231,8 @@ function render(){
   $('tag').textContent = q.tag;
   // 文を組み立て（@@ を空らんに）
   const parts = q.sentence.split('@@');
-  $('question').innerHTML = parts[0] + '<span class="blank">○</span>' + parts[1];
+  $('question').innerHTML = parts[0] +
+    '<span class="blank" role="img" aria-label="ここに かん字が 入る">○</span>' + parts[1];
   $('readline').innerHTML = '読み：<b>' + q.read + '</b>';
   $('count').textContent = `だい ${idx+1} / ${deck.length} もん`;
   $('score').textContent = `せいかい ${scoreCount()}`;
@@ -1182,8 +1240,10 @@ function render(){
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
 
   const answered = answers[idx];
+  // 選択肢の並びは問題ごとに固定（戻っても入れ替わらない）
+  if(!order[idx]) order[idx] = shuffle(q.choices);
   const box = $('choices'); box.innerHTML='';
-  shuffle(q.choices).forEach(c=>{
+  order[idx].forEach(c=>{
     const b = document.createElement('button');
     b.className='choice';
     // 送りがなを薄く見せず、言葉そのものを表示
@@ -1239,6 +1299,22 @@ function showResult(){
     rate>=0.7 ? 'よくできました！' :
     rate>=0.4 ? 'もう少し！もう一回やってみよう' :
     'だいじょうぶ、くりかえせば できるよ！';
+
+  // まちがえた問題の振り返り
+  wrongQuestions = deck.filter((q,i)=> answers[i] && !answers[i].correct);
+  const rv = $('review');
+  if(wrongQuestions.length){
+    rv.style.display = 'block';
+    rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrongQuestions.length}）</div>` +
+      wrongQuestions.map(q=>{
+        const p = q.sentence.split('@@');
+        return `<div class="rv-i">${p[0]}<b>${q.answer}</b>${p[1]}<span style="color:#9a7b5e;font-size:.8rem">（${q.read}）</span></div>`;
+      }).join('');
+    $('retryWrong').style.display = 'inline-block';
+  } else {
+    rv.style.display = 'none';
+    $('retryWrong').style.display = 'none';
+  }
 }
 
 // 学年セレクター
@@ -1247,6 +1323,14 @@ document.querySelectorAll('#seg button').forEach(b=>{
     document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     currentGrade = b.dataset.grade;
+  };
+});
+// 出題数セレクター
+document.querySelectorAll('#countSeg button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#countSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentCount = b.dataset.count;
   };
 });
 document.querySelectorAll('.mode-btn').forEach(b=>{
@@ -1260,8 +1344,23 @@ function goHome(){
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('retry').onclick = ()=> startMode(currentMode);
+$('retryWrong').onclick = ()=> startWithDeck(wrongQuestions);
 $('back').onclick = goHome;
 $('quizHome').onclick = goHome;
+
+// キーボード操作（PC）：1〜4で選択、Enter/→で次へ、←で前へ
+document.addEventListener('keydown', e=>{
+  if($('quiz').style.display === 'none') return;
+  if(e.key>='1' && e.key<='9'){
+    const btns = $('choices').querySelectorAll('button:not(:disabled)');
+    const i = Number(e.key)-1;
+    if(btns[i]) btns[i].click();
+  } else if(e.key==='Enter' || e.key==='ArrowRight'){
+    if($('feedback').classList.contains('show')) next();
+  } else if(e.key==='ArrowLeft'){
+    prev();
+  }
+});
 </script>
 </body>
 </html>
