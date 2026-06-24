@@ -33,6 +33,9 @@
     flex:1; border:none; background:transparent; padding:12px 0; border-radius:12px;
     font-size:1rem; font-weight:700; color:#9a7b5e; cursor:pointer;
   }
+  /* 学年は1〜6＋ぜんぶで数が多いので 4列グリッドで折り返す */
+  #seg{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  #seg button{padding:11px 0; font-size:.95rem;}
   .seg button.active{background:#fff; color:var(--accent); box-shadow:0 2px 6px rgba(0,0,0,.08);}
   .seg button.locked{opacity:.5;}
 
@@ -244,6 +247,9 @@
         <button data-grade="1">1年</button>
         <button data-grade="2">2年</button>
         <button data-grade="3">3年🔒</button>
+        <button data-grade="4">4年🔒</button>
+        <button data-grade="5">5年🔒</button>
+        <button data-grade="6">6年🔒</button>
         <button data-grade="all" class="active">ぜんぶ</button>
       </div>
       <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
@@ -337,7 +343,7 @@
 
     <h3>1. じゅんびを する</h3>
     <ul>
-      <li><b>学年（がくねん）</b>… 1年・2年・ぜんぶ から えらぶ（3年は ずかんを ぜんぶ あつめると ひらくよ）。</li>
+      <li><b>学年（がくねん）</b>… 1年〜6年・ぜんぶ から えらぶ。3年から上は、<b>前の学年を ずかんに ぜんぶ あつめると じゅんばんに ひらく</b>よ（4・5・6年は いま じゅんびちゅう）。</li>
       <li><b>もんだいの 数</b>… 10もん・20もん・ぜんぶ から えらぶ。</li>
     </ul>
 
@@ -2556,16 +2562,30 @@ const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).len
 // その学年の図鑑をすべて集めたか
 const dexGradeDone = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g===g).every(ch => (store.kanji[ch]||0) >= 1);
 
-// 3年生の解放：1・2年の図鑑コンプリートで解放
-const COLLECTIBLE12 = COLLECTIBLE.filter(ch => KANJI[ch].g <= 2);
-function grade3Unlocked(){
-  return !!store.unlocked3 || COLLECTIBLE12.every(ch => (store.kanji[ch]||0) >= 1);
+// ── 学年の解放（3〜6年）：前の学年までを図鑑コンプリートで解放。問題がまだ無い学年は「じゅんび中」 ──
+const MAXGRADE = 6;
+const COLLECTIBLE12 = COLLECTIBLE.filter(ch => KANJI[ch].g <= 2);   // ※旧コード互換
+const gradeHasContent = (g)=> COLLECTIBLE.some(ch => KANJI[ch].g === g);   // その学年の問題があるか
+const collectiblesUpTo = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g <= g);
+function gradeUnlocked(g){
+  if(g <= 2) return true;
+  if(!gradeHasContent(g)) return false;            // 問題がまだ無い学年は あそべない（じゅんび中）
+  if(store['unlocked'+g]) return true;
+  const lower = collectiblesUpTo(g-1);
+  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
 }
-function checkUnlock(){    // 初めて条件を満たした瞬間だけ true
-  if(!store.unlocked3 && COLLECTIBLE12.every(ch => (store.kanji[ch]||0) >= 1)){
-    store.unlocked3 = true; saveStore(); return true;
+function grade3Unlocked(){ return gradeUnlocked(3); }   // 互換
+function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
+// 新たに解放した学年があれば その最上位の学年番号を返す（無ければ 0）
+function checkUnlock(){
+  let unlockedNow = 0;
+  for(let g=3; g<=MAXGRADE; g++){
+    if(gradeHasContent(g) && !store['unlocked'+g] && gradeUnlocked(g)){
+      store['unlocked'+g] = true; unlockedNow = g;
+    }
   }
-  return false;
+  if(unlockedNow) saveStore();
+  return unlockedNow;
 }
 
 // 正解した漢字を記録（2段階：1回で図鑑入り→3回で★）
@@ -2827,7 +2847,7 @@ function seededShuffle(arr, seed){
 }
 function startDaily(){
   isDaily = true;
-  const maxC = grade3Unlocked() ? 3 : 2;   // 解放ぶんだけ出題
+  const maxC = maxUnlockedGrade();   // 解放ぶんだけ出題
   const pool = BANK.filter(q => q.choices.every(c=>wordGrade(c)<=maxC) && wordGrade(q.answer)<=maxC);
   deck = seededShuffle(pool, todayIndex()).slice(0, 10);
   idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0; sessionComebacks = 0;
@@ -2863,7 +2883,11 @@ function startReview(){
 // currentGrade（'1','2','3','all'）→ {許す正解学年, 選択肢の最大学年}
 function gradeSpec(){
   let g = currentGrade;
-  if(g === 'all') g = grade3Unlocked() ? '123' : '12';
+  if(g === 'all'){
+    let s = '12';
+    for(let x=3; x<=MAXGRADE; x++){ if(gradeUnlocked(x)) s += x; }
+    g = s;
+  }
   const set = g.split('').map(Number);
   return { ans: new Set(set), maxC: Math.max(...set) };
 }
@@ -3046,7 +3070,7 @@ function showResult(){
   const em = $('earned');
   const newRank = STAGES[rankStage(tcAfter)];
   const evoMsg = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
-  const banner = (justUnlocked ? '🎉 3年生が かいきん！　' : '') + evoMsg;
+  const banner = (justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '') + evoMsg;
   if(banner || newly.length){
     em.style.display = 'block';
     em.innerHTML = banner + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
@@ -3074,9 +3098,16 @@ function showResult(){
 // 学年セレクター
 document.querySelectorAll('#seg button').forEach(b=>{
   b.onclick = ()=>{
-    if(b.dataset.grade==='3' && !grade3Unlocked()){
-      const rem = COLLECTIBLE12.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
-      alert(`「3年生」は ロック中。\n1・2年の かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
+    const gv = b.dataset.grade;
+    if(gv!=='all' && Number(gv)>=3 && !gradeUnlocked(Number(gv))){
+      const g = Number(gv);
+      if(!gradeHasContent(g)){
+        alert(`「${g}年生」は ただいま じゅんびちゅう。\nもんだいが できるまで まってね！`);
+      } else {
+        const lower = collectiblesUpTo(g-1);
+        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+        alert(`「${g}年生」は ロック中。\n${g-1}年までの かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
+      }
       return;
     }
     document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('active'));
@@ -3151,20 +3182,28 @@ function refreshHome(){
   $('dailyInfo').textContent = info;
   const rc = reviewList().length;
   $('reviewInfo').textContent = rc ? `のこり ${rc}問` : 'まちがいは ありません';
-  // 3年生ボタンのロック表示
-  const g3 = grade3Unlocked();
-  const b3 = document.querySelector('#seg button[data-grade="3"]');
-  if(b3){ b3.textContent = g3 ? '3年' : '3年🔒'; b3.classList.toggle('locked', !g3); }
-  // 3年生 解放までの あと何字
+  // 3〜6年生ボタンのロック表示
+  for(let g=3; g<=MAXGRADE; g++){
+    const btn = document.querySelector(`#seg button[data-grade="${g}"]`);
+    if(!btn) continue;
+    const un = gradeUnlocked(g);
+    btn.textContent = un ? `${g}年` : `${g}年🔒`;
+    btn.classList.toggle('locked', !un);
+  }
+  // つぎに 解放できる学年の あんない
   const hint = $('unlockHint');
   if(hint){
-    if(g3){
-      hint.textContent = '✅ 3年生も あそべるよ！';
+    let next = 0;
+    for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
+    if(!next){
+      hint.textContent = '✅ ぜんぶの 学年が あそべるよ！';
+    } else if(!gradeHasContent(next)){
+      hint.textContent = `🔒 ${next}年生は ただいま じゅんびちゅう（もうすこし まってね）`;
     } else {
-      const total = COLLECTIBLE12.length;
-      const have  = COLLECTIBLE12.filter(ch => (store.kanji[ch]||0) >= 1).length;
-      const rem   = total - have;
-      hint.textContent = `🔒 3年生まで あと ${rem}字（${have}/${total}）― 1・2年を ずかんに あつめよう`;
+      const lower = collectiblesUpTo(next-1);
+      const total = lower.length;
+      const have  = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
+      hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
     }
   }
   refreshSoundBtn();
