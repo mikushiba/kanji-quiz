@@ -48,7 +48,7 @@ BANK.forEach((q, i) => {
 
 // KANJI DB 自体の形をチェック
 Object.entries(KANJI).forEach(([ch, k]) => {
-  if (![1, 2].includes(k.g)) problems.push(`KANJI「${ch}」: g(学年) が不正: ${k.g}`);
+  if (![1, 2, 3, 4, 5, 6].includes(k.g)) problems.push(`KANJI「${ch}」: g(学年) が不正: ${k.g}`);
   if (typeof k.s !== 'number') problems.push(`KANJI「${ch}」: s(画数) が数値でない`);
   if (!Array.isArray(k.on) || !Array.isArray(k.kun)) problems.push(`KANJI「${ch}」: on/kun が配列でない`);
 });

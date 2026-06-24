@@ -34,6 +34,16 @@
     font-size:1rem; font-weight:700; color:#9a7b5e; cursor:pointer;
   }
   .seg button.active{background:#fff; color:var(--accent); box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .seg button.locked{opacity:.5;}
+
+  /* きろくの 書き出し／読み込み */
+  .saveBar{display:flex; gap:10px; justify-content:center; margin-top:16px;
+           padding-top:14px; border-top:1px dashed var(--line);}
+  .saveBar button, .saveBar .impBtn{
+    border:1px solid var(--line); background:#fff; color:#9a7b5e; border-radius:99px;
+    padding:7px 14px; font-size:.78rem; font-weight:700; cursor:pointer;
+  }
+  .saveBar button:active{transform:translateY(1px);}
 
   /* mode select */
   .modes{display:flex; flex-direction:column; gap:12px;}
@@ -186,7 +196,8 @@
       <div class="seg" id="seg">
         <button data-grade="1">1年</button>
         <button data-grade="2">2年</button>
-        <button data-grade="12" class="active">1・2年</button>
+        <button data-grade="3">3年🔒</button>
+        <button data-grade="all" class="active">ぜんぶ</button>
       </div>
     </div>
     <div class="gradeSel">
@@ -215,6 +226,11 @@
     <div class="collbar">
       <button id="openDex" type="button">📖 かん字ずかん</button>
       <button id="openMedals" type="button">🏅 メダル</button>
+    </div>
+    <div class="saveBar">
+      <button id="exportSave" type="button">💾 きろくを ほぞん</button>
+      <label class="impBtn" for="importFile">📂 きろくを よみこむ</label>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
     </div>
   </div>
 
@@ -252,7 +268,8 @@
   <div id="dex" class="card" style="display:none;">
     <button class="backBtn" id="dexBack">← もどる</button>
     <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
-    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:6px;">正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
     <div class="dexGrid" id="dexGrid"></div>
   </div>
 
@@ -439,6 +456,16 @@ const KANJI = {
   '図':{g:2,s:7,on:['ズ','ト'],kun:['はか(る)']},
   '戸':{g:2,s:4,on:['コ'],kun:['と']},
   '明':{g:2,s:8,on:['メイ','ミョウ'],kun:['あ(かるい)','あ(ける)','あ(く)']},
+
+  // ── 3年生（解放後に使う字。同じ書式で拡張可）──
+  '開':{g:3,s:12,on:['カイ'],kun:['ひら(く)','あ(く)','あ(ける)']},
+  '速':{g:3,s:10,on:['ソク'],kun:['はや(い)','すみ(やか)']},
+  '返':{g:3,s:7,on:['ヘン'],kun:['かえ(す)','かえ(る)']},
+  '登':{g:3,s:12,on:['トウ','ト'],kun:['のぼ(る)']},
+  '追':{g:3,s:9,on:['ツイ'],kun:['お(う)']},
+  '負':{g:3,s:9,on:['フ'],kun:['ま(ける)','お(う)']},
+  '注':{g:3,s:8,on:['チュウ'],kun:['そそ(ぐ)']},
+  '柱':{g:3,s:9,on:['チュウ'],kun:['はしら']},
 };
 
 /* 単語から漢字の最大学年を求める（送りがなは無視） */
@@ -1219,12 +1246,87 @@ const BANK = [
     sentence:'おひるごはんを みんなで @@ べる。', read:'た',
     answer:'食', choices:['食','色'],
     meaning:{'食':'たべる','色':'いろ'} },
+
+  // ============================================================
+  //  3年生（図鑑コンプリートで解放）
+  // ============================================================
+  // 使い分け：あける（開ける／空ける／明ける）
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'げんかんの ドアを @@ ける。', read:'あ',
+    answer:'開', choices:['開','空','明'],
+    meaning:{'開':'開ける＝とじている物を ひらく','空':'空ける＝すきまを 作る','明':'明ける＝朝に なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'まどを @@ けて かぜを 入れる。', read:'あ',
+    answer:'開', choices:['開','空','明'],
+    meaning:{'開':'開ける＝とじている物を ひらく','空':'空ける＝すきまを 作る','明':'明ける＝朝に なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'本だなを 一だん @@ けて すきまを 作る。', read:'あ',
+    answer:'空', choices:['空','開','明'],
+    meaning:{'空':'空ける＝すきまを 作る','開':'開ける＝とじている物を ひらく','明':'明ける＝朝に なる'} },
+
+  // 使い分け：はやい（速い／早い）
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'チーターは 走るのが とても @@ い。', read:'はや',
+    answer:'速', choices:['速','早'],
+    meaning:{'速':'速い＝スピードが はやい','早':'早い＝時こくが はやい'} },
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'今朝は いつもより @@ く おきた。', read:'はや',
+    answer:'早', choices:['早','速'],
+    meaning:{'早':'早い＝時こくが はやい','速':'速い＝スピードが はやい'} },
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'この 電車は @@ さが じまんだ。', read:'はや',
+    answer:'速', choices:['速','早'],
+    meaning:{'速':'速い＝スピードが はやい','早':'早い＝時こくが はやい'} },
+
+  // 使い分け：かえる（帰る／返る）
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'かりた 本を 友だちに @@ す。', read:'かえ',
+    answer:'返', choices:['返','帰'],
+    meaning:{'返':'返す＝ものを もとに もどす','帰':'帰る＝家などに もどる'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'ゆうがた、家に @@ る。', read:'かえ',
+    answer:'帰', choices:['帰','返'],
+    meaning:{'帰':'帰る＝家などに もどる','返':'返す＝ものを もとに もどす'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'おつりが 手もとに @@ る。', read:'かえ',
+    answer:'返', choices:['返','帰'],
+    meaning:{'返':'返る＝ものが もとに もどる','帰':'帰る＝家などに もどる'} },
+
+  // 使い分け：のぼる（登る／上る）
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'たかい 山に @@ る。', read:'のぼ',
+    answer:'登', choices:['登','上'],
+    meaning:{'登':'登る＝高い所・山などに のぼる','上':'上る＝上の ほうへ あがる'} },
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'けむりが まっすぐ 空へ @@ る。', read:'のぼ',
+    answer:'上', choices:['上','登'],
+    meaning:{'上':'上る＝上の ほうへ あがる','登':'登る＝高い所・山などに のぼる'} },
+
+  // 使い分け：おう（追う／負う）
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'にげる ねこを @@ いかける。', read:'お',
+    answer:'追', choices:['追','負'],
+    meaning:{'追':'追う＝おいかける','負':'負う＝せおう・まける'} },
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'おもい にもつを せなかに @@ う。', read:'お',
+    answer:'負', choices:['負','追'],
+    meaning:{'負':'負う＝せおう','追':'追う＝おいかける'} },
+
+  // 同じ読み：ちゅう（注・柱・中）
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'コップに ジュースを @@ ぐ。', read:'そそ',
+    answer:'注', choices:['注','柱','中'],
+    meaning:{'注':'そそぐ','柱':'はしら','中':'なか'} },
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'家の 太い @@ を 見上げる。', read:'はしら',
+    answer:'柱', choices:['柱','注','中'],
+    meaning:{'柱':'はしら','注':'そそぐ','中':'なか'} },
 ];
 
 /* ============ ゲーム処理 ============ */
 const $ = id => document.getElementById(id);
 let deck = [], idx = 0, answers = [], order = [], wrongQuestions = [];
-let currentMode = 'all', currentGrade = '12', currentCount = '10';
+let currentMode = 'all', currentGrade = 'all', currentCount = '10';
 let combo = 0, sessionMaxCombo = 0;
 const scoreCount = ()=> answers.filter(a => a && a.correct).length;
 
@@ -1246,6 +1348,10 @@ store.totalCorrect = store.totalCorrect || 0;  // 累計 正解数
 store.perfectCount = store.perfectCount || 0;   // 全問正解した回数
 store.comebacks    = store.comebacks    || 0;   // まちがいを なおした回数
 store.daily   = store.daily   || { streak:0, bestStreak:0, lastDay:null };
+store.unlocked3 = store.unlocked3 || false;     // 3年生 解放ずみか
+const SAVE_VERSION = 3;
+store.version = SAVE_VERSION;                    // セーブの版（将来の移行用）
+saveStore();
 
 // 問題に固定ID（BANKの並びは静的なので index をIDにする）
 BANK.forEach((q,i)=>{ q.id = i; });
@@ -1257,6 +1363,18 @@ const COLLECTIBLE = [...new Set(
 
 const dexCount    = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 1).length;
 const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).length;
+
+// 3年生の解放：1・2年の図鑑コンプリートで解放
+const COLLECTIBLE12 = COLLECTIBLE.filter(ch => KANJI[ch].g <= 2);
+function grade3Unlocked(){
+  return !!store.unlocked3 || COLLECTIBLE12.every(ch => (store.kanji[ch]||0) >= 1);
+}
+function checkUnlock(){    // 初めて条件を満たした瞬間だけ true
+  if(!store.unlocked3 && COLLECTIBLE12.every(ch => (store.kanji[ch]||0) >= 1)){
+    store.unlocked3 = true; saveStore(); return true;
+  }
+  return false;
+}
 
 // 正解した漢字を記録（2段階：1回で図鑑入り→3回で★）
 function recordCorrect(answer){
@@ -1295,6 +1413,8 @@ const MEDALS = [
   // デイリー
   {id:'daily3',     icon:'📅', name:'3日 れんぞく', desc:'チャレンジ 3日れんぞく', test:()=> (store.daily?.bestStreak||0)>=3},
   {id:'daily7',     icon:'🗓️', name:'7日 れんぞく', desc:'チャレンジ 7日れんぞく', test:()=> (store.daily?.bestStreak||0)>=7},
+  // 解放
+  {id:'unlock3',    icon:'🔓', name:'3年生 かいきん', desc:'1・2年を ぜんぶ 図かんに', test:()=> grade3Unlocked()},
 ];
 function checkMedals(){
   const newly = [];
@@ -1350,7 +1470,9 @@ function seededShuffle(arr, seed){
 }
 function startDaily(){
   isDaily = true;
-  deck = seededShuffle(BANK, todayIndex()).slice(0, 10);
+  const maxC = grade3Unlocked() ? 3 : 2;   // 解放ぶんだけ出題
+  const pool = BANK.filter(q => q.choices.every(c=>wordGrade(c)<=maxC) && wordGrade(q.answer)<=maxC);
+  deck = seededShuffle(pool, todayIndex()).slice(0, 10);
   idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0;
   showOnly('quiz'); render();
 }
@@ -1381,15 +1503,17 @@ function startReview(){
 /* 学年フィルタ：選んだ学年で「習った字だけ」を出す
    - maxG までの字しか選択肢に出さない（知らない字を見せない）
    - 単一学年（1 or 2）のときは、正解の字がその学年のものに限定 */
+// currentGrade（'1','2','3','all'）→ {許す正解学年, 選択肢の最大学年}
+function gradeSpec(){
+  let g = currentGrade;
+  if(g === 'all') g = grade3Unlocked() ? '123' : '12';
+  const set = g.split('').map(Number);
+  return { ans: new Set(set), maxC: Math.max(...set) };
+}
 function gradeOK(q){
-  const maxG = currentGrade==='1' ? 1 : 2;
-  // すべての選択肢が maxG までの漢字か
-  for(const c of q.choices){
-    if(wordGrade(c) > maxG) return false;
-  }
-  if(currentGrade==='12') return true;
-  // 単一学年：正解の対象漢字がその学年
-  return wordGrade(q.answer) === Number(currentGrade);
+  const { ans, maxC } = gradeSpec();
+  for(const c of q.choices){ if(wordGrade(c) > maxC) return false; }  // 知らない字は出さない
+  return ans.has(wordGrade(q.answer));                                 // 正解の学年が対象か
 }
 
 function startMode(mode){
@@ -1545,18 +1669,21 @@ function showResult(){
     rate>=0.4 ? 'もう少し！もう一回やってみよう' :
     'だいじょうぶ、くりかえせば できるよ！';
 
-  // セーブ更新（プレイ回数・全問正解フラグ・デイリー連続日数）→ メダル判定
+  // セーブ更新（プレイ回数・全問正解フラグ・デイリー連続日数）→ 解放・メダル判定
   store.plays += 1;
   if(rate===1){ store.perfect = true; store.perfectCount++; confettiBurst(26); }
   if(isDaily) updateDailyStreak();
+  const justUnlocked = checkUnlock();
   saveStore();
   const newly = checkMedals();
+  if(justUnlocked) confettiBurst(36);
 
   $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
   const em = $('earned');
-  if(newly.length){
+  const banner = justUnlocked ? '🎉 3年生が かいきん！　' : '';
+  if(banner || newly.length){
     em.style.display = 'block';
-    em.innerHTML = '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　');
+    em.innerHTML = banner + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
   } else {
     em.style.display = 'none';
   }
@@ -1581,6 +1708,10 @@ function showResult(){
 // 学年セレクター
 document.querySelectorAll('#seg button').forEach(b=>{
   b.onclick = ()=>{
+    if(b.dataset.grade==='3' && !grade3Unlocked()){
+      alert('「3年生」は ロック中。\n1・2年の かん字を ぜんぶ 図かんに あつめると かいきん！');
+      return;
+    }
     document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     currentGrade = b.dataset.grade;
@@ -1600,6 +1731,12 @@ document.querySelectorAll('.mode-btn').forEach(b=>{
 // 図鑑を描く
 function renderDex(){
   $('dexCnt').textContent = `${dexCount()} / ${COLLECTIBLE.length} 字（★${masterCount()}）`;
+  if(grade3Unlocked()){
+    $('dexUnlock').textContent = '🔓 3年生 かいきん中！';
+  } else {
+    const rem = COLLECTIBLE12.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+    $('dexUnlock').textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`;
+  }
   const grid = $('dexGrid'); grid.innerHTML = '';
   COLLECTIBLE.forEach(ch=>{
     const k = KANJI[ch], c = store.kanji[ch]||0;
@@ -1647,6 +1784,10 @@ function refreshHome(){
   $('dailyInfo').textContent = info;
   const rc = reviewList().length;
   $('reviewInfo').textContent = rc ? `のこり ${rc}問` : 'まちがいは ありません';
+  // 3年生ボタンのロック表示
+  const g3 = grade3Unlocked();
+  const b3 = document.querySelector('#seg button[data-grade="3"]');
+  if(b3){ b3.textContent = g3 ? '3年' : '3年🔒'; b3.classList.toggle('locked', !g3); }
 }
 function goHome(){ refreshHome(); showOnly('home'); }
 $('next').onclick = next;
@@ -1655,6 +1796,31 @@ $('retry').onclick = ()=> startMode(currentMode);
 $('retryWrong').onclick = ()=> startWithDeck(wrongQuestions);
 $('back').onclick = goHome;
 $('quizHome').onclick = goHome;
+
+// きろくの 書き出し／読み込み（バックアップ）
+function exportSave(){
+  const blob = new Blob([JSON.stringify(store)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'かん字クイズ-きろく.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function importSave(file){
+  const r = new FileReader();
+  r.onload = ()=>{
+    try {
+      const obj = JSON.parse(r.result);
+      if(!obj || typeof obj !== 'object' || !obj.kanji) throw 0;
+      if(!confirm('いまの きろくを、よみこんだ きろくに 入れかえます。よろしいですか？')) return;
+      localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+      location.reload();
+    } catch(e){ alert('この ファイルは よみこめませんでした。'); }
+  };
+  r.readAsText(file);
+}
+$('exportSave').onclick = exportSave;
+$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) importSave(f); e.target.value=''; };
 
 // デイリー・復習
 $('openDaily').onclick  = startDaily;
