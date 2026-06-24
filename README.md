@@ -16,7 +16,7 @@
 
 | 区分 | 数 |
 |---|---|
-| 問題数 | **281問**（使い分け 50 / 同じ読み 231） |
+| 問題数 | **331問**（使い分け 50 / 同じ読み 281） |
 | 漢字DB | **440字＝全配当字**（1年 80/80・2年 160/160・3年 200/200） |
 | 図鑑の対象（集められる漢字） | 約223字（出題の正解になる漢字） |
 | メダル | **100種** |
@@ -159,8 +159,14 @@ store = {
 
 ### 公開へ反映（更新のしかた）
 ```bash
-~/kanji-quiz/deploy.sh "問題を追加"   # commit+push（GitHub Actionsで validate 自動実行）
+./deploy.sh "問題を追加"   # commit+push（GitHub Actionsで validate 自動実行）
 ```
+
+### 道具とskill（PC非依存・cloneすればどこでも）
+- `tools/db-coverage.mjs` … 学年別配当表に対する網羅チェック（不足・学年ズレ）
+- `tools/onaji-candidates.mjs` … これから作れる「同じ読み」グループ候補
+- `tools/export-csv.mjs` … 漢字/問題のCSV書き出し（Lark/Sheets用）
+- skill **`kanji-quiz-update`**（`.claude/skills/`）… 編集→検証→公開→記録の標準フロー。`git clone` した任意の環境（GCP等）で同手順。
 
 ### 品質の自動化
 - `validate.mjs`＋`.github/workflows/validate.yml`：push/PR時にデータ検証。実際に漢字のDB登録漏れ（古・区など）を公開前に検出した実績あり。

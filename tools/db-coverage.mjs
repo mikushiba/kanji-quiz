@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+/* 学年別漢字配当表に対する DB の網羅状況を表示する。
+ * 不足字（DB未登録）・学年ズレを検出。常用漢字をDBに足すときの確認に使う。
+ * 使い方: node tools/db-coverage.mjs
+ */
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const html = readFileSync(join(here, '..', 'index.html'), 'utf8');
+let js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+js = js.slice(0, js.indexOf('/* ============ ゲーム処理'));
+const s = {}; vm.createContext(s);
+vm.runInContext(js + '; this.KANJI = KANJI;', s);
+const DB = s.KANJI;
+
+// 学年別漢字配当表（1〜3年）。4年以降を足すときはここに追記。
+const HAITOU = {
+  1: '一右雨円王音下火花貝学気九休玉金空月犬見五口校左三山子四糸字耳七車手十出女小上森人水正生青夕石赤千川先早草足村大男竹中虫町天田土二日入年白八百文木本名目立力林六',
+  2: '引羽雲園遠何科夏家歌画回会海絵外角楽活間丸岩顔汽記帰弓牛魚京強教近兄形計元言原戸古午後語工公広交光考行高黄合谷国黒今才細作算止市矢姉思紙寺自時室社弱首秋週春書少場色食心新親図数西声星晴切雪船線前組走多太体台地池知茶昼長鳥朝直通弟店点電刀冬当東答頭同道読内南肉馬売買麦半番父風分聞米歩母方北妹毎万明鳴毛門夜野友用曜来里理話',
+  3: '悪安暗医委意育員院飲運泳駅央横屋温化荷界開階寒感漢館岸起期客究急級宮球去橋業曲局銀区苦具君係軽血決研県庫湖向幸港号根祭皿仕死使始指歯詩次事持式実写者主守取酒受州拾終習集住重宿所暑助昭消商章勝乗植申身神真深進世整昔全相送想息速族他打対待代第題炭短談着注柱丁帳調追定庭笛鉄転都度投豆島湯登等動童農波配倍箱畑発反坂板皮悲美鼻筆氷表秒病品負部服福物平返勉放味命面問役薬由油有遊予羊洋葉陽様落流旅両緑礼列練路和',
+};
+
+let bad = 0;
+for (const [g, list] of Object.entries(HAITOU)) {
+  const chars = [...list];
+  const miss = chars.filter(c => !DB[c]);
+  const have = chars.length - miss.length;
+  console.log(`■ ${g}年: ${have}/${chars.length}` + (miss.length ? `  不足(${miss.length}): ${miss.join('')}` : '  ✓ 完全'));
+  if (miss.length) bad += miss.length;
+}
+// 学年ズレ（DBの学年が配当と違う）
+const map = {}; for (const [g, list] of Object.entries(HAITOU)) for (const c of list) map[c] = +g;
+const wrong = Object.entries(DB).filter(([c, k]) => map[c] && map[c] !== k.g);
+if (wrong.length) { console.log('■ 学年ズレ:', wrong.map(([c, k]) => `${c}(DB:g${k.g}/配当:g${map[c]})`).join(' ')); bad += wrong.length; }
+
+console.log(bad ? `\n⚠ 要対応: ${bad}件` : '\n✓ 配当どおり（不足・ズレ なし）');
+process.exit(0);
