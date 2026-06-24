@@ -1,0 +1,8 @@
+{
+  "domain": "https://open.larksuite.com",
+  "appId": "cli_xxxxxxxxxxxxxxxx",
+  "appSecret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "baseToken": "bascnXXXXXXXXXXXXXXXXXXXXXXXX",
+  "kanjiTable": "漢字DB",
+  "questionsTable": "問題"
+}
