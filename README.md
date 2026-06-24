@@ -162,11 +162,15 @@ store = {
 ./deploy.sh "問題を追加"   # commit+push（GitHub Actionsで validate 自動実行）
 ```
 
-### 道具とskill（PC非依存・cloneすればどこでも）
+### 道具（リポジトリ内 `tools/`）
 - `tools/db-coverage.mjs` … 学年別配当表に対する網羅チェック（不足・学年ズレ）
 - `tools/onaji-candidates.mjs` … これから作れる「同じ読み」グループ候補
 - `tools/export-csv.mjs` … 漢字/問題のCSV書き出し（Lark/Sheets用）
-- skill **`kanji-quiz-update`**（`.claude/skills/`）… 編集→検証→公開→記録の標準フロー。`git clone` した任意の環境（GCP等）で同手順。
+
+### skill `kanji`（更新フロー）
+- 編集→検証→公開→記録の標準フローを `/kanji` で実行。
+- 置き場所は**利用フォルダ専用**（Googleドライブ `共有ドライブ/family/.claude/skills/kanji/`）。グローバルにもこのリポジトリにも置かない＝そのフォルダで起動したセッションだけで有効。
+- 実体の手順は `cd ~/kanji-quiz` してから上記コマンドを実行する内容。
 
 ### 品質の自動化
 - `validate.mjs`＋`.github/workflows/validate.yml`：push/PR時にデータ検証。実際に漢字のDB登録漏れ（古・区など）を公開前に検出した実績あり。
