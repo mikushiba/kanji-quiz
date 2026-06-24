@@ -40,6 +40,11 @@ BANK.forEach((q, i) => {
   if (!q.read) problems.push(`${where}: read が無い`);
   if (!Array.isArray(q.choices) || q.choices.length < 2) problems.push(`${where}: choices が不正`);
   if (!q.choices?.includes(q.answer)) problems.push(`${where}: answer「${q.answer}」が choices に無い`);
+  // 答えの漢字が 例文に出ていないか（答えがバレる）
+  const rest = (q.sentence || '').split('@@').join('');
+  kanjiOf(q.answer || '').forEach(ch => {
+    if (rest.includes(ch)) problems.push(`${where}: 答え「${q.answer}」の漢字「${ch}」が例文に出ている（答えがバレる）`);
+  });
   (q.choices || []).forEach(c => {
     kanjiOf(c).forEach(ch => { if (!KANJI[ch]) problems.push(`${where}: 漢字「${ch}」が KANJI DB に無い`); });
     if (!q.meaning?.[c]) problems.push(`${where}: 「${c}」の meaning が無い`);
