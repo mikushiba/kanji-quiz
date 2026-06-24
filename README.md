@@ -2,11 +2,13 @@
 
 小学1・2年生で習う漢字の「同音異義語／同じ読みの漢字」を、**例文を通じて意味を理解し、正しく使い分ける**ことを目的とした学習クイズアプリです。
 
-- **ファイル**: `kanji-quiz.html`（単一HTMLファイル・依存ライブラリなし）
-- **動作環境**: PC／スマホ／タブレットのブラウザ。ダブルクリックまたは下記コマンドで開く。
-  ```
-  open "kanji-quiz.html"
-  ```
+- **公開URL（スマホ・タブレット・PCで遊べる）**: https://mikushiba.github.io/kanji-quiz/
+- **リポジトリ**: https://github.com/mikushiba/kanji-quiz
+- **本体ファイル**: `index.html`（単一HTMLファイル・依存ライブラリなし）
+- **編集元（唯一の本体）**: `~/kanji-quiz/index.html`
+- **ローカルで開く**: `open ~/kanji-quiz/index.html`
+
+> このフォルダ `~/kanji-quiz` が唯一の本体です。ここを編集して `git push` すると公開サイトに反映されます（下記「更新のしかた」）。
 
 ---
 
@@ -119,6 +121,18 @@ const KANJI = {
    ```
 2. `BANK` に問題オブジェクトを追加（3-2 の書式）。`answer` は必ず `choices` に含める。
 3. 動作前チェック（任意・推奨）: 「答えが選択肢に含まれる／選択肢の漢字がDBにある／全選択肢に意味がある」を確認。
+
+### 更新を公開サイトへ反映する（更新のしかた）
+`~/kanji-quiz/index.html` を編集したら、次のどちらかで反映（数分後にURLへ反映）。
+
+```bash
+# かんたん（用意したスクリプト）
+~/kanji-quiz/deploy.sh "問題を追加"
+
+# または手動で
+cd ~/kanji-quiz
+git add -A && git commit -m "問題を追加" && git push
+```
 
 ---
 
