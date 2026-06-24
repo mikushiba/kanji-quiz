@@ -121,6 +121,47 @@
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
   }
+
+  /* コンボ */
+  #combo{font-weight:800; color:#ff6a00; font-size:.85rem;}
+  #combo.pop{animation:pop .45s;}
+  @keyframes pop{0%{transform:scale(.5);opacity:0} 55%{transform:scale(1.35)} 100%{transform:scale(1)}}
+
+  /* 紙ふぶき */
+  .confetti{position:fixed; top:-30px; pointer-events:none; z-index:50; will-change:transform;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg); opacity:.15;}}
+
+  /* コレクション入口 */
+  .collbar{display:flex; gap:12px; margin-top:14px;}
+  .collbar button{flex:1; border:2px solid var(--line); background:#fff; color:#c46a23;
+    border-radius:16px; padding:14px 8px; font-size:1rem; font-weight:700; cursor:pointer;}
+  .collbar button:active{transform:translateY(2px);}
+
+  .backBtn{border:2px solid var(--line); background:#fff; color:#c46a23; border-radius:99px;
+    padding:8px 16px; font-size:.9rem; font-weight:700; cursor:pointer; margin-bottom:12px;}
+  .collHead{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .collHead h2{font-size:1.15rem; margin:0;}
+  .collHead .cnt{font-size:.85rem; color:#9a7b5e; font-weight:700;}
+
+  /* 図鑑 */
+  .dexGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(82px,1fr)); gap:10px;}
+  .dcard{border:2px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center; background:#fff;}
+  .dcard.locked{background:#f3e9df; color:#cbb9a6;}
+  .dcard .k{font-size:1.8rem; font-weight:800; line-height:1.1;}
+  .dcard .star{font-size:.85rem; color:#ffb300; line-height:1;}
+  .dcard .info{font-size:.6rem; color:#8a7a6a; margin-top:3px; line-height:1.35;}
+  .dcard.master{border-color:#ffb300; box-shadow:inset 0 0 0 2px #ffe9b0;}
+
+  /* メダル */
+  .medalList{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .medal{border:2px solid var(--line); border-radius:14px; padding:12px 8px; text-align:center; background:#fff;}
+  .medal.locked{opacity:.45; filter:grayscale(1);}
+  .medal .mi{font-size:2rem; line-height:1;}
+  .medal .mn{font-weight:700; font-size:.85rem; margin-top:5px;}
+  .medal .md{font-size:.72rem; color:#8a7a6a; margin-top:2px; line-height:1.4;}
+
+  .earned{display:none; margin:8px 0 4px; font-size:1rem; font-weight:700; color:#c46a23;}
+  .comboBest{font-size:.95rem; color:#9a7b5e; margin-bottom:6px;}
 </style>
 </head>
 <body>
@@ -160,6 +201,10 @@
         <small>①と②を シャッフルして 出題</small>
       </button>
     </div>
+    <div class="collbar">
+      <button id="openDex" type="button">📖 かん字ずかん</button>
+      <button id="openMedals" type="button">🏅 メダル</button>
+    </div>
   </div>
 
   <!-- クイズ画面 -->
@@ -167,7 +212,7 @@
     <button class="navBtn" id="prev">← 前へ</button>
     <button class="homeBtn" id="quizHome">🏠 HOME</button>
     <div class="bar"><i id="prog"></i></div>
-    <div class="meta"><span id="count"></span><span id="score"></span></div>
+    <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
     <span class="tag" id="tag"></span>
     <div class="q" id="question"></div>
     <div class="read" id="readline"></div>
@@ -183,11 +228,28 @@
   <div id="result" class="card result" style="display:none;">
     <div class="stars" id="stars"></div>
     <div class="score" id="finalScore"></div>
+    <div class="comboBest" id="comboBest"></div>
     <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="earned" id="earned"></div>
     <div class="review" id="review"></div>
     <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
     <button class="again" id="retry">もう一回</button>
     <button class="again home" id="back">さいしょの画面</button>
+  </div>
+
+  <!-- 漢字ずかん画面 -->
+  <div id="dex" class="card" style="display:none;">
+    <button class="backBtn" id="dexBack">← もどる</button>
+    <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div class="dexGrid" id="dexGrid"></div>
+  </div>
+
+  <!-- メダル画面 -->
+  <div id="medals" class="card" style="display:none;">
+    <button class="backBtn" id="medalsBack">← もどる</button>
+    <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
+    <div class="medalList" id="medalList"></div>
   </div>
 </div>
 
@@ -1152,7 +1214,74 @@ const BANK = [
 const $ = id => document.getElementById(id);
 let deck = [], idx = 0, answers = [], order = [], wrongQuestions = [];
 let currentMode = 'all', currentGrade = '12', currentCount = '10';
+let combo = 0, sessionMaxCombo = 0;
 const scoreCount = ()=> answers.filter(a => a && a.correct).length;
+
+/* ===== セーブ（localStorage）と コレクション ===== */
+const STORE_KEY = 'kanjiQuiz.v1';
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveStore(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e){} }
+let store = loadStore();
+store.kanji   = store.kanji   || {};   // { 漢字: 正解した回数 }
+store.medals  = store.medals  || {};   // { メダルID: true }
+store.bestCombo = store.bestCombo || 0;
+store.plays   = store.plays   || 0;
+store.perfect = store.perfect || false;
+
+// 集めらる漢字＝問題の「正解」に出てくる漢字（学年→画数順）
+const COLLECTIBLE = [...new Set(
+  BANK.flatMap(q => [...q.answer].filter(c => KANJI[c]))
+)].sort((a,b)=> KANJI[a].g - KANJI[b].g || KANJI[a].s - KANJI[b].s || (a<b?-1:1));
+
+const dexCount    = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 1).length;
+const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).length;
+
+// 正解した漢字を記録（2段階：1回で図鑑入り→3回で★）
+function recordCorrect(answer){
+  [...answer].filter(c => KANJI[c]).forEach(ch=>{
+    store.kanji[ch] = (store.kanji[ch]||0) + 1;
+  });
+  saveStore();
+}
+
+// メダル定義
+const MEDALS = [
+  {id:'firstClear', icon:'🎫', name:'はじめの一歩', desc:'1かい あそんだ',        test:()=> store.plays>=1},
+  {id:'perfect',    icon:'💯', name:'ぜんもん せいかい', desc:'1かいで ぜんぶ正かい', test:()=> store.perfect},
+  {id:'combo5',     icon:'🔥', name:'コンボ 5',     desc:'5れんぞく 正かい',       test:()=> store.bestCombo>=5},
+  {id:'combo10',    icon:'⚡', name:'コンボ 10',    desc:'10れんぞく 正かい',      test:()=> store.bestCombo>=10},
+  {id:'dex10',      icon:'📗', name:'ずかん 10字',  desc:'図かんに 10字',          test:()=> dexCount()>=10},
+  {id:'dex50',      icon:'📚', name:'ずかん 50字',  desc:'図かんに 50字',          test:()=> dexCount()>=50},
+  {id:'master10',   icon:'⭐', name:'マスター 10字', desc:'★を 10字 あつめた',      test:()=> masterCount()>=10},
+  {id:'dexAll',     icon:'👑', name:'ずかん コンプリート', desc:'ぜんぶ 図かんに',  test:()=> dexCount()>=COLLECTIBLE.length},
+];
+function checkMedals(){
+  const newly = [];
+  MEDALS.forEach(m=>{
+    if(!store.medals[m.id] && m.test()){ store.medals[m.id]=true; newly.push(m); }
+  });
+  if(newly.length) saveStore();
+  return newly;
+}
+
+// 紙ふぶき
+function confettiBurst(n){
+  const emo = ['🎉','⭐','✨','🎊','🌟'];
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'confetti';
+    s.textContent = emo[i % emo.length];
+    s.style.left = (2 + (i*9 + (i*i)%13) % 96) + 'vw';   // indexで散らす（乱数不要）
+    const dur = 1.3 + (i % 7) * 0.18;
+    s.style.fontSize = (1 + (i % 4) * 0.3) + 'rem';
+    s.style.animation = `fall ${dur}s linear forwards`;
+    document.body.appendChild(s);
+    setTimeout(()=> s.remove(), dur*1000 + 120);
+  }
+}
 
 function shuffle(a){
   a = a.slice();
@@ -1190,9 +1319,8 @@ function startMode(mode){
 function startWithDeck(questions){
   deck = shuffle(questions);
   idx = 0; answers = []; order = [];
-  $('home').style.display='none';
-  $('result').style.display='none';
-  $('quiz').style.display='block';
+  combo = 0; sessionMaxCombo = 0;
+  showOnly('quiz');
   render();
 }
 
@@ -1238,6 +1366,7 @@ function render(){
   $('score').textContent = `せいかい ${scoreCount()}`;
   $('prog').style.width = (idx/deck.length*100) + '%';
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
+  $('combo').textContent = '';        // コンボ表示は回答時だけ出す
 
   const answered = answers[idx];
   // 選択肢の並びは問題ごとに固定（戻っても入れ替わらない）
@@ -1270,9 +1399,31 @@ function choose(btn, picked, q){
     b.disabled = true;
     if(b.textContent===q.answer) b.classList.add('ok');
   });
-  if(!isOK){ btn.classList.add('ng'); }
+  if(isOK){
+    combo++;
+    sessionMaxCombo = Math.max(sessionMaxCombo, combo);
+    if(combo > store.bestCombo) store.bestCombo = combo;
+    recordCorrect(q.answer);          // 図鑑に記録（saveStoreも実行）
+    showCombo(combo);
+    if(combo===3 || combo===5 || combo>=10 && combo%5===0) confettiBurst(14);
+  } else {
+    combo = 0;
+    btn.classList.add('ng');
+    $('combo').textContent = '';
+  }
   showFeedback(q, isOK);
   $('score').textContent = `せいかい ${scoreCount()}`;
+}
+
+function showCombo(n){
+  const el = $('combo');
+  if(n >= 2){
+    el.textContent = `🔥 ${n}れんぞく`;
+    el.className = 'pop';
+    setTimeout(()=>{ el.className=''; }, 450);
+  } else {
+    el.textContent = '';
+  }
 }
 
 function next(){
@@ -1286,8 +1437,7 @@ function prev(){
 }
 
 function showResult(){
-  $('quiz').style.display='none';
-  $('result').style.display='block';
+  showOnly('result');
   const total = deck.length;
   const correct = scoreCount();
   $('finalScore').textContent = `${correct} / ${total} もん せいかい`;
@@ -1299,6 +1449,21 @@ function showResult(){
     rate>=0.7 ? 'よくできました！' :
     rate>=0.4 ? 'もう少し！もう一回やってみよう' :
     'だいじょうぶ、くりかえせば できるよ！';
+
+  // セーブ更新（プレイ回数・全問正解フラグ）→ メダル判定
+  store.plays += 1;
+  if(rate===1){ store.perfect = true; confettiBurst(26); }
+  saveStore();
+  const newly = checkMedals();
+
+  $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
+  const em = $('earned');
+  if(newly.length){
+    em.style.display = 'block';
+    em.innerHTML = '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　');
+  } else {
+    em.style.display = 'none';
+  }
 
   // まちがえた問題の振り返り
   wrongQuestions = deck.filter((q,i)=> answers[i] && !answers[i].correct);
@@ -1336,17 +1501,60 @@ document.querySelectorAll('#countSeg button').forEach(b=>{
 document.querySelectorAll('.mode-btn').forEach(b=>{
   b.onclick = ()=> startMode(b.dataset.mode);
 });
-function goHome(){
-  $('result').style.display='none';
-  $('quiz').style.display='none';
-  $('home').style.display='block';
+// 図鑑を描く
+function renderDex(){
+  $('dexCnt').textContent = `${dexCount()} / ${COLLECTIBLE.length} 字（★${masterCount()}）`;
+  const grid = $('dexGrid'); grid.innerHTML = '';
+  COLLECTIBLE.forEach(ch=>{
+    const k = KANJI[ch], c = store.kanji[ch]||0;
+    const div = document.createElement('div');
+    if(c>=1){
+      const master = c>=3;
+      div.className = 'dcard' + (master ? ' master' : '');
+      const on  = k.on.length  ? '音 '+k.on.join('・')  : '';
+      const kun = k.kun.length ? '訓 '+k.kun.join('・') : '';
+      div.innerHTML = `<div class="k">${ch}</div><div class="star">${master?'★':'☆'}</div>`
+        + `<div class="info">${k.s}画<br>${on}${on&&kun?'<br>':''}${kun}</div>`;
+    } else {
+      div.className = 'dcard locked';
+      div.innerHTML = `<div class="k">？</div><div class="info">みつけよう</div>`;
+    }
+    grid.appendChild(div);
+  });
 }
+
+// メダルを描く
+function renderMedals(){
+  const got = MEDALS.filter(m=>store.medals[m.id]).length;
+  $('medalsCnt').textContent = `${got} / ${MEDALS.length}`;
+  const list = $('medalList'); list.innerHTML = '';
+  MEDALS.forEach(m=>{
+    const has = !!store.medals[m.id];
+    const div = document.createElement('div');
+    div.className = 'medal' + (has ? '' : ' locked');
+    div.innerHTML = `<div class="mi">${has?m.icon:'🔒'}</div><div class="mn">${m.name}</div><div class="md">${m.desc}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function showOnly(id){
+  ['home','quiz','result','dex','medals'].forEach(s=>{
+    $(s).style.display = (s===id) ? 'block' : 'none';
+  });
+}
+function goHome(){ showOnly('home'); }
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('retry').onclick = ()=> startMode(currentMode);
 $('retryWrong').onclick = ()=> startWithDeck(wrongQuestions);
 $('back').onclick = goHome;
 $('quizHome').onclick = goHome;
+
+// コレクション画面
+$('openDex').onclick    = ()=>{ renderDex();    showOnly('dex'); };
+$('openMedals').onclick = ()=>{ renderMedals(); showOnly('medals'); };
+$('dexBack').onclick    = goHome;
+$('medalsBack').onclick = goHome;
 
 // キーボード操作（PC）：1〜4で選択、Enter/→で次へ、←で前へ
 document.addEventListener('keydown', e=>{
