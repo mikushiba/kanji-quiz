@@ -2567,11 +2567,17 @@ const MAXGRADE = 6;
 const COLLECTIBLE12 = COLLECTIBLE.filter(ch => KANJI[ch].g <= 2);   // ※旧コード互換
 const gradeHasContent = (g)=> COLLECTIBLE.some(ch => KANJI[ch].g === g);   // その学年の問題があるか
 const collectiblesUpTo = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g <= g);
+// g学年以下「だけ」で実際に集められる正解漢字（選択肢に上位学年を含む問題は出題されないので除外）。
+// これを使わないと、答えはg以下でも選択肢に上の学年が混ざる問題しか無い字が永久に集まらず、解放が詰む。
+const collectableUpTo = (g)=> [...new Set(
+  BANK.filter(q => q.choices.every(c => wordGrade(c) <= g))
+      .flatMap(q => [...q.answer].filter(c => KANJI[c] && KANJI[c].g <= g))
+)];
 function gradeUnlocked(g){
   if(g <= 2) return true;
   if(!gradeHasContent(g)) return false;            // 問題がまだ無い学年は あそべない（じゅんび中）
   if(store['unlocked'+g]) return true;
-  const lower = collectiblesUpTo(g-1);
+  const lower = collectableUpTo(g-1);              // ※実際に集められる字だけを条件にする
   return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
 }
 function grade3Unlocked(){ return gradeUnlocked(3); }   // 互換
@@ -3104,7 +3110,7 @@ document.querySelectorAll('#seg button').forEach(b=>{
       if(!gradeHasContent(g)){
         alert(`「${g}年生」は ただいま じゅんびちゅう。\nもんだいが できるまで まってね！`);
       } else {
-        const lower = collectiblesUpTo(g-1);
+        const lower = collectableUpTo(g-1);
         const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
         alert(`「${g}年生」は ロック中。\n${g-1}年までの かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
       }
@@ -3132,7 +3138,7 @@ function renderDex(){
   if(grade3Unlocked()){
     $('dexUnlock').textContent = '🔓 3年生 かいきん中！';
   } else {
-    const rem = COLLECTIBLE12.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+    const rem = collectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length;
     $('dexUnlock').textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`;
   }
   const grid = $('dexGrid'); grid.innerHTML = '';
@@ -3200,7 +3206,7 @@ function refreshHome(){
     } else if(!gradeHasContent(next)){
       hint.textContent = `🔒 ${next}年生は ただいま じゅんびちゅう（もうすこし まってね）`;
     } else {
-      const lower = collectiblesUpTo(next-1);
+      const lower = collectableUpTo(next-1);
       const total = lower.length;
       const have  = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
       hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
