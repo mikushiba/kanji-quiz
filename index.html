@@ -57,6 +57,9 @@
   .mode-btn small{display:block; font-weight:400; font-size:.8rem; opacity:.95; margin-top:4px;}
   .m1{background:var(--accent);} .m2{background:var(--accent2);} .m3{background:#e08e3c;} .m4{background:#9b59b6;}
   .mode-btn:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12);}
+  /* 読みクイズ：大きな漢字 */
+  .yomi-q{font-size:.95rem; color:#9a7b5e; margin-bottom:6px;}
+  .bigkanji{font-size:4.2rem; font-weight:800; text-align:center; line-height:1.2; margin:6px 0 2px; color:#5a3e28;}
 
   /* quiz */
   .homeBtn{
@@ -271,9 +274,9 @@
         ② 同じ読みの かん字さがし
         <small>「ほし＝星」「こえ＝声」など、読みからかん字をえらぶ</small>
       </button>
-      <button class="mode-btn m3" data-mode="imi">
-        ③ いみ・かたちで えらぶ
-        <small>同じ読みの なかまが いない かん字（県名など）を、いみや 文で えらぶ</small>
+      <button class="mode-btn m3" data-mode="yomi">
+        ③ 読みクイズ（かん字を 読もう）
+        <small>かん字を 見て、音読み・訓読みを えらぶ。配当の 全漢字が 出る</small>
       </button>
       <button class="mode-btn m4" data-mode="all">
         ④ ぜんぶ まとめて
@@ -1064,9 +1067,7 @@ function wordGrade(word){
    - choices : えらぶ言葉の配列（answer をふくむ）
    - meaning : { 言葉: いみ } 各えらびしの意味
    - tag     : 上に出る分るい名
-   - type    : 'tsukai'（使い分け） / 'onaji'（同じ読み） / 'imi'（いみ・かたちで えらぶ）
-       ※ 'imi' は「同じ読みの相手が 1〜4年に いない字」用。選択肢は 学年4以下の
-         別の字（読みは ちがってよい）。これで全202字を 図鑑で集められる＝解放が詰まらない。
+   - type    : 'tsukai'（使い分け） / 'onaji'（同じ読み）
    ※ 追加したいときは この配列に足すだけ。
    =========================================================== */
 const BANK = [
@@ -3571,88 +3572,6 @@ const BANK = [
     sentence:'おもしろくて 本を 読み @@ ける。', read:'つづ',
     answer:'続', choices:['続','族'],
     meaning:{'続':'つづく・つづける','族':'ぞく（家族）'} },
-
-  // ══════════ 4年生「いみ・かたちで えらぶ」(imi) ══════════
-  //  ※同じ読みの相手が 1〜4年に いない19字を、図鑑で集められるように回収。
-  //   選択肢はすべて 学年4以下なので 解放チェーンは詰まらない。
-  // ── 県の名前に つかう かん字 ──
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'@@ きけんは なっとうで ゆうめいだ。', read:'いばら',
-    answer:'茨', choices:['茨','栃','梨'],
-    meaning:{'茨':'いばら（茨城県）','栃':'とち（栃木県）','梨':'なし（山梨県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'@@ ぎけんは いちごの さんちだ。', read:'とち',
-    answer:'栃', choices:['栃','茨','熊'],
-    meaning:{'栃':'とち（栃木県）','茨':'いばら（茨城県）','熊':'くま（熊本県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'@@ もとけんには 大きな おしろが ある。', read:'くま',
-    answer:'熊', choices:['熊','岡','潟'],
-    meaning:{'熊':'くま（熊本県・くま）','岡':'おか（岡山・静岡）','潟':'がた（新潟県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'しず @@ けんは おちゃの さんちだ。', read:'おか',
-    answer:'岡', choices:['岡','熊','媛'],
-    meaning:{'岡':'おか（静岡・福岡）','熊':'くま（熊本県）','媛':'ひめ（愛媛県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'あい @@ けんは みかんで ゆうめいだ。', read:'ひめ',
-    answer:'媛', choices:['媛','潟','茨'],
-    meaning:{'媛':'ひめ（愛媛県）','潟':'がた（新潟県）','茨':'いばら（茨城県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'にい @@ けんは 米どころだ。', read:'がた',
-    answer:'潟', choices:['潟','梨','栃'],
-    meaning:{'潟':'がた（新潟県）','梨':'なし（山梨県）','栃':'とち（栃木県）'} },
-  { type:'imi', tag:'いみでえらぶ：県の名前',
-    sentence:'やま @@ けんは ぶどうが ゆうめいだ。', read:'なし',
-    answer:'梨', choices:['梨','岡','媛'],
-    meaning:{'梨':'なし（山梨県・くだもののなし）','岡':'おか（静岡・福岡）','媛':'ひめ（愛媛県）'} },
-  // ── 同じ読みの なかまが いない かん字 ──
-  { type:'imi', tag:'いみでえらぶ：会議',
-    sentence:'クラスみんなで はなし合う かい @@ を ひらく。', read:'ぎ',
-    answer:'議', choices:['議','案','典'],
-    meaning:{'議':'ぎ（会議・話し合い）','案':'あん（考え・アイデア）','典':'てん（辞典）'} },
-  { type:'imi', tag:'いみでえらぶ：木材',
-    sentence:'いえを 作る もく @@ を はこぶ。', read:'ざい',
-    answer:'材', choices:['材','料','束'],
-    meaning:{'材':'ざい（木材・ざいりょう）','料':'りょう（りょうきん）','束':'たば'} },
-  { type:'imi', tag:'いみでえらぶ：のこす',
-    sentence:'おなかが いっぱいで ごはんを 食べ @@ す。', read:'のこ',
-    answer:'残', choices:['残','席','欠'],
-    meaning:{'残':'のこす・のこる','席':'せき（すわる場所）','欠':'かける'} },
-  { type:'imi', tag:'いみでえらぶ：順番',
-    sentence:'せの たかい @@ ばんに ならぶ。', read:'じゅん',
-    answer:'順', choices:['順','例','典'],
-    meaning:{'順':'じゅん（じゅんばん）','例':'たとえ','典':'てん（辞典）'} },
-  { type:'imi', tag:'いみでえらぶ：卒業',
-    sentence:'六年生が しょう学校を @@ ぎょうする。', read:'そつ',
-    answer:'卒', choices:['卒','初','祝'],
-    meaning:{'卒':'そつ（卒業＝学校をおえる）','初':'はじめ','祝':'いわう'} },
-  { type:'imi', tag:'いみでえらぶ：友達',
-    sentence:'クラスの 友 @@ と なかよく あそぶ。', read:'だち',
-    answer:'達', choices:['達','側','残'],
-    meaning:{'達':'たち・だち（友達・とどく）','側':'がわ','残':'のこす'} },
-  { type:'imi', tag:'いみでえらぶ：年末',
-    sentence:'一年の おわりの ねん @@ を むかえる。', read:'まつ',
-    answer:'末', choices:['末','典','席'],
-    meaning:{'末':'まつ（年末・すえ）','典':'てん（辞典）','席':'せき'} },
-  { type:'imi', tag:'いみでえらぶ：国民',
-    sentence:'その くにに すむ 人＝こく @@ 。', read:'みん',
-    answer:'民', choices:['民','席','順'],
-    meaning:{'民':'みん（国民・たみ）','席':'せき','順':'じゅん（じゅんばん）'} },
-  { type:'imi', tag:'いみでえらぶ：あびる',
-    sentence:'おふろで あたたかい お湯を @@ びる。', read:'あ',
-    answer:'浴', choices:['浴','満','冷'],
-    meaning:{'浴':'あびる（湯や水を）','満':'みちる','冷':'つめたい'} },
-  { type:'imi', tag:'いみでえらぶ：陸',
-    sentence:'ふねが うみから @@ に 上がる。', read:'りく',
-    answer:'陸', choices:['陸','席','束'],
-    meaning:{'陸':'りく（りくち＝うみでないところ）','席':'せき','束':'たば'} },
-  { type:'imi', tag:'いみでえらぶ：種類',
-    sentence:'にた なかまごとに しゅ @@ を 分ける。', read:'るい',
-    answer:'類', choices:['類','例','典'],
-    meaning:{'類':'るい（種類・なかま）','例':'たとえ','典':'てん（辞典）'} },
-  { type:'imi', tag:'いみでえらぶ：芸',
-    sentence:'犬が おもしろい @@ を して みせる。', read:'げい',
-    answer:'芸', choices:['芸','典','席'],
-    meaning:{'芸':'げい（げいごと・わざ）','典':'てん（辞典）','席':'せき'} },
 ];
 
 /* ============ ゲーム処理 ============ */
@@ -3690,10 +3609,10 @@ saveStore();
 // 問題に固定ID（BANKの並びは静的なので index をIDにする）
 BANK.forEach((q,i)=>{ q.id = i; });
 
-// 集めらる漢字＝問題の「正解」に出てくる漢字（学年→画数順）
-const COLLECTIBLE = [...new Set(
-  BANK.flatMap(q => [...q.answer].filter(c => KANJI[c]))
-)].sort((a,b)=> KANJI[a].g - KANJI[b].g || KANJI[a].s - KANJI[b].s || (a<b?-1:1));
+// 集められる漢字＝配当のぜんぶ（DBにある全字）。
+// 「同じ読み／使い分け」で出ない字も「読みクイズ」(自動生成) で集められるので、図鑑は配当どおり全字。
+const COLLECTIBLE = Object.keys(KANJI)
+  .sort((a,b)=> KANJI[a].g - KANJI[b].g || KANJI[a].s - KANJI[b].s || (a<b?-1:1));
 
 const dexCount    = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 1).length;
 const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).length;
@@ -3738,6 +3657,37 @@ function recordCorrect(answer){
     store.kanji[ch] = (store.kanji[ch]||0) + 1;
   });
   saveStore();
+}
+
+/* ===== 読みクイズ（KANJIデータから自動生成。全学年・全漢字に対応） ===== */
+const kataToHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+// その漢字の「読み」候補をひらがなで返す（音＝カタカナ→ひら／訓＝送りがな込み お(いる)→おいる）
+function yomiReadings(ch){
+  const k = KANJI[ch]; if(!k) return [];
+  const on  = (k.on ||[]).map(kataToHira);
+  const kun = (k.kun||[]).map(r => r.replace(/[()]/g,''));
+  return [...new Set([...on, ...kun])].filter(Boolean);
+}
+const GRADE_NAME = {1:'1年',2:'2年',3:'3年',4:'4年',5:'5年',6:'6年'};
+// 1字ぶんの読みクイズを作る（答え＝その字の読みの一つ。ダミー＝他の字の読み）
+function makeYomiQ(ch){
+  const mine = yomiReadings(ch);
+  const answer = mine[Math.floor(Math.random()*mine.length)];
+  const mineSet = new Set(mine);
+  const pool = [];
+  for(const c of Object.keys(KANJI)){
+    if(c===ch) continue;
+    for(const r of yomiReadings(c)){ if(!mineSet.has(r)) pool.push(r); }
+  }
+  const dummies = [], seen = new Set([answer]);
+  for(const r of shuffle(pool)){ if(dummies.length>=3) break; if(!seen.has(r)){ seen.add(r); dummies.push(r); } }
+  return { type:'yomi', kanji:ch, answer, choices: shuffle([answer, ...dummies]),
+           tag:`読みクイズ：${GRADE_NAME[KANJI[ch].g]||''}`, id:'y'+ch };
+}
+// いま選んでいる学年の読みクイズ問題リストを作る
+function buildYomiPool(){
+  const { ans } = gradeSpec();
+  return Object.keys(KANJI).filter(c => ans.has(KANJI[c].g)).map(makeYomiQ);
 }
 
 // メダル定義
@@ -4043,7 +3993,14 @@ function gradeOK(q){
 
 function startMode(mode){
   currentMode = mode;
-  let pool = BANK.filter(q => (mode==='all' ? true : q.type===mode) && gradeOK(q));
+  let pool;
+  if(mode==='yomi'){
+    pool = buildYomiPool();                                   // 読みクイズ（自動生成）
+  } else if(mode==='all'){
+    pool = BANK.filter(q => gradeOK(q)).concat(buildYomiPool()); // ①②＋読みクイズ
+  } else {
+    pool = BANK.filter(q => q.type===mode && gradeOK(q));
+  }
   if(pool.length === 0){
     alert('この 学年と モードの くみあわせには まだ もんだいが ありません。\nべつの 学年か モードを えらんでね。');
     return;
@@ -4080,6 +4037,14 @@ function showFeedback(q, isOK){
   const fb = $('feedback');
   fb.className = 'feedback show ' + (isOK?'good':'bad');
   $('fbHead').textContent = isOK ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
+  if(q.type==='yomi'){
+    let yh = `<div class="fb-sentence"><b>${q.kanji}</b> ＝ <b>${q.answer}</b></div>`;
+    q.choices.forEach(c=>{ yh += `<div class="fb-line">${c===q.answer?'✅':'　'} ${c}</div>`; });
+    const ym = kanjiMemo(q.kanji);
+    if(ym) yh += `<div class="fb-kanji">📖 ${ym}</div>`;
+    $('fbBody').innerHTML = yh;
+    return;
+  }
   // 完成した文（空らんに正解を入れたもの）
   const parts = q.sentence.split('@@');
   let html = `<div class="fb-sentence">${parts[0]}<b>${q.answer}</b>${parts[1]}</div>`;
@@ -4097,16 +4062,22 @@ function showFeedback(q, isOK){
 function render(){
   const q = deck[idx];
   $('tag').textContent = q.tag;
-  // 文を組み立て（@@ を空らんに）
-  const parts = q.sentence.split('@@');
-  $('question').innerHTML = parts[0] +
-    '<span class="blank" role="img" aria-label="ここに かん字が 入る">○</span>' + parts[1];
-  $('readline').innerHTML = '読み：<b>' + q.read + '</b>';
   $('count').textContent = `だい ${idx+1} / ${deck.length} もん`;
   $('score').textContent = `せいかい ${scoreCount()}`;
   $('prog').style.width = (idx/deck.length*100) + '%';
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
   $('combo').textContent = '';        // コンボ表示は回答時だけ出す
+
+  if(q.type==='yomi'){
+    $('question').innerHTML = '<div class="yomi-q">この かん字の 読みは？</div><div class="bigkanji">'+q.kanji+'</div>';
+    $('readline').innerHTML = '音（おん）か 訓（くん）の 読みを えらんでね';
+  } else {
+    // 文を組み立て（@@ を空らんに）
+    const parts = q.sentence.split('@@');
+    $('question').innerHTML = parts[0] +
+      '<span class="blank" role="img" aria-label="ここに かん字が 入る">○</span>' + parts[1];
+    $('readline').innerHTML = '読み：<b>' + q.read + '</b>';
+  }
 
   const answered = answers[idx];
   // 選択肢の並びは問題ごとに固定（戻っても入れ替わらない）
@@ -4115,8 +4086,9 @@ function render(){
   order[idx].forEach(c=>{
     const b = document.createElement('button');
     b.className='choice';
-    // 送りがなを薄く見せず、言葉そのものを表示
-    b.innerHTML = c.replace(/[ぁ-ん]+/g, m=>`<span style="font-size:1rem">${m}</span>`);
+    // 読みクイズは読み（ひらがな）をそのまま／通常問題は送りがなを小さく
+    if(q.type==='yomi'){ b.textContent = c; }
+    else { b.innerHTML = c.replace(/[ぁ-ん]+/g, m=>`<span style="font-size:1rem">${m}</span>`); }
     if(answered){
       b.disabled = true;
       if(c===q.answer) b.classList.add('ok');
@@ -4146,12 +4118,12 @@ function choose(btn, picked, q){
     if(combo > store.bestCombo) store.bestCombo = combo;
     store.totalCorrect++;
     if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; sessionComebacks++; }  // 復習で克服
-    recordCorrect(q.answer);          // 図鑑に記録（saveStoreも実行）
+    recordCorrect(q.type==='yomi' ? q.kanji : q.answer);   // 図鑑に記録（読みクイズは漢字を集める）
     showCombo(combo);
     if(combo===3 || combo===5 || combo>=10 && combo%5===0) confettiBurst(14);
   } else {
     combo = 0;
-    store.wrong[q.id] = true;         // 復習リストに追加
+    if(q.type!=='yomi') store.wrong[q.id] = true;         // 復習リストに追加（読みクイズは自動生成なので対象外）
     saveStore();
     btn.classList.add('ng');
     $('combo').textContent = '';
@@ -4229,6 +4201,9 @@ function showResult(){
     rv.style.display = 'block';
     rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrongQuestions.length}）</div>` +
       wrongQuestions.map(q=>{
+        if(q.type==='yomi'){
+          return `<div class="rv-i"><b>${q.kanji}</b> ＝ <b>${q.answer}</b></div>`;
+        }
         const p = q.sentence.split('@@');
         return `<div class="rv-i">${p[0]}<b>${q.answer}</b>${p[1]}<span style="color:#9a7b5e;font-size:.8rem">（${q.read}）</span></div>`;
       }).join('');
