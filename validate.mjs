@@ -35,7 +35,7 @@ const problems = [];
 
 BANK.forEach((q, i) => {
   const where = `#${i}（${q.tag || '?'}）`;
-  if (!q.type || !['tsukai', 'onaji'].includes(q.type)) problems.push(`${where}: type が不正: ${q.type}`);
+  if (!q.type || !['tsukai', 'onaji', 'imi'].includes(q.type)) problems.push(`${where}: type が不正: ${q.type}`);
   if (!q.sentence || !q.sentence.includes('@@')) problems.push(`${where}: sentence に @@ が無い`);
   if (!q.read) problems.push(`${where}: read が無い`);
   if (!Array.isArray(q.choices) || q.choices.length < 2) problems.push(`${where}: choices が不正`);
@@ -60,7 +60,8 @@ Object.entries(KANJI).forEach(([ch, k]) => {
 
 const tsukai = BANK.filter(q => q.type === 'tsukai').length;
 const onaji = BANK.filter(q => q.type === 'onaji').length;
-console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み ${onaji}）　KANJI: ${Object.keys(KANJI).length}字`);
+const imi = BANK.filter(q => q.type === 'imi').length;
+console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み ${onaji} / いみ ${imi}）　KANJI: ${Object.keys(KANJI).length}字`);
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length}件の問題:\n` + problems.join('\n'));
