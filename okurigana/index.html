@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>送りがな れんしゅう</title>
+<meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
+<meta name="theme-color" content="#ff8a3d">
+<!-- 共有スタイル（クイズと同じ見た目） -->
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262058">
+<style>
+  /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
+  #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  #gsel button{padding:11px 0; font-size:.95rem;}
+  .choices.okuri{grid-template-columns:1fr 1fr;}
+  .choices.okuri .choice{font-size:1.5rem;}
+  .reading-big{text-align:center; color:#c46a23; font-size:1.4rem; font-weight:700; margin:2px 0 16px;}
+  .prompt{font-size:.95rem; color:#9a7b5e; text-align:center; margin-bottom:4px;}
+  .start{margin-top:18px; width:100%; border:none; border-radius:16px; padding:16px;
+         font-size:1.15rem; font-weight:700; color:#fff; background:var(--accent);
+         cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.12);}
+  .start:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12);}
+  .applink{display:block; text-align:center; margin-top:18px; font-size:.8rem; color:#9a7b5e;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ホーム -->
+  <div id="home">
+    <h1>送りがな れんしゅう</h1>
+    <div class="sub">― 読みに合う 送りがなを えらぼう ―</div>
+    <div class="card">
+      <div class="gradeSel">
+        <div class="gradeLabel">どの学年の かん字で れんしゅうする？</div>
+        <div class="seg" id="gsel"></div>
+      </div>
+      <button class="start" id="startBtn">はじめる（10問）</button>
+      <a class="applink" href="../">← 「同じ読みの かん字クイズ」へ</a>
+    </div>
+  </div>
+
+  <!-- 出題 -->
+  <div id="quiz" style="display:none;">
+    <div class="card">
+      <button class="homeBtn" id="homeBtn">🏠 やめる</button>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="meta"><span id="qnum"></span><span id="qscore"></span></div>
+      <div class="tag" id="qtag"></div>
+      <div class="prompt">この かん字の 送りがなは？</div>
+      <div class="bigkanji" id="qkanji"></div>
+      <div class="reading-big" id="qreading"></div>
+      <div class="choices okuri" id="choices"></div>
+      <div class="feedback" id="fb">
+        <div class="fb-head" id="fbHead"></div>
+        <div class="fb-sentence" id="fbBody"></div>
+        <div class="fb-kanji" id="fbKanji"></div>
+        <button class="next" id="nextBtn">つぎへ →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="result" style="display:none;">
+    <div class="card result">
+      <h1>けっか</h1>
+      <div class="score" id="finalScore"></div>
+      <div class="sub" id="finalMsg"></div>
+      <button class="again" id="againBtn">もう一回</button>
+      <div style="margin-top:12px;"><a class="applink" href="#" id="backHome">学年を えらびなおす</a></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
+<script src="../shared/kanji-db.js?v=202606262058"></script>
+<script>
+/* ===== 送りがな問題の生成（共有DBの kun から自動生成） ===== */
+const MAXGRADE = 6;
+const N_QUESTIONS = 10;
+
+// 送りがなのある訓だけを単語化
+function buildWords(){
+  const list = [];
+  for(const [k, info] of Object.entries(KANJI)){
+    for(const kun of (info.kun||[])){
+      const p = parseOkurigana(k, kun);          // {reading,stem,okuri,word}
+      if(p.okuri && p.reading.length >= 2){
+        list.push({ kanji:k, grade:info.g, reading:p.reading, okuri:p.okuri, word:p.word });
+      }
+    }
+  }
+  return list;
+}
+const ALL_WORDS = buildWords();
+
+// 1語から「送りがなの長さ違い」の選択肢を作る
+function makeQuestion(w){
+  const R = w.reading, K = w.kanji, correctLen = w.okuri.length;
+  const cand = (len)=> K + R.slice(R.length - len);    // 末尾 len 文字を送りがなに
+  const lens = [];
+  const push = (l)=>{ if(l>=0 && l<R.length && !lens.includes(l)) lens.push(l); };
+  push(correctLen);
+  [correctLen-1, correctLen+1, correctLen+2, correctLen-2, 1, 0].forEach(push);
+  const useLens = lens.slice(0, Math.min(4, lens.length));
+  const choices = shuffle(useLens.map(cand));
+  return { kanji:K, reading:R, grade:w.grade, answer:w.word, choices };
+}
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== 状態 ===== */
+let grade = 1;          // 選択中の学年（'all' で全部）
+let deck = [], idx = 0, correct = 0, answered = false;
+
+/* ===== ホーム：学年セレクタ ===== */
+function renderGradeSel(){
+  const seg = document.getElementById('gsel');
+  seg.innerHTML = '';
+  const items = [];
+  for(let g=1; g<=MAXGRADE; g++) items.push([String(g), g+'年']);
+  items.push(['all','ぜんぶ']);
+  for(const [val,label] of items){
+    const b = document.createElement('button');
+    b.textContent = label;
+    if((val==='all'?'all':+val) === grade) b.classList.add('active');
+    b.onclick = ()=>{ grade = (val==='all')?'all':+val; renderGradeSel(); };
+    seg.appendChild(b);
+  }
+}
+
+function wordsForGrade(){
+  if(grade==='all') return ALL_WORDS;
+  return ALL_WORDS.filter(w => w.grade === grade);
+}
+
+/* ===== 出題ループ ===== */
+function start(){
+  const pool = shuffle(wordsForGrade());
+  // 同じ漢字＋読みの重複をへらす
+  const seen = new Set(), picked = [];
+  for(const w of pool){ const key=w.word; if(!seen.has(key)){ seen.add(key); picked.push(w); } if(picked.length>=N_QUESTIONS) break; }
+  deck = picked.map(makeQuestion);
+  idx = 0; correct = 0;
+  show('quiz'); renderQ();
+}
+
+function renderQ(){
+  answered = false;
+  const q = deck[idx];
+  document.getElementById('bar').style.width = (idx/deck.length*100)+'%';
+  document.getElementById('qnum').textContent = `問題 ${idx+1} / ${deck.length}`;
+  document.getElementById('qscore').textContent = `正かい ${correct}`;
+  document.getElementById('qtag').textContent = (q.grade)+'年の かん字';
+  document.getElementById('qkanji').textContent = q.kanji;
+  document.getElementById('qreading').textContent = '「'+q.reading+'」';
+  const wrap = document.getElementById('choices');
+  wrap.innerHTML = '';
+  for(const c of q.choices){
+    const b = document.createElement('button');
+    b.className = 'choice'; b.textContent = c;
+    b.onclick = ()=> choose(c, b);
+    wrap.appendChild(b);
+  }
+  document.getElementById('fb').classList.remove('show','good','bad');
+}
+
+function choose(picked, btn){
+  if(answered) return; answered = true;
+  const q = deck[idx];
+  const ok = picked === q.answer;
+  if(ok) correct++;
+  document.querySelectorAll('#choices .choice').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === q.answer) b.classList.add('ok');
+    else if(b===btn) b.classList.add('ng');
+  });
+  const fb = document.getElementById('fb');
+  fb.classList.add('show', ok?'good':'bad');
+  document.getElementById('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
+  document.getElementById('fbBody').innerHTML = '「'+q.reading+'」＝ <b>'+q.answer+'</b>';
+  const info = KANJI[q.kanji];
+  const on = (info.on||[]).join('・'), kun = (info.kun||[]).join('・');
+  document.getElementById('fbKanji').innerHTML =
+    `<b>${q.kanji}</b>（${info.s}画）` + [on?'音 '+on:'', kun?'訓 '+kun:''].filter(Boolean).join(' ／ ');
+  document.getElementById('qscore').textContent = `正かい ${correct}`;
+}
+
+function next(){
+  idx++;
+  if(idx >= deck.length) return finish();
+  renderQ();
+}
+
+function finish(){
+  document.getElementById('bar').style.width = '100%';
+  show('result');
+  document.getElementById('finalScore').textContent = correct + ' / ' + deck.length;
+  const r = correct/deck.length;
+  document.getElementById('finalMsg').textContent =
+    r===1 ? 'ぜんぶ せいかい！ すごい！' : r>=0.7 ? 'よく できました！' : 'もう一回 ちょうせんしよう！';
+}
+
+/* ===== 画面きりかえ ===== */
+function show(id){
+  for(const s of ['home','quiz','result']) document.getElementById(s).style.display = (s===id)?'block':'none';
+}
+
+/* ===== 初期化 ===== */
+document.getElementById('startBtn').onclick = start;
+document.getElementById('nextBtn').onclick = next;
+document.getElementById('againBtn').onclick = start;
+document.getElementById('homeBtn').onclick = ()=> show('home');
+document.getElementById('backHome').onclick = (e)=>{ e.preventDefault(); show('home'); };
+renderGradeSel();
+</script>
+</body>
+</html>

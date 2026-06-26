@@ -14,13 +14,14 @@ if [ -z "$(git status --porcelain)" ]; then
   exit 0
 fi
 
-# 共有DBに変更があれば、全 index.html のキャッシュ版数を更新
+# 共有アセット(shared/ 配下: kanji-db.js / kanji-ui.css など)に変更があれば、
+# 全 index.html の ?v= を更新してキャッシュを確実に新しくする（全アプリに反映）
 CHANGES="$(git status --porcelain)"
-if printf '%s\n' "$CHANGES" | grep -q 'shared/kanji-db.js'; then
+if printf '%s\n' "$CHANGES" | grep -q 'shared/'; then
   STAMP=$(date +%Y%m%d%H%M)
   find . -name 'index.html' -not -path './.git/*' -print0 \
-    | xargs -0 sed -i '' -E "s|(shared/kanji-db\.js\?v=)[^\"]*|\1${STAMP}|g"
-  echo "🔄 共有DBの更新を検出 → キャッシュ版数を ${STAMP} に更新（参照する全アプリに反映）"
+    | xargs -0 sed -i '' -E "s|(shared/[^\"?]+\?v=)[^\"]*|\1${STAMP}|g"
+  echo "🔄 共有アセットの更新を検出 → キャッシュ版数を ${STAMP} に更新（参照する全アプリに反映）"
 fi
 
 git add -A
