@@ -158,11 +158,35 @@
     }).join('');
   }
 
+  /* ── セーブ／読み込み（共有 store 全体＝全アプリの進捗をまとめて入出力） ── */
+  function exportSave(filename) {
+    const blob = new Blob([JSON.stringify(store)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename || 'かん字クイズ-きろく.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importSave(file, onOk) {
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const obj = JSON.parse(r.result);
+        if (!obj || typeof obj !== 'object' || !obj.kanji) throw 0;
+        if (!confirm('いまの きろくを、よみこんだ きろくに 入れかえます。よろしいですか？')) return;
+        localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+        if (onOk) onOk(); else location.reload();
+      } catch (e) { alert('この ファイルは よみこめませんでした。'); }
+    };
+    r.readAsText(file);
+  }
+
   global.QuizCore = {
     get store() { return store; }, reload: load, save,
     COLLECTIBLE, dexCount, masterCount, dexGradeDone,
     recordCorrect, bumpCorrect, noteCombo, notePlay, notePerfect,
     MEDALS, checkMedals, STAGES, rankStage,
     renderBuddy, dexHead, dexGridHTML, medalsHead, medalsGridHTML,
+    exportSave, importSave,
   };
 })(window);
