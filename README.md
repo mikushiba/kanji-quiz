@@ -12,7 +12,8 @@
   - `shared/kanji-ui.css` … 全アプリ共通のデザイン
 - **ローカルで開く**: `open ~/kanji-quiz/index.html`（file:// でも共有DB/CSSを読める）
 
-> このドキュメントの一部の説明は旧・単一HTML時代のもの。データ構造の `KANJI` は現在 `shared/kanji-db.js`、`BANK` は `onaji/index.html` にある。運用・公開・作業履歴は `運用ガイド.md` を参照。
+> このドキュメントの一部の説明は旧・単一HTML時代のもの。データ構造の `KANJI` は現在 `shared/kanji-db.js`、`BANK` は `onaji/index.html` にある。
+> **設計・アーキテクチャ（共有モジュール構成・file://制約・進捗合算の仕組み・新アプリの足し方）は `ARCHITECTURE.md` を参照。** 運用・公開・作業履歴は `運用ガイド.md`。
 
 ---
 
