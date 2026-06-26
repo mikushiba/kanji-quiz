@@ -3,18 +3,8 @@
  * DBの漢字を音読みごとにまとめ、訓読みが2字以上あって、まだ未使用の読みを表示。
  * 拡充できるグループ探しに使う。使い方: node tools/onaji-candidates.mjs
  */
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-
-const here = dirname(fileURLToPath(import.meta.url));
-const html = readFileSync(join(here, '..', 'index.html'), 'utf8');
-let js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-js = js.slice(0, js.indexOf('/* ============ ゲーム処理'));
-const s = {}; vm.createContext(s);
-vm.runInContext(js + '; this.KANJI = KANJI; this.BANK = BANK;', s);
-const { KANJI, BANK } = s;
+import { KANJI, loadBANK } from './lib.mjs';   // 共有モジュール shared/kanji-db.js
+const BANK = loadBANK();
 
 // すでに使っている「同じ読み：XXX」のタグ
 const usedTags = new Set(BANK.map(q => (q.tag || '').replace(/^.*：/, '')));

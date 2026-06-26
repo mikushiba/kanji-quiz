@@ -3,18 +3,7 @@
  * 不足字（DB未登録）・学年ズレを検出。常用漢字をDBに足すときの確認に使う。
  * 使い方: node tools/db-coverage.mjs
  */
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-
-const here = dirname(fileURLToPath(import.meta.url));
-const html = readFileSync(join(here, '..', 'index.html'), 'utf8');
-let js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-js = js.slice(0, js.indexOf('/* ============ ゲーム処理'));
-const s = {}; vm.createContext(s);
-vm.runInContext(js + '; this.KANJI = KANJI;', s);
-const DB = s.KANJI;
+import { KANJI as DB } from './lib.mjs';   // 共有モジュール shared/kanji-db.js
 
 // 学年別漢字配当表（1〜3年）。4年以降を足すときはここに追記。
 const HAITOU = {

@@ -3,19 +3,14 @@
  * 出力: export/kanji.csv, export/questions.csv
  * 使い方: node tools/export-csv.mjs
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import vm from 'node:vm';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { KANJI, loadBANK } from './lib.mjs';   // 共有モジュール shared/kanji-db.js
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
-const html = readFileSync(join(root, 'index.html'), 'utf8');
-let js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-js = js.slice(0, js.indexOf('/* ============ ゲーム処理'));
-const s = {}; vm.createContext(s);
-vm.runInContext(js + '; this.KANJI = KANJI; this.BANK = BANK;', s);
-const { KANJI, BANK } = s;
+const BANK = loadBANK();
 
 const q = v => { v = (v == null ? '' : String(v)); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
 const csv = rows => '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n') + '\r\n';

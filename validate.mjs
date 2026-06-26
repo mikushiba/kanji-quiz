@@ -9,26 +9,10 @@
  *
  * 使い方: node validate.mjs
  */
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { KANJI, loadBANK } from './tools/lib.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const html = readFileSync(join(here, 'index.html'), 'utf8');
-
-const m = html.match(/<script>([\s\S]*?)<\/script>/);
-if (!m) { console.error('✗ <script> が見つかりません'); process.exit(1); }
-
-// ゲーム処理より前（データ定義部分）だけを安全に評価する
-let js = m[1];
-const cut = js.indexOf('/* ============ ゲーム処理');
-if (cut > 0) js = js.slice(0, cut);
-
-const sandbox = {};
-vm.createContext(sandbox);
-vm.runInContext(js + '; this.KANJI = KANJI; this.BANK = BANK;', sandbox);
-const { KANJI, BANK } = sandbox;
+// KANJI は共有モジュール shared/kanji-db.js（唯一の正データ）、BANK は index.html から
+const BANK = loadBANK();
 
 const kanjiOf = w => [...w].filter(c => /\p{Script=Han}/u.test(c));
 const problems = [];
