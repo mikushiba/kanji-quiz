@@ -1065,6 +1065,18 @@ function wordGrade(word){
   return g; // 漢字が無ければ 0
 }
 
+/* 訓読み 'うつ(る)' を { reading, stem, okuri, word } に分解する共通ヘルパー。
+ * 送りがなアプリ等が共有して使う（送りがな無しの訓は okuri:'' になる）。
+ *   parseOkurigana('移','うつ(る)') → {reading:'うつる', stem:'うつ', okuri:'る', word:'移る'}
+ *   parseOkurigana('水','みず')      → {reading:'みず',   stem:'みず', okuri:'',  word:'水'}
+ */
+function parseOkurigana(kanji, kun){
+  const m = String(kun).match(/^(.*?)\((.*?)\)$/);
+  const stem  = m ? m[1] : String(kun);
+  const okuri = m ? m[2] : '';
+  return { reading: stem + okuri, stem, okuri, word: kanji + okuri };
+}
+
 /* 各実行環境へ公開（クラシック<script>＝グローバル代入／Node＝module.exports） */
-if (typeof window !== 'undefined') { window.KANJI = KANJI; window.wordGrade = wordGrade; }
-if (typeof module !== 'undefined' && module.exports) { module.exports = { KANJI, wordGrade }; }
+if (typeof window !== 'undefined') { window.KANJI = KANJI; window.wordGrade = wordGrade; window.parseOkurigana = parseOkurigana; }
+if (typeof module !== 'undefined' && module.exports) { module.exports = { KANJI, wordGrade, parseOkurigana }; }

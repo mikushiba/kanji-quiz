@@ -15,7 +15,8 @@ if [ -z "$(git status --porcelain)" ]; then
 fi
 
 # 共有DBに変更があれば、全 index.html のキャッシュ版数を更新
-if git status --porcelain | grep -q 'shared/kanji-db.js'; then
+CHANGES="$(git status --porcelain)"
+if printf '%s\n' "$CHANGES" | grep -q 'shared/kanji-db.js'; then
   STAMP=$(date +%Y%m%d%H%M)
   find . -name 'index.html' -not -path './.git/*' -print0 \
     | xargs -0 sed -i '' -E "s|(shared/kanji-db\.js\?v=)[^\"]*|\1${STAMP}|g"
