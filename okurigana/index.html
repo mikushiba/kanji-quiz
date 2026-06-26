@@ -7,7 +7,7 @@
 <meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262213">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262349">
 <style>
   /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -36,6 +36,15 @@
       <button class="topBtn" id="openHelp" type="button">❓ あそびかた</button>
       <button class="topBtn" id="soundToggle" type="button">🔊 おと ON</button>
     </div>
+    <div class="buddy" id="buddy">
+      <div class="bi" id="buddyIcon">🥚</div>
+      <div class="bb">
+        <div class="bn" id="buddyName">漢字みならい</div>
+        <div class="bc" id="buddyCoin">これまで せいかい 0問</div>
+        <div class="bbar"><i id="buddyBar"></i></div>
+        <div class="bnext" id="buddyNext"></div>
+      </div>
+    </div>
     <div class="gradeSel">
       <div class="gradeLabel">学年（がくねん）をえらぶ</div>
       <div class="seg" id="gsel"></div>
@@ -53,6 +62,10 @@
         ✏️ はじめる（送りがな）
         <small>読みに合う 正しい 送りがなを えらぶ</small>
       </button>
+    </div>
+    <div class="collbar">
+      <button id="openDex" type="button">📖 かん字ずかん</button>
+      <button id="openMedals" type="button">🏅 メダル</button>
     </div>
     <a class="applink" href="../index.html">← 漢字クイズ トップへ</a>
   </div>
@@ -97,16 +110,34 @@
     <div class="score" id="finalScore"></div>
     <div class="comboBest" id="comboBest"></div>
     <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="earned" id="earned" style="display:none;"></div>
     <div class="review" id="review"></div>
     <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
     <button class="again" id="retry">もう一回</button>
     <button class="again home" id="back">さいしょの画面</button>
   </div>
 
+  <!-- 漢字ずかん（共有：onajiと同じ図鑑にたまる） -->
+  <div id="dex" class="card" style="display:none;">
+    <button class="backBtn" id="dexBack">← もどる</button>
+    <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">どのクイズでも 正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div class="dexGrid" id="dexGrid"></div>
+  </div>
+
+  <!-- メダル（共有） -->
+  <div id="medals" class="card" style="display:none;">
+    <button class="backBtn" id="medalsBack">← もどる</button>
+    <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
+    <div class="medalList" id="medalList"></div>
+  </div>
+
 </div>
 
 <!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
-<script src="../shared/kanji-db.js?v=202606262213"></script>
+<script src="../shared/kanji-db.js?v=202606262349"></script>
+<!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算） -->
+<script src="../shared/quiz-core.js?v=202606262349"></script>
 <script>
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -178,7 +209,15 @@ function playSound(name){
 function refreshSoundBtn(){ $('soundToggle').textContent = soundOn ? '🔊 おと ON' : '🔇 おと OFF'; }
 
 /* ===== 画面きりかえ ===== */
-function showOnly(id){ for(const s of ['home','help','quiz','result']) $(s).style.display = (s===id)?'block':'none'; }
+function showOnly(id){ for(const s of ['home','help','quiz','result','dex','medals']) $(s).style.display = (s===id)?'block':'none'; }
+
+/* ===== 育成系（共有 QuizCore：図鑑・称号・メダル＝onajiと同じ進捗にたまる） ===== */
+function refreshBuddy(){
+  QuizCore.renderBuddy({ icon:$('buddyIcon'), name:$('buddyName'), coin:$('buddyCoin'), bar:$('buddyBar'), next:$('buddyNext') });
+}
+function goHome(){ refreshBuddy(); showOnly('home'); }
+function openDex(){ $('dexCnt').textContent = QuizCore.dexHead(); $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex'); }
+function openMedals(){ $('medalsCnt').textContent = QuizCore.medalsHead(); $('medalList').innerHTML = QuizCore.medalsGridHTML(); showOnly('medals'); }
 
 /* ===== ホーム：学年セレクタ ===== */
 function renderGradeSel(){
@@ -255,7 +294,11 @@ function choose(picked, btn){
   const q = deck[idx];
   const ok = picked === q.answer;
   answers[idx] = { picked, correct: ok };
-  if(ok){ combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo); } else { combo = 0; }
+  if(ok){
+    combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
+    // 共有進捗へ：図鑑に漢字を記録＋累計正解＋最高コンボ（onajiと同じ store に合算）
+    QuizCore.recordCorrect(q.answer); QuizCore.bumpCorrect(); QuizCore.noteCombo(combo); QuizCore.save();
+  } else { combo = 0; }
   document.querySelectorAll('#choices .choice').forEach(b=>{
     b.disabled = true;
     if(b.textContent === q.answer) b.classList.add('ok');
@@ -303,6 +346,22 @@ function showResult(){
     'だいじょうぶ、くりかえせば できるよ！';
   $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
 
+  // 共有進捗の更新（プレイ回数・全問正解・最高コンボ）→ メダル・称号（onajiと合算）
+  QuizCore.notePlay();
+  if(rate===1) QuizCore.notePerfect();
+  QuizCore.noteCombo(sessionMaxCombo);
+  QuizCore.save();
+  const tcAfter = QuizCore.store.totalCorrect||0, tcBefore = tcAfter - correct;
+  const rankUp = QuizCore.rankStage(tcAfter) > QuizCore.rankStage(tcBefore);
+  const newly = QuizCore.checkMedals();
+  const em = $('earned');
+  const newRank = QuizCore.STAGES[QuizCore.rankStage(tcAfter)];
+  const evo = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
+  if(evo || newly.length){
+    em.style.display = 'block';
+    em.innerHTML = evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+  } else { em.style.display = 'none'; }
+
   // まちがえた問題の振り返り
   const wrong = deck.filter((q,i)=> answers[i] && !answers[i].correct);
   wrongWords = wrong.map(q => q.src);
@@ -323,13 +382,17 @@ function showResult(){
 $('startBtn').onclick = start;
 $('next').onclick = next;
 $('prev').onclick = prev;
-$('quizHome').onclick = ()=> showOnly('home');
+$('quizHome').onclick = goHome;
 $('retry').onclick = start;
 $('retryWrong').onclick = ()=> startWithDeck(wrongWords.map(makeQuestion));
-$('back').onclick = ()=> showOnly('home');
+$('back').onclick = goHome;
 $('openHelp').onclick = ()=> showOnly('help');
-$('helpBack').onclick = ()=> showOnly('home');
-$('helpStart').onclick = ()=> showOnly('home');
+$('helpBack').onclick = goHome;
+$('helpStart').onclick = goHome;
+$('openDex').onclick = openDex;
+$('openMedals').onclick = openMedals;
+$('dexBack').onclick = goHome;
+$('medalsBack').onclick = goHome;
 $('soundToggle').onclick = ()=>{
   soundOn = !soundOn;
   localStorage.setItem('okuriganaSoundOff', soundOn ? '0' : '1');
@@ -338,6 +401,7 @@ $('soundToggle').onclick = ()=>{
 };
 renderGradeSel();
 refreshSoundBtn();
+refreshBuddy();
 </script>
 </body>
 </html>
