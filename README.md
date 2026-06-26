@@ -2,13 +2,17 @@
 
 小学1〜3年生の漢字の「同音異義語／同じ読みの漢字」を、**例文を通じて意味を理解し、正しく使い分ける**ことを目的とした学習クイズアプリ。
 
-- **公開URL（スマホ・タブレット・PCで遊べる）**: https://mikushiba.github.io/kanji-quiz/
+- **公開URL（トップ＝メニュー）**: https://mikushiba.github.io/kanji-quiz/ ／ 同じ読み= `…/onaji/` ／ 送りがな= `…/okurigana/`
 - **リポジトリ**: https://github.com/mikushiba/kanji-quiz
-- **本体ファイル**: `index.html`（単一HTML・依存ライブラリなし）
-- **編集元（唯一の本体）**: `~/kanji-quiz/index.html`
-- **ローカルで開く**: `open ~/kanji-quiz/index.html`
+- **構成（ポータル＋共有モジュール）**:
+  - `index.html` … トップ（メニュー）
+  - `onaji/index.html` … 同じ読み/使い分けクイズ本体（問題 `BANK` はここ）
+  - `okurigana/index.html` … 送りがな練習（`KANJI` から自動生成）
+  - `shared/kanji-db.js` … 漢字マスタ `KANJI`（**唯一の正データ・全アプリ共通**）＋`wordGrade`/`parseOkurigana`
+  - `shared/kanji-ui.css` … 全アプリ共通のデザイン
+- **ローカルで開く**: `open ~/kanji-quiz/index.html`（file:// でも共有DB/CSSを読める）
 
-> 運用・公開・作業履歴は `運用ガイド.md` を参照。
+> このドキュメントの一部の説明は旧・単一HTML時代のもの。データ構造の `KANJI` は現在 `shared/kanji-db.js`、`BANK` は `onaji/index.html` にある。運用・公開・作業履歴は `運用ガイド.md` を参照。
 
 ---
 
