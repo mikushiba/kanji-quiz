@@ -217,3 +217,10 @@
   .topBtn{flex:1; border:1px solid var(--line); background:#fff; color:#9a7b5e;
     border-radius:99px; padding:10px 10px; font-size:.86rem; font-weight:700; cursor:pointer;}
   .topBtn:active{transform:translateY(1px);}
+
+  /* アプリ間の ナビリンク（トップへ戻る 等） */
+  .applink{display:block; text-align:center; margin-top:18px; font-size:.8rem; color:#9a7b5e; text-decoration:none;}
+  .applink:hover{text-decoration:underline;}
+  /* トップへ戻る小リンク（各クイズの最上部） */
+  .toplink{display:inline-block; font-size:.8rem; color:#9a7b5e; text-decoration:none; margin:2px 0 6px;}
+  .toplink:hover{text-decoration:underline;}

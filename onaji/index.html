@@ -1,0 +1,4487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>同じ読みのかん字クイズ</title>
+<meta name="description" content="小学1・2年生の漢字の同音異義語・同じ読みの漢字を、例文で意味を理解して使い分ける学習クイズ。">
+<meta name="theme-color" content="#ff8a3d">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262213">
+</head>
+<body>
+<div class="wrap">
+  <a class="toplink" href="../">← 漢字クイズ トップへ</a>
+  <h1>同じ読みの かん字クイズ</h1>
+  <div class="sub">― 文を読んで、正しいかん字をえらぼう ―</div>
+
+  <!-- スタート画面 -->
+  <div id="home" class="card">
+    <div class="topRow">
+      <button class="topBtn" id="openHelp" type="button">❓ あそびかた</button>
+      <button class="topBtn" id="soundToggle" type="button">🔊 おと ON</button>
+    </div>
+    <div class="buddy" id="buddy">
+      <div class="bi" id="buddyIcon">🥚</div>
+      <div class="bb">
+        <div class="bn" id="buddyName">漢字みならい</div>
+        <div class="bc" id="buddyCoin">これまで せいかい 0問</div>
+        <div class="bbar"><i id="buddyBar"></i></div>
+        <div class="bnext" id="buddyNext"></div>
+      </div>
+    </div>
+    <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
+    <div class="gradeSel">
+      <div class="gradeLabel">学年（がくねん）をえらぶ</div>
+      <div class="seg" id="seg">
+        <button data-grade="1">1年</button>
+        <button data-grade="2">2年</button>
+        <button data-grade="3">3年🔒</button>
+        <button data-grade="4">4年🔒</button>
+        <button data-grade="5">5年🔒</button>
+        <button data-grade="6">6年🔒</button>
+        <button data-grade="all" class="active">ぜんぶ</button>
+      </div>
+      <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
+    </div>
+    <div class="gradeSel">
+      <div class="gradeLabel">もんだいの数（かず）</div>
+      <div class="seg" id="countSeg">
+        <button data-count="10" class="active">10もん</button>
+        <button data-count="20">20もん</button>
+        <button data-count="all">ぜんぶ</button>
+      </div>
+    </div>
+    <div class="modes">
+      <button class="mode-btn m1" data-mode="tsukai">
+        ① つかい分け（あう…会う・合う）
+        <small>同じ音で 意味（いみ）がちがう かん字を、文で見分ける</small>
+      </button>
+      <button class="mode-btn m2" data-mode="onaji">
+        ② 同じ読みの かん字さがし
+        <small>「ほし＝星」「こえ＝声」など、読みからかん字をえらぶ</small>
+      </button>
+      <button class="mode-btn m3" data-mode="yomi">
+        ③ 読みクイズ（かん字を 読もう）
+        <small>かん字を 見て、音読み・訓読みを えらぶ。配当の 全漢字が 出る</small>
+      </button>
+      <button class="mode-btn m4" data-mode="all">
+        ④ ぜんぶ まとめて
+        <small>①②③を シャッフルして 出題</small>
+      </button>
+    </div>
+    <button class="dailyBtn" id="openReview" type="button" style="background:linear-gradient(135deg,#7bc47b,#3da35a);margin-top:14px;">🔁 まちがい ふくしゅう<span id="reviewInfo"></span></button>
+    <div class="collbar">
+      <button id="openDex" type="button">📖 かん字ずかん</button>
+      <button id="openMedals" type="button">🏅 メダル</button>
+    </div>
+    <div class="saveBar">
+      <button id="exportSave" type="button">💾 きろくを ほぞん</button>
+      <label class="impBtn" for="importFile">📂 きろくを よみこむ</label>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+
+  <!-- クイズ画面 -->
+  <div id="quiz" class="card" style="display:none;">
+    <button class="navBtn" id="prev">← 前へ</button>
+    <button class="homeBtn" id="quizHome">🏠 HOME</button>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
+    <span class="tag" id="tag"></span>
+    <div class="q" id="question"></div>
+    <div class="read" id="readline"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback">
+      <div class="fb-head" id="fbHead"></div>
+      <div class="fb-line" id="fbBody"></div>
+      <button class="next" id="next">つぎへ →</button>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result" class="card result" style="display:none;">
+    <div class="stars" id="stars"></div>
+    <div class="score" id="finalScore"></div>
+    <div class="comboBest" id="comboBest"></div>
+    <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="earned" id="earned"></div>
+    <div class="review" id="review"></div>
+    <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
+    <button class="again" id="retry">もう一回</button>
+    <button class="again home" id="back">さいしょの画面</button>
+  </div>
+
+  <!-- 漢字ずかん画面 -->
+  <div id="dex" class="card" style="display:none;">
+    <button class="backBtn" id="dexBack">← もどる</button>
+    <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:6px;">正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
+    <div class="dexGrid" id="dexGrid"></div>
+  </div>
+
+  <!-- メダル画面 -->
+  <div id="medals" class="card" style="display:none;">
+    <button class="backBtn" id="medalsBack">← もどる</button>
+    <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
+    <div class="medalList" id="medalList"></div>
+  </div>
+
+  <!-- あそびかた画面 -->
+  <div id="help" class="card help" style="display:none;">
+    <button class="backBtn" id="helpBack">← もどる</button>
+    <h2>❓ あそびかた</h2>
+
+    <p class="big">文（ぶん）を よんで、□に 入る ただしい かん字を えらぶ ゲームだよ。</p>
+
+    <h3>1. じゅんびを する</h3>
+    <ul>
+      <li><b>学年（がくねん）</b>… 1年〜6年・ぜんぶ から えらぶ。3年から上は、<b>前の学年を ずかんに ぜんぶ あつめると じゅんばんに ひらく</b>よ（4・5・6年は いま じゅんびちゅう）。</li>
+      <li><b>もんだいの 数</b>… 10もん・20もん・ぜんぶ から えらぶ。</li>
+    </ul>
+
+    <h3>2. もんだいを はじめる</h3>
+    <ul>
+      <li><b>① つかい分け</b>… 「会う」と「合う」みたいに、同じ よみで いみが ちがう かん字を えらぶ。</li>
+      <li><b>② 同じ読み</b>… 「ほし＝星」みたいに、よみに あう かん字を えらぶ。</li>
+      <li><b>③ ぜんぶ まとめて</b>… ①と②を まぜて 出すよ。</li>
+    </ul>
+
+    <h3>3. こたえる</h3>
+    <ol>
+      <li>文の <b>よみ（ひらがな）</b>を 見て、ボタンで かん字を えらぶ。</li>
+      <li>⭕か ❌が 出て、<b>正かいと いみ</b>が わかるよ。</li>
+      <li><b>「つぎへ →」</b>で 次の もんだい。</li>
+      <li>ぜんぶ おわると <b>てんすう</b>と ⭐が 出るよ。</li>
+    </ol>
+    <div class="tip">じょうの ボタン：<b>🏠 HOME</b>＝さいしょへ／<b>← 前へ</b>＝1つ もどる。</div>
+
+    <h3>あつめて たのしもう</h3>
+    <ul>
+      <li><b>📖 かん字ずかん</b>… 正かいした かん字が カードに なって ふえる。3かい 正かいで <b>★マスター</b>！</li>
+      <li><b>🔥 コンボ</b>… れんぞくで 正かいすると もりあがるよ。</li>
+      <li><b>🏅 メダル</b>… いろいろ がんばると もらえる。ぜんぶで 100こ！</li>
+      <li><b>🎖️ 称号（しょうごう）</b>… 正かいの 数が ふえると あいぼうが 🥚→🐣→…→👑→🌌と <b>そだって</b>、なまえも「漢字みならい→…→漢字達人→…→漢字うちゅういち」と かわるよ。「あと何問で つぎの 称号」も ホームに 出るよ。</li>
+    </ul>
+
+    <h3>もっと あそぶ</h3>
+    <ul>
+      <li><b>📅 きょうの チャレンジ</b>… まい日 10もん。れんぞくで あそぶと 日数が ふえるよ。</li>
+      <li><b>🔁 まちがい ふくしゅう</b>… まちがえた もんだいだけ もう一回。正かいすると きえる。</li>
+    </ul>
+    <div class="tip">👨‍👩‍👧 おうちの 人へ：<b>💾 きろくを ほぞん</b>で バックアップ、<b>📂 よみこむ</b>で もどせます（べつの たんまつへ うつす ときに）。</div>
+
+    <button class="again" id="helpStart" style="margin-top:16px;">わかった！ はじめる</button>
+  </div>
+</div>
+
+<script src="../shared/kanji-db.js?v=202606262213"></script>
+<script>
+/* 漢字マスタDB（KANJI）と wordGrade は shared/kanji-db.js に分離（全アプリ共通の唯一データ）。
+   下の外部<script>で先に読み込まれる グローバル const KANJI / wordGrade をここから参照する。 */
+
+/* ===========================================================
+   問題データ
+   - sentence: 文。@@ の所が空らん（えらんだかん字が入る）
+   - read    : @@ の読み（ひらがな）
+   - answer  : 正かいの言葉（かん字つき・送りがな込み）
+   - choices : えらぶ言葉の配列（answer をふくむ）
+   - meaning : { 言葉: いみ } 各えらびしの意味
+   - tag     : 上に出る分るい名
+   - type    : 'tsukai'（使い分け） / 'onaji'（同じ読み）
+   ※ 追加したいときは この配列に足すだけ。
+   =========================================================== */
+const BANK = [
+  // ── ① 使い分け　あう（会う / 合う）── 本物の同音異義 ──
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'えきで 友だちに @@。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しくなる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'計算（けいさん）の 答えが @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'正しい・ぴったり一(いっ)ちする','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'この くつは 足に @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'大きさが ぴったりになる','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'日曜日に おじいちゃんに @@。', read:'あった',
+    answer:'会った', choices:['会った','合った'],
+    meaning:{'会った':'人と かおを あわせた','合った':'ぴったりになった・正しかった'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'ともだちと 目が @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'目と目が ぴったり 一(いっ)ちする','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'赤と 青が きれいに @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'色が よく つりあう・ぴったり','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'妹と 話が よく @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'気もちが ぴったり 合う','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'来週も 学校で @@ ね。', read:'あおう',
+    answer:'会おう', choices:['会おう','合おう'],
+    meaning:{'会おう':'人と かおを あわせよう','合おう':'ぴったりに なろう（ふつう 使わない）'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'びょういんで お母さんに @@。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しい'} },
+
+  // ── 使い分け：あける（明ける / 空ける）── 同じ「あける」 ──
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'ながい 夜が @@ ける。', read:'あ',
+    answer:'明', choices:['明','空'],
+    meaning:{'明':'明ける＝朝になる・おわる','空':'空ける＝すきまを 作る'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'お正月、年が @@ けた。', read:'あ',
+    answer:'明', choices:['明','空'],
+    meaning:{'明':'明ける＝新しい年に なる','空':'空ける＝すきまを 作る'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'うしろの 人に せきを @@ ける。', read:'あ',
+    answer:'空', choices:['空','明'],
+    meaning:{'空':'空ける＝すきまを 作る','明':'明ける＝朝になる・おわる'} },
+
+  // ── 使い分け：まるい（丸い / 円い）── 同じ「まるい」 ──
+  { type:'tsukai', tag:'つかい分け：まるい',
+    sentence:'ボールは @@ い。', read:'まる',
+    answer:'丸', choices:['丸','円'],
+    meaning:{'丸':'丸い＝ボールのように 丸い（立体）','円':'円い＝円のように 平(たい)らに 丸い'} },
+  { type:'tsukai', tag:'つかい分け：まるい',
+    sentence:'@@ い テーブルを かこむ。', read:'まる',
+    answer:'円', choices:['円','丸'],
+    meaning:{'円':'円い＝円のように 平らに 丸い','丸':'丸い＝ボールのように 丸い（立体）'} },
+
+  // ── 使い分け：あう（会う/合う）おかわり ──
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'ぼうしの 大きさが あたまに @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'大きさが ぴったりになる','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'兄とは すきな あそびが @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'気もち・このみが ぴったり','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'みんなで 力を @@ わせる。', read:'あわせる',
+    answer:'合わせる', choices:['合わせる','会わせる'],
+    meaning:{'合わせる':'ひとつに する','会わせる':'人どうしを 会わせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'えきで いとこに @@。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しい'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'はじめて 校長先生に @@。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しい'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'とけいの 時こくが ぴったり @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'ぴったり 一(いっ)ちする','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'けいさんの こたえが @@ か しらべる。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'数が 正しく そろう','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'公園で ぐうぜん クラスの子に @@。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しい'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'この 色は ふくに よく @@。', read:'あう',
+    answer:'合う', choices:['合う','会う'],
+    meaning:{'合う':'よく つりあう・にあう','会う':'人と かおを あわせる'} },
+  { type:'tsukai', tag:'つかい分け：あう',
+    sentence:'あした 友だちと @@ やくそくを する。', read:'あう',
+    answer:'会う', choices:['会う','合う'],
+    meaning:{'会う':'人と かおを あわせる','合う':'ぴったりになる・正しい'} },
+
+  // ── 使い分け：あける（明ける/空ける）おかわり ──
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'ながい 夏休みが @@ ける。', read:'あ',
+    answer:'明', choices:['明','空'],
+    meaning:{'明':'明ける＝(きかんが)おわる','空':'空ける＝すきまを 作る'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'つゆが @@ けて 夏が 来る。', read:'あ',
+    answer:'明', choices:['明','空'],
+    meaning:{'明':'明ける＝(つゆが)おわる','空':'空ける＝すきまを 作る'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'あさ、空が 白く @@ ける。', read:'あ',
+    answer:'明', choices:['明','空'],
+    meaning:{'明':'明ける＝あさに なる','空':'空ける＝すきまを 作る'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'コップの 水を のみほして @@ ける。', read:'あ',
+    answer:'空', choices:['空','明'],
+    meaning:{'空':'空ける＝からに する','明':'明ける＝あさに なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'本だなの 一だんを @@ ける。', read:'あ',
+    answer:'空', choices:['空','明'],
+    meaning:{'空':'空ける＝すきまを 作る','明':'明ける＝あさに なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'前の 人との 間を 一歩 @@ ける。', read:'あ',
+    answer:'空', choices:['空','明'],
+    meaning:{'空':'空ける＝あいだを 作る','明':'明ける＝あさに なる'} },
+
+  // ── 使い分け：まるい（丸い/円い）おかわり ──
+  { type:'tsukai', tag:'つかい分け：まるい',
+    sentence:'夜空の お月さまが @@ い。', read:'まる',
+    answer:'丸', choices:['丸','円'],
+    meaning:{'丸':'丸い＝ボールのように 丸い（立体）','円':'円い＝円のように 平らに 丸い'} },
+  { type:'tsukai', tag:'つかい分け：まるい',
+    sentence:'ふちの @@ い 大きな おぼん。', read:'まる',
+    answer:'円', choices:['円','丸'],
+    meaning:{'円':'円い＝円のように 平らに 丸い','丸':'丸い＝ボールのように 丸い（立体）'} },
+  { type:'tsukai', tag:'つかい分け：まるい',
+    sentence:'ねん土を @@ めて 玉を 作る。', read:'まる',
+    answer:'丸', choices:['丸','円'],
+    meaning:{'丸':'丸める＝ボールのように まるくする','円':'円い＝円のように 平らに 丸い'} },
+
+  // ── ② 同じ読みのかん字さがし ──
+  // せい（西・声・星・晴）
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'夜空（よぞら）に @@ が 光る。', read:'ほし',
+    answer:'星', choices:['星','声','晴','西'],
+    meaning:{'星':'そらの ほし','声':'こえ','晴':'はれ','西':'にし'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'大きな @@ で 歌う。', read:'こえ',
+    answer:'声', choices:['声','星','西','晴'],
+    meaning:{'声':'こえ','星':'ほし','西':'にし','晴':'はれ'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'今日は よく @@ れた。', read:'はれ',
+    answer:'晴', choices:['晴','星','声','西'],
+    meaning:{'晴':'はれ（よい天気）','星':'ほし','声':'こえ','西':'にし'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'太ようは @@ に しずむ。', read:'にし',
+    answer:'西', choices:['西','星','晴','声'],
+    meaning:{'西':'にし','星':'ほし','晴':'はれ','声':'こえ'} },
+
+  // とう（冬・刀・答・東）
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'さむい @@ が 来た。', read:'ふゆ',
+    answer:'冬', choices:['冬','刀','答','東'],
+    meaning:{'冬':'ふゆ','刀':'かたな','答':'こたえ','東':'ひがし'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'先生の しつもんに @@ える。', read:'こたえ',
+    answer:'答', choices:['答','冬','東','刀'],
+    meaning:{'答':'こたえる','冬':'ふゆ','東':'ひがし','刀':'かたな'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'朝日は @@ から のぼる。', read:'ひがし',
+    answer:'東', choices:['東','冬','答','刀'],
+    meaning:{'東':'ひがし','冬':'ふゆ','答':'こたえ','刀':'かたな'} },
+
+  // まい（米・妹・毎）
+  { type:'onaji', tag:'同じ読み：まい',
+    sentence:'ごはんは @@ から できる。', read:'こめ',
+    answer:'米', choices:['米','妹','毎'],
+    meaning:{'米':'こめ','妹':'いもうと','毎':'まい（毎日など）'} },
+  { type:'onaji', tag:'同じ読み：まい',
+    sentence:'ぼくの @@ は 五さいだ。', read:'いもうと',
+    answer:'妹', choices:['妹','米','毎'],
+    meaning:{'妹':'いもうと','米':'こめ','毎':'まい（毎日など）'} },
+
+  // き（記・帰・汽）
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'夕方（ゆうがた）に 家へ @@ る。', read:'かえ',
+    answer:'帰', choices:['帰','記','汽'],
+    meaning:{'帰':'かえる','記':'しるす（書きとめる）','汽':'き（汽車の汽）'} },
+
+  // ちょう（鳥・朝・長）
+  { type:'onaji', tag:'同じ読み：ちょう',
+    sentence:'木の上で @@ が ないている。', read:'とり',
+    answer:'鳥', choices:['鳥','朝','長'],
+    meaning:{'鳥':'とり','朝':'あさ','長':'ながい'} },
+  { type:'onaji', tag:'同じ読み：ちょう',
+    sentence:'まい @@、はやおきする。', read:'あさ',
+    answer:'朝', choices:['朝','鳥','長'],
+    meaning:{'朝':'あさ','鳥':'とり','長':'ながい'} },
+
+  // ── 1年生のかん字 ──
+  // か（火・花・下）
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'@@ で やかんの お湯を わかす。', read:'ひ',
+    answer:'火', choices:['火','花','下'],
+    meaning:{'火':'ひ','花':'はな','下':'した'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'きれいな @@ が さく。', read:'はな',
+    answer:'花', choices:['花','火','下'],
+    meaning:{'花':'はな','火':'ひ','下':'した'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'いすの @@ に ねこが いる。', read:'した',
+    answer:'下', choices:['下','火','花'],
+    meaning:{'下':'した','火':'ひ','花':'はな'} },
+
+  // せい・しょう（正・青・生）
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'@@ しい 答えを 書く。', read:'ただ',
+    answer:'正', choices:['正','青','生'],
+    meaning:{'正':'ただしい','青':'あお','生':'いきる・はえる'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'空が きれいに @@ い。', read:'あお',
+    answer:'青', choices:['青','正','生'],
+    meaning:{'青':'あお','正':'ただしい','生':'いきる・はえる'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'はるに 草が @@ える。', read:'は',
+    answer:'生', choices:['生','青','正'],
+    meaning:{'生':'はえる・いきる','青':'あお','正':'ただしい'} },
+
+  // き（木・気）
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'にわの 大きな @@ に のぼる。', read:'き',
+    answer:'木', choices:['木','気'],
+    meaning:{'木':'き（しょくぶつ）','気':'き（空気・元気の気）'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'ふうせんに @@ を 入れる。', read:'き',
+    answer:'気', choices:['気','木'],
+    meaning:{'気':'き（空気）','木':'き（しょくぶつ）'} },
+
+  // さん（三・山）
+  { type:'onaji', tag:'同じ読み：さん',
+    sentence:'たかい @@ に のぼる。', read:'やま',
+    answer:'山', choices:['山','三'],
+    meaning:{'山':'やま','三':'さん（３）'} },
+  { type:'onaji', tag:'同じ読み：さん',
+    sentence:'ボールが @@ こ ある。', read:'みっ',
+    answer:'三', choices:['三','山'],
+    meaning:{'三':'みっつ（３）','山':'やま'} },
+
+  // せん（川・千・先・線・船）
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'@@ で 水あそびを する。', read:'かわ',
+    answer:'川', choices:['川','千','先'],
+    meaning:{'川':'かわ','千':'せん（１０００）','先':'さき・先生の先'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'@@ せいの 話を 聞く。', read:'せん',
+    answer:'先', choices:['先','川','千'],
+    meaning:{'先':'さき（先生）','川':'かわ','千':'せん（１０００）'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'ノートに まっすぐな @@ を ひく。', read:'せん',
+    answer:'線', choices:['線','川','船'],
+    meaning:{'線':'せん（まっすぐな線）','川':'かわ','船':'ふね'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'うみに 大きな @@ が うかぶ。', read:'ふね',
+    answer:'船', choices:['船','川','線'],
+    meaning:{'船':'ふね','川':'かわ','線':'せん'} },
+
+  // し（四・糸・子）
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'はこが @@ つ ある。', read:'よっ',
+    answer:'四', choices:['四','糸','子'],
+    meaning:{'四':'よっつ（４）','糸':'いと','子':'こ（子ども）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'@@ で ぬのを ぬう。', read:'いと',
+    answer:'糸', choices:['糸','四','子'],
+    meaning:{'糸':'いと','四':'よっつ（４）','子':'こ（子ども）'} },
+
+  // こう（口・行・高・光・考）
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'大きく @@ を あけて わらう。', read:'くち',
+    answer:'口', choices:['口','高','光'],
+    meaning:{'口':'くち','高':'たかい','光':'ひかる'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'みんなで 学校へ @@ く。', read:'い',
+    answer:'行', choices:['行','口','考'],
+    meaning:{'行':'いく・おこなう','口':'くち','考':'かんがえる'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'とても @@ い ビルだ。', read:'たか',
+    answer:'高', choices:['高','口','光'],
+    meaning:{'高':'たかい','口':'くち','光':'ひかる'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'星が きらきら @@ る。', read:'ひか',
+    answer:'光', choices:['光','高','考'],
+    meaning:{'光':'ひかる','高':'たかい','考':'かんがえる'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'よく @@ えてから 答える。', read:'かんが',
+    answer:'考', choices:['考','行','口'],
+    meaning:{'考':'かんがえる','行':'いく','口':'くち'} },
+
+  // かい（海・回・貝）
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'夏は @@ で およぐ。', read:'うみ',
+    answer:'海', choices:['海','回','貝'],
+    meaning:{'海':'うみ','回':'まわる','貝':'かい（貝がら）'} },
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'コマが くるくる @@ る。', read:'まわ',
+    answer:'回', choices:['回','海','貝'],
+    meaning:{'回':'まわる','海':'うみ','貝':'かい（貝がら）'} },
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'すなはまで @@ を ひろう。', read:'かい',
+    answer:'貝', choices:['貝','海','回'],
+    meaning:{'貝':'かい（貝がら）','海':'うみ','回':'まわる'} },
+
+  // しょう（小・少）
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'とても @@ さな 虫だ。', read:'ちい',
+    answer:'小', choices:['小','少'],
+    meaning:{'小':'ちいさい','少':'すくない'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'コップの 水が @@ ない。', read:'すく',
+    answer:'少', choices:['少','小'],
+    meaning:{'少':'すくない','小':'ちいさい'} },
+
+  // じ（字・耳・時）
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'ノートに @@ を 書く。', read:'じ',
+    answer:'字', choices:['字','耳','時'],
+    meaning:{'字':'じ（もじ）','耳':'みみ','時':'とき'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'@@ で 音を 聞く。', read:'みみ',
+    answer:'耳', choices:['耳','字','時'],
+    meaning:{'耳':'みみ','字':'じ（もじ）','時':'とき'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'楽しい @@ を すごす。', read:'とき',
+    answer:'時', choices:['時','字','耳'],
+    meaning:{'時':'とき','字':'じ（もじ）','耳':'みみ'} },
+
+  // か（夏・家・歌）※「火・花・下」と同じ読みのなかま
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'あつい @@ が やってきた。', read:'なつ',
+    answer:'夏', choices:['夏','家','歌'],
+    meaning:{'夏':'なつ','家':'いえ','歌':'うた'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'学校から @@ に 帰る。', read:'いえ',
+    answer:'家', choices:['家','夏','歌'],
+    meaning:{'家':'いえ','夏':'なつ','歌':'うた'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'大きな こえで @@ を うたう。', read:'うた',
+    answer:'歌', choices:['歌','家','夏'],
+    meaning:{'歌':'うた','家':'いえ','夏':'なつ'} },
+
+  // ぶん（文・分・聞）
+  { type:'onaji', tag:'同じ読み：ぶん',
+    sentence:'みじかい @@ を 書く。', read:'ぶん',
+    answer:'文', choices:['文','分','聞'],
+    meaning:{'文':'ぶん（文しょう）','分':'わける','聞':'きく'} },
+  { type:'onaji', tag:'同じ読み：ぶん',
+    sentence:'リンゴを 二つに @@ ける。', read:'わ',
+    answer:'分', choices:['分','文','聞'],
+    meaning:{'分':'わける','文':'ぶん（文しょう）','聞':'きく'} },
+  { type:'onaji', tag:'同じ読み：ぶん',
+    sentence:'先生の 話を よく @@ く。', read:'き',
+    answer:'聞', choices:['聞','文','分'],
+    meaning:{'聞':'きく','文':'ぶん（文しょう）','分':'わける'} },
+
+  // や（矢・野・夜）
+  { type:'onaji', tag:'同じ読み：や',
+    sentence:'弓で @@ を とばす。', read:'や',
+    answer:'矢', choices:['矢','野','夜'],
+    meaning:{'矢':'や（弓矢）','野':'の（野原）','夜':'よる'} },
+  { type:'onaji', tag:'同じ読み：や',
+    sentence:'広い @@ はらで あそぶ。', read:'の',
+    answer:'野', choices:['野','矢','夜'],
+    meaning:{'野':'の（野原）','矢':'や（弓矢）','夜':'よる'} },
+  { type:'onaji', tag:'同じ読み：や',
+    sentence:'@@ に なると 星が 出る。', read:'よる',
+    answer:'夜', choices:['夜','矢','野'],
+    meaning:{'夜':'よる','矢':'や（弓矢）','野':'の（野原）'} },
+
+  // ばい（売・買）
+  { type:'onaji', tag:'同じ読み：ばい',
+    sentence:'店で パンを @@ る。', read:'う',
+    answer:'売', choices:['売','買'],
+    meaning:{'売':'うる（お店がうる）','買':'かう（お金をはらう）'} },
+  { type:'onaji', tag:'同じ読み：ばい',
+    sentence:'お金を はらって パンを @@ う。', read:'か',
+    answer:'買', choices:['買','売'],
+    meaning:{'買':'かう（お金をはらう）','売':'うる（お店がうる）'} },
+
+  // り（里・理）
+  { type:'onaji', tag:'同じ読み：り',
+    sentence:'@@ 科の じかんが すきだ。', read:'り',
+    answer:'理', choices:['理','里'],
+    meaning:{'理':'り（理科の理）','里':'さと'} },
+  { type:'onaji', tag:'同じ読み：り',
+    sentence:'山の おくの @@ に すむ。', read:'さと',
+    answer:'里', choices:['里','理'],
+    meaning:{'里':'さと','理':'り（理科の理）'} },
+
+  // どう（同・道・読）
+  { type:'onaji', tag:'同じ読み：どう',
+    sentence:'ふたつの 形は @@ じだ。', read:'おな',
+    answer:'同', choices:['同','道','読'],
+    meaning:{'同':'おなじ','道':'みち','読':'よむ'} },
+  { type:'onaji', tag:'同じ読み：どう',
+    sentence:'学校までの @@ を あるく。', read:'みち',
+    answer:'道', choices:['道','同','読'],
+    meaning:{'道':'みち','同':'おなじ','読':'よむ'} },
+  { type:'onaji', tag:'同じ読み：どう',
+    sentence:'おもしろい 本を @@ む。', read:'よ',
+    answer:'読', choices:['読','同','道'],
+    meaning:{'読':'よむ','同':'おなじ','道':'みち'} },
+
+  // てん（天・点・店）
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'@@ 気（てんき）が いい。', read:'てん',
+    answer:'天', choices:['天','点','店'],
+    meaning:{'天':'てん（天気の天）','点':'てん（数の点）','店':'みせ'} },
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'テストで 百 @@ を とる。', read:'てん',
+    answer:'点', choices:['点','天','店'],
+    meaning:{'点':'てん（数の点）','天':'てん（天気の天）','店':'みせ'} },
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'パンの @@ で 買う。', read:'みせ',
+    answer:'店', choices:['店','天','点'],
+    meaning:{'店':'みせ','天':'てん（天気の天）','点':'てん（数の点）'} },
+
+  // ち（地・池・知）
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'@@ めんに 立つ。', read:'じ',
+    answer:'地', choices:['地','池','知'],
+    meaning:{'地':'ち（地めんの地）','池':'いけ','知':'しる'} },
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'@@ に さかなが いる。', read:'いけ',
+    answer:'池', choices:['池','地','知'],
+    meaning:{'池':'いけ','地':'ち（地めんの地）','知':'しる'} },
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'答えを よく @@ る。', read:'し',
+    answer:'知', choices:['知','地','池'],
+    meaning:{'知':'しる','地':'ち（地めんの地）','池':'いけ'} },
+
+  // たい・だい（大・台・体・太）
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'@@ きな 声で 話す。', read:'おお',
+    answer:'大', choices:['大','台','太'],
+    meaning:{'大':'おおきい','台':'だい（台の上）','太':'ふとい'} },
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'@@ の 上に お皿を のせる。', read:'だい',
+    answer:'台', choices:['台','体','太'],
+    meaning:{'台':'だい（台の上）','体':'からだ','太':'ふとい'} },
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'@@ を うごかして あそぶ。', read:'からだ',
+    answer:'体', choices:['体','台','太'],
+    meaning:{'体':'からだ','台':'だい（台の上）','太':'ふとい'} },
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'@@ い うでを している。', read:'ふと',
+    answer:'太', choices:['太','大','台'],
+    meaning:{'太':'ふとい','大':'おおきい','台':'だい（台の上）'} },
+
+  // ご（五・午・後・語）
+  { type:'onaji', tag:'同じ読み：ご',
+    sentence:'ボールが @@ つ ある。', read:'いつ',
+    answer:'五', choices:['五','後','語'],
+    meaning:{'五':'いつつ（５）','後':'あと・うしろ','語':'ご（国語の語）'} },
+  { type:'onaji', tag:'同じ読み：ご',
+    sentence:'@@ ぜんちゅうに しゅくだいを する。', read:'ご',
+    answer:'午', choices:['午','五','語'],
+    meaning:{'午':'ご（午ぜんの午）','五':'いつつ（５）','語':'ご（国語の語）'} },
+  { type:'onaji', tag:'同じ読み：ご',
+    sentence:'ごはんの @@ で あそぶ。', read:'あと',
+    answer:'後', choices:['後','五','午'],
+    meaning:{'後':'あと・うしろ','五':'いつつ（５）','午':'ご（午ぜんの午）'} },
+  { type:'onaji', tag:'同じ読み：ご',
+    sentence:'国 @@ の じかんが すきだ。', read:'ご',
+    answer:'語', choices:['語','五','午'],
+    meaning:{'語':'ご（国語の語）','五':'いつつ（５）','午':'ご（午ぜんの午）'} },
+
+  // う（右・雨・羽）
+  { type:'onaji', tag:'同じ読み：う',
+    sentence:'@@ の 手を あげる。', read:'みぎ',
+    answer:'右', choices:['右','雨','羽'],
+    meaning:{'右':'みぎ','雨':'あめ','羽':'はね'} },
+  { type:'onaji', tag:'同じ読み：う',
+    sentence:'つめたい @@ が ふる。', read:'あめ',
+    answer:'雨', choices:['雨','右','羽'],
+    meaning:{'雨':'あめ','右':'みぎ','羽':'はね'} },
+  { type:'onaji', tag:'同じ読み：う',
+    sentence:'鳥の @@ は やわらかい。', read:'はね',
+    answer:'羽', choices:['羽','右','雨'],
+    meaning:{'羽':'はね','右':'みぎ','雨':'あめ'} },
+
+  // げん（元・言・原）
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'@@ 気いっぱい あそぶ。', read:'げん',
+    answer:'元', choices:['元','言','原'],
+    meaning:{'元':'げん（元気の元）','言':'いう','原':'はら（原っぱ）'} },
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'やさしく お礼を @@ う。', read:'い',
+    answer:'言', choices:['言','元','原'],
+    meaning:{'言':'いう','元':'げん（元気の元）','原':'はら（原っぱ）'} },
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'広い @@ っぱで かける。', read:'はら',
+    answer:'原', choices:['原','元','言'],
+    meaning:{'原':'はら（原っぱ）','元':'げん（元気の元）','言':'いう'} },
+
+  // きょう（強・教・兄・京）
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'とても @@ い 力もちだ。', read:'つよ',
+    answer:'強', choices:['強','教','兄'],
+    meaning:{'強':'つよい','教':'おしえる','兄':'あに'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'妹に 字を @@ える。', read:'おし',
+    answer:'教', choices:['教','強','兄'],
+    meaning:{'教':'おしえる','強':'つよい','兄':'あに'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'ぼくの @@ は 中学生だ。', read:'あに',
+    answer:'兄', choices:['兄','強','教'],
+    meaning:{'兄':'あに','強':'つよい','教':'おしえる'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'東 @@ へ しんかんせんで 行く。', read:'きょう',
+    answer:'京', choices:['京','強','教'],
+    meaning:{'京':'きょう（東京の京）','強':'つよい','教':'おしえる'} },
+
+  // けい（形・計）
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'まるい @@ の お皿。', read:'かたち',
+    answer:'形', choices:['形','計'],
+    meaning:{'形':'かたち','計':'はかる（計算の計）'} },
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'時間を @@ る。', read:'はか',
+    answer:'計', choices:['計','形'],
+    meaning:{'計':'はかる（計算の計）','形':'かたち'} },
+
+  // しゃ（車・社）
+  { type:'onaji', tag:'同じ読み：しゃ',
+    sentence:'赤い @@ に のる。', read:'くるま',
+    answer:'車', choices:['車','社'],
+    meaning:{'車':'くるま','社':'しゃ（会社の社）'} },
+  { type:'onaji', tag:'同じ読み：しゃ',
+    sentence:'父は 会 @@ で はたらく。', read:'しゃ',
+    answer:'社', choices:['社','車'],
+    meaning:{'社':'しゃ（会社の社）','車':'くるま'} },
+
+  // しん（心・新・親・森）
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'やさしい @@ を もつ。', read:'こころ',
+    answer:'心', choices:['心','新','親'],
+    meaning:{'心':'こころ','新':'あたらしい','親':'おや'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'@@ しい くつを はく。', read:'あたら',
+    answer:'新', choices:['新','心','親'],
+    meaning:{'新':'あたらしい','心':'こころ','親':'おや'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'@@ と 公園へ 行く。', read:'おや',
+    answer:'親', choices:['親','心','新'],
+    meaning:{'親':'おや','心':'こころ','新':'あたらしい'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'ふかい @@ に 入る。', read:'もり',
+    answer:'森', choices:['森','心','親'],
+    meaning:{'森':'もり','心':'こころ','親':'おや'} },
+
+  // でん（電・田）
+  { type:'onaji', tag:'同じ読み：でん',
+    sentence:'@@ 車に のって 出かける。', read:'でん',
+    answer:'電', choices:['電','田'],
+    meaning:{'電':'でん（電車の電）','田':'た（田んぼ）'} },
+  { type:'onaji', tag:'同じ読み：でん',
+    sentence:'お米を @@ んぼで そだてる。', read:'た',
+    answer:'田', choices:['田','電'],
+    meaning:{'田':'た（田んぼ）','電':'でん（電車の電）'} },
+
+  // がん（岩・顔・丸）
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'大きな @@ に のぼる。', read:'いわ',
+    answer:'岩', choices:['岩','顔','丸'],
+    meaning:{'岩':'いわ','顔':'かお','丸':'まるい'} },
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'わらった @@ で 話す。', read:'かお',
+    answer:'顔', choices:['顔','岩','丸'],
+    meaning:{'顔':'かお','岩':'いわ','丸':'まるい'} },
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'@@ い ボールで あそぶ。', read:'まる',
+    answer:'丸', choices:['丸','岩','顔'],
+    meaning:{'丸':'まるい','岩':'いわ','顔':'かお'} },
+
+  // こく（国・黒・谷）
+  { type:'onaji', tag:'同じ読み：こく',
+    sentence:'とおい @@ へ 行く。', read:'くに',
+    answer:'国', choices:['国','黒','谷'],
+    meaning:{'国':'くに','黒':'くろい','谷':'たに'} },
+  { type:'onaji', tag:'同じ読み：こく',
+    sentence:'@@ い ねこが いる。', read:'くろ',
+    answer:'黒', choices:['黒','国','谷'],
+    meaning:{'黒':'くろい','国':'くに','谷':'たに'} },
+  { type:'onaji', tag:'同じ読み：こく',
+    sentence:'山と 山の あいだの @@。', read:'たに',
+    answer:'谷', choices:['谷','国','黒'],
+    meaning:{'谷':'たに','国':'くに','黒':'くろい'} },
+
+  // しゅう（秋・週）
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'@@ に なって すずしい。', read:'あき',
+    answer:'秋', choices:['秋','週'],
+    meaning:{'秋':'あき','週':'しゅう（来週の週）'} },
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'来 @@ も いっしょに あそぼう。', read:'しゅう',
+    answer:'週', choices:['週','秋'],
+    meaning:{'週':'しゅう（来週の週）','秋':'あき'} },
+
+  // しょく（食・色）
+  { type:'onaji', tag:'同じ読み：しょく',
+    sentence:'ごはんを @@ べる。', read:'た',
+    answer:'食', choices:['食','色'],
+    meaning:{'食':'たべる','色':'いろ'} },
+  { type:'onaji', tag:'同じ読み：しょく',
+    sentence:'赤い @@ の クレヨン。', read:'いろ',
+    answer:'色', choices:['色','食'],
+    meaning:{'色':'いろ','食':'たべる'} },
+
+  // と（戸・土・図）
+  { type:'onaji', tag:'同じ読み：と',
+    sentence:'いえの @@ を しめる。', read:'と',
+    answer:'戸', choices:['戸','図','土'],
+    meaning:{'戸':'と（とびら）','図':'ず（地図の図）','土':'つち'} },
+  { type:'onaji', tag:'同じ読み：と',
+    sentence:'にわの @@ を ほる。', read:'つち',
+    answer:'土', choices:['土','戸','図'],
+    meaning:{'土':'つち','戸':'と（とびら）','図':'ず（地図の図）'} },
+  { type:'onaji', tag:'同じ読み：と',
+    sentence:'地 @@ を 見ながら あるく。', read:'ず',
+    answer:'図', choices:['図','戸','土'],
+    meaning:{'図':'ず（地図の図）','戸':'と（とびら）','土':'つち'} },
+
+  // そう（草・早）
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'みどりの @@ が はえる。', read:'くさ',
+    answer:'草', choices:['草','早'],
+    meaning:{'草':'くさ','早':'はやい'} },
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'朝 @@ く おきる。', read:'はや',
+    answer:'早', choices:['早','草'],
+    meaning:{'早':'はやい','草':'くさ'} },
+
+  // しょう（小・上・正）※1年生のなかま
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'つくえの @@ に のせる。', read:'うえ',
+    answer:'上', choices:['上','小','正'],
+    meaning:{'上':'うえ','小':'ちいさい','正':'ただしい'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'とても @@ さな 花だ。', read:'ちい',
+    answer:'小', choices:['小','上','正'],
+    meaning:{'小':'ちいさい','上':'うえ','正':'ただしい'} },
+
+  // ── 別の例文（同じ読みグループのおかわり）──
+  // こう
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'あめが やんで にじが @@ る。', read:'ひか',
+    answer:'光', choices:['光','高','口'],
+    meaning:{'光':'ひかる','高':'たかい','口':'くち'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'@@ で あめを なめる。', read:'くち',
+    answer:'口', choices:['口','行','考'],
+    meaning:{'口':'くち','行':'いく','考':'かんがえる'} },
+  // かい
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'ふねで 青い @@ を わたる。', read:'うみ',
+    answer:'海', choices:['海','回','貝'],
+    meaning:{'海':'うみ','回':'まわる','貝':'かい（貝がら）'} },
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'同じ ところを ぐるぐる @@ る。', read:'まわ',
+    answer:'回', choices:['回','海','貝'],
+    meaning:{'回':'まわる','海':'うみ','貝':'かい（貝がら）'} },
+  // せい
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'げん気な @@ で あいさつする。', read:'こえ',
+    answer:'声', choices:['声','星','晴'],
+    meaning:{'声':'こえ','星':'ほし','晴':'はれ'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'青空が ひろがり よく @@ れた。', read:'はれ',
+    answer:'晴', choices:['晴','星','声'],
+    meaning:{'晴':'はれ','星':'ほし','声':'こえ'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'夜空いっぱいの @@ を 見上げる。', read:'ほし',
+    answer:'星', choices:['星','晴','声'],
+    meaning:{'星':'ほし','晴':'はれ','声':'こえ'} },
+  // とう
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'@@ に なると ゆきが ふる。', read:'ふゆ',
+    answer:'冬', choices:['冬','答','東'],
+    meaning:{'冬':'ふゆ','答':'こたえ','東':'ひがし'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'手を あげて 大きな声で @@ える。', read:'こた',
+    answer:'答', choices:['答','冬','東'],
+    meaning:{'答':'こたえる','冬':'ふゆ','東':'ひがし'} },
+  // か
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'キャンプで @@ を おこす。', read:'ひ',
+    answer:'火', choices:['火','花','夏'],
+    meaning:{'火':'ひ','花':'はな','夏':'なつ'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'広い 野原で @@ を つむ。', read:'はな',
+    answer:'花', choices:['花','家','歌'],
+    meaning:{'花':'はな','家':'いえ','歌':'うた'} },
+  // しん
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'@@ しい 本を 読む。', read:'あたら',
+    answer:'新', choices:['新','心','森'],
+    meaning:{'新':'あたらしい','心':'こころ','森':'もり'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'@@ を こめて おりがみを 作る。', read:'こころ',
+    answer:'心', choices:['心','親','新'],
+    meaning:{'心':'こころ','親':'おや','新':'あたらしい'} },
+  // たい・だい
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'まいにち 走って @@ を きたえる。', read:'からだ',
+    answer:'体', choices:['体','大','太'],
+    meaning:{'体':'からだ','大':'おおきい','太':'ふとい'} },
+  { type:'onaji', tag:'同じ読み：たい・だい',
+    sentence:'@@ きな 木が そびえる。', read:'おお',
+    answer:'大', choices:['大','台','太'],
+    meaning:{'大':'おおきい','台':'だい（台の上）','太':'ふとい'} },
+  // ち
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'公園の @@ で かもが およぐ。', read:'いけ',
+    answer:'池', choices:['池','地','知'],
+    meaning:{'池':'いけ','地':'ち（地めんの地）','知':'しる'} },
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'友だちの 名まえを @@ る。', read:'し',
+    answer:'知', choices:['知','池','地'],
+    meaning:{'知':'しる','池':'いけ','地':'ち（地めんの地）'} },
+  // がん
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'うれしそうな @@ で わらう。', read:'かお',
+    answer:'顔', choices:['顔','岩','丸'],
+    meaning:{'顔':'かお','岩':'いわ','丸':'まるい'} },
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'川の 中の 大きな @@。', read:'いわ',
+    answer:'岩', choices:['岩','丸','顔'],
+    meaning:{'岩':'いわ','丸':'まるい','顔':'かお'} },
+  // こく
+  { type:'onaji', tag:'同じ読み：こく',
+    sentence:'@@ い ふくを きる。', read:'くろ',
+    answer:'黒', choices:['黒','国','谷'],
+    meaning:{'黒':'くろい','国':'くに','谷':'たに'} },
+  // ご
+  { type:'onaji', tag:'同じ読み：ご',
+    sentence:'学校が おわった @@ で 公園へ 行く。', read:'あと',
+    answer:'後', choices:['後','五','語'],
+    meaning:{'後':'あと・うしろ','五':'いつつ（５）','語':'ご（国語の語）'} },
+  // しょく
+  { type:'onaji', tag:'同じ読み：しょく',
+    sentence:'おひるごはんを みんなで @@ べる。', read:'た',
+    answer:'食', choices:['食','色'],
+    meaning:{'食':'たべる','色':'いろ'} },
+
+  // ============================================================
+  //  3年生（図鑑コンプリートで解放）
+  // ============================================================
+  // 使い分け：あける（開ける／空ける／明ける）
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'げんかんの ドアを @@ ける。', read:'あ',
+    answer:'開', choices:['開','空','明'],
+    meaning:{'開':'開ける＝とじている物を ひらく','空':'空ける＝すきまを 作る','明':'明ける＝朝に なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'まどを @@ けて かぜを 入れる。', read:'あ',
+    answer:'開', choices:['開','空','明'],
+    meaning:{'開':'開ける＝とじている物を ひらく','空':'空ける＝すきまを 作る','明':'明ける＝朝に なる'} },
+  { type:'tsukai', tag:'つかい分け：あける',
+    sentence:'本だなを 一だん @@ けて すきまを 作る。', read:'あ',
+    answer:'空', choices:['空','開','明'],
+    meaning:{'空':'空ける＝すきまを 作る','開':'開ける＝とじている物を ひらく','明':'明ける＝朝に なる'} },
+
+  // 使い分け：はやい（速い／早い）
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'チーターは 走るのが とても @@ い。', read:'はや',
+    answer:'速', choices:['速','早'],
+    meaning:{'速':'速い＝スピードが はやい','早':'早い＝時こくが はやい'} },
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'今朝は いつもより @@ く おきた。', read:'はや',
+    answer:'早', choices:['早','速'],
+    meaning:{'早':'早い＝時こくが はやい','速':'速い＝スピードが はやい'} },
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'この 電車は @@ さが じまんだ。', read:'はや',
+    answer:'速', choices:['速','早'],
+    meaning:{'速':'速い＝スピードが はやい','早':'早い＝時こくが はやい'} },
+
+  // 使い分け：かえる（帰る／返る）
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'かりた 本を 友だちに @@ す。', read:'かえ',
+    answer:'返', choices:['返','帰'],
+    meaning:{'返':'返す＝ものを もとに もどす','帰':'帰る＝家などに もどる'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'ゆうがた、家に @@ る。', read:'かえ',
+    answer:'帰', choices:['帰','返'],
+    meaning:{'帰':'帰る＝家などに もどる','返':'返す＝ものを もとに もどす'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'おつりが 手もとに @@ る。', read:'かえ',
+    answer:'返', choices:['返','帰'],
+    meaning:{'返':'返る＝ものが もとに もどる','帰':'帰る＝家などに もどる'} },
+
+  // 使い分け：のぼる（登る／上る）
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'たかい 山に @@ る。', read:'のぼ',
+    answer:'登', choices:['登','上'],
+    meaning:{'登':'登る＝高い所・山などに のぼる','上':'上る＝上の ほうへ あがる'} },
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'けむりが まっすぐ 空へ @@ る。', read:'のぼ',
+    answer:'上', choices:['上','登'],
+    meaning:{'上':'上る＝上の ほうへ あがる','登':'登る＝高い所・山などに のぼる'} },
+
+  // 使い分け：おう（追う／負う）
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'にげる ねこを @@ いかける。', read:'お',
+    answer:'追', choices:['追','負'],
+    meaning:{'追':'追う＝おいかける','負':'負う＝せおう・まける'} },
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'おもい にもつを せなかに @@ う。', read:'お',
+    answer:'負', choices:['負','追'],
+    meaning:{'負':'負う＝せおう','追':'追う＝おいかける'} },
+
+  // 同じ読み：ちゅう（注・柱・中）
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'コップに ジュースを @@ ぐ。', read:'そそ',
+    answer:'注', choices:['注','柱','中'],
+    meaning:{'注':'そそぐ','柱':'はしら','中':'なか'} },
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'家の 太い @@ を 見上げる。', read:'はしら',
+    answer:'柱', choices:['柱','注','中'],
+    meaning:{'柱':'はしら','注':'そそぐ','中':'なか'} },
+
+  // ── 3年生の「同じ読み」グループ ──
+  // し（死・始・指・歯・使）
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'虫が うごかなく なって @@ ぬ。', read:'し',
+    answer:'死', choices:['死','始','指'],
+    meaning:{'死':'しぬ','始':'はじめる','指':'ゆび'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'べんきょうを @@ める。', read:'はじ',
+    answer:'始', choices:['始','使','死'],
+    meaning:{'始':'はじめる','使':'つかう','死':'しぬ'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'@@ で こくばんを さす。', read:'ゆび',
+    answer:'指', choices:['指','歯','始'],
+    meaning:{'指':'ゆび','歯':'は','始':'はじめる'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'@@ を みがいて ねる。', read:'は',
+    answer:'歯', choices:['歯','指','死'],
+    meaning:{'歯':'は（口の歯）','指':'ゆび','死':'しぬ'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'はさみを @@ って 紙を きる。', read:'つか',
+    answer:'使', choices:['使','始','指'],
+    meaning:{'使':'つかう','始':'はじめる','指':'ゆび'} },
+
+  // とう（島・豆・湯・投）
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'うみに うかぶ 小さな @@。', read:'しま',
+    answer:'島', choices:['島','豆','湯'],
+    meaning:{'島':'しま','豆':'まめ','湯':'ゆ'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'せつぶんに @@ を まく。', read:'まめ',
+    answer:'豆', choices:['豆','島','投'],
+    meaning:{'豆':'まめ','島':'しま','投':'なげる'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'あつい お @@ に 入る。', read:'ゆ',
+    answer:'湯', choices:['湯','豆','島'],
+    meaning:{'湯':'ゆ（おゆ）','豆':'まめ','島':'しま'} },
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'ボールを とおくへ @@ げる。', read:'な',
+    answer:'投', choices:['投','島','湯'],
+    meaning:{'投':'なげる','島':'しま','湯':'ゆ'} },
+
+  // ひ（皮・悲）
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'りんごの @@ を むく。', read:'かわ',
+    answer:'皮', choices:['皮','悲'],
+    meaning:{'皮':'かわ','悲':'かなしい'} },
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'とても @@ しくて なみだが 出る。', read:'かな',
+    answer:'悲', choices:['悲','皮'],
+    meaning:{'悲':'かなしい','皮':'かわ'} },
+
+  // び（美・鼻）
+  { type:'onaji', tag:'同じ読み：び',
+    sentence:'とても @@ しい けしき。', read:'うつく',
+    answer:'美', choices:['美','鼻'],
+    meaning:{'美':'うつくしい','鼻':'かおの はな'} },
+
+  // はな（鼻・花）
+  { type:'onaji', tag:'同じ読み：はな',
+    sentence:'@@ で においを かぐ。', read:'はな',
+    answer:'鼻', choices:['鼻','花'],
+    meaning:{'鼻':'かおの はな','花':'さく はな'} },
+
+  // こう（港・向・幸）
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'ふねが @@ に とまる。', read:'みなと',
+    answer:'港', choices:['港','向','幸'],
+    meaning:{'港':'みなと','向':'むく','幸':'しあわせ'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'前を まっすぐ @@ く。', read:'む',
+    answer:'向', choices:['向','港','幸'],
+    meaning:{'向':'むく','港':'みなと','幸':'しあわせ'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'みんな わらって @@ せな 一日。', read:'しあわ',
+    answer:'幸', choices:['幸','港','向'],
+    meaning:{'幸':'しあわせ','港':'みなと','向':'むく'} },
+
+  // あん（安・暗）
+  { type:'onaji', tag:'同じ読み：あん',
+    sentence:'この くだものは ねだんが @@ い。', read:'やす',
+    answer:'安', choices:['安','暗'],
+    meaning:{'安':'やすい','暗':'くらい'} },
+  { type:'onaji', tag:'同じ読み：あん',
+    sentence:'へやが @@ くて 見えない。', read:'くら',
+    answer:'暗', choices:['暗','安'],
+    meaning:{'暗':'くらい','安':'やすい'} },
+
+  // よう（羊・洋・葉）
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'まきばに @@ が いる。', read:'ひつじ',
+    answer:'羊', choices:['羊','洋','葉'],
+    meaning:{'羊':'ひつじ','洋':'西洋の洋','葉':'はっぱ'} },
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'木の @@ が 風で ゆれる。', read:'は',
+    answer:'葉', choices:['葉','羊','洋'],
+    meaning:{'葉':'はっぱ','羊':'ひつじ','洋':'西洋の洋'} },
+
+  // やく（薬・役）
+  { type:'onaji', tag:'同じ読み：やく',
+    sentence:'ねつが 出たので @@ を のむ。', read:'くすり',
+    answer:'薬', choices:['薬','役','矢'],
+    meaning:{'薬':'くすり','役':'やくめ','矢':'や（弓矢）'} },
+
+  // どう（動・道・同）
+  { type:'onaji', tag:'同じ読み：どう',
+    sentence:'うでを 大きく @@ かす。', read:'うご',
+    answer:'動', choices:['動','道','同'],
+    meaning:{'動':'うごく','道':'みち','同':'おなじ'} },
+
+  // ちょう（調・帳・長）
+  { type:'onaji', tag:'同じ読み：ちょう',
+    sentence:'としょかんで 本を @@ べる。', read:'しら',
+    answer:'調', choices:['調','帳','長'],
+    meaning:{'調':'しらべる','帳':'ノートの帳','長':'ながい'} },
+
+  // きょく（曲・局）
+  { type:'onaji', tag:'同じ読み：きょく',
+    sentence:'道が 右に @@ がる。', read:'ま',
+    answer:'曲', choices:['曲','局'],
+    meaning:{'曲':'まがる','局':'ゆうびん局の局'} },
+
+  // たい（待・代・対）
+  { type:'onaji', tag:'同じ読み：たい',
+    sentence:'友だちを えきで @@ つ。', read:'ま',
+    answer:'待', choices:['待','代','対'],
+    meaning:{'待':'まつ','代':'かわり','対':'反対の対'} },
+
+  // ── 3年生の「同じ読み」グループ（つづき）──
+  // しん（深・進・身・神）
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'とても @@ い うみ。', read:'ふか',
+    answer:'深', choices:['深','進','神'],
+    meaning:{'深':'ふかい','進':'すすむ','神':'かみさま'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'まっすぐ 前へ @@ む。', read:'すす',
+    answer:'進', choices:['進','深','身'],
+    meaning:{'進':'すすむ','深':'ふかい','身':'からだ・み'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'自分の @@ を まもる。', read:'み',
+    answer:'身', choices:['身','神','深'],
+    meaning:{'身':'からだ・み','神':'かみさま','深':'ふかい'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'@@ さまに おいのりする。', read:'かみ',
+    answer:'神', choices:['神','深','進'],
+    meaning:{'神':'かみさま','深':'ふかい','進':'すすむ'} },
+
+  // しゅう（拾・終・習・集）
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'おちた ごみを @@ う。', read:'ひろ',
+    answer:'拾', choices:['拾','終','習'],
+    meaning:{'拾':'ひろう','終':'おわる','習':'ならう'} },
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'べんきょうが @@ わる。', read:'お',
+    answer:'終', choices:['終','集','拾'],
+    meaning:{'終':'おわる','集':'あつめる','拾':'ひろう'} },
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'ピアノを @@ う。', read:'なら',
+    answer:'習', choices:['習','拾','集'],
+    meaning:{'習':'ならう','拾':'ひろう','集':'あつめる'} },
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'切手を たくさん @@ める。', read:'あつ',
+    answer:'集', choices:['集','終','習'],
+    meaning:{'集':'あつめる','終':'おわる','習':'ならう'} },
+
+  // しゅ（守・取・酒）
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'やくそくを @@ る。', read:'まも',
+    answer:'守', choices:['守','取','酒'],
+    meaning:{'守':'まもる','取':'とる','酒':'さけ'} },
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'たなの 本を 手に @@ る。', read:'と',
+    answer:'取', choices:['取','守','酒'],
+    meaning:{'取':'とる','守':'まもる','酒':'さけ'} },
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'お @@ は おとなの のみもの。', read:'さけ',
+    answer:'酒', choices:['酒','守','取'],
+    meaning:{'酒':'さけ','守':'まもる','取':'とる'} },
+
+  // じ（持・次・事）
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'おもい かばんを @@ つ。', read:'も',
+    answer:'持', choices:['持','次','事'],
+    meaning:{'持':'もつ','次':'つぎ','事':'こと'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'@@ の 人、どうぞ。', read:'つぎ',
+    answer:'次', choices:['次','持','事'],
+    meaning:{'次':'つぎ','持':'もつ','事':'こと'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'大切な @@ を つたえる。', read:'こと',
+    answer:'事', choices:['事','持','次'],
+    meaning:{'事':'こと','持':'もつ','次':'つぎ'} },
+
+  // じゅう（住・重）
+  { type:'onaji', tag:'同じ読み：じゅう',
+    sentence:'東京に @@ む。', read:'す',
+    answer:'住', choices:['住','重'],
+    meaning:{'住':'すむ','重':'おもい'} },
+  { type:'onaji', tag:'同じ読み：じゅう',
+    sentence:'@@ い にもつを はこぶ。', read:'おも',
+    answer:'重', choices:['重','住'],
+    meaning:{'重':'おもい','住':'すむ'} },
+
+  // おん（温・音）
+  { type:'onaji', tag:'同じ読み：おん',
+    sentence:'@@ かい おちゃを のむ。', read:'あたた',
+    answer:'温', choices:['温','音'],
+    meaning:{'温':'あたたかい','音':'おと'} },
+  { type:'onaji', tag:'同じ読み：おん',
+    sentence:'きれいな @@ が きこえる。', read:'おと',
+    answer:'音', choices:['音','温'],
+    meaning:{'音':'おと','温':'あたたかい'} },
+
+  // たん（炭・短）
+  { type:'onaji', tag:'同じ読み：たん',
+    sentence:'@@ で 火を おこす。', read:'すみ',
+    answer:'炭', choices:['炭','短'],
+    meaning:{'炭':'すみ','短':'みじかい'} },
+  { type:'onaji', tag:'同じ読み：たん',
+    sentence:'@@ い えんぴつ。', read:'みじか',
+    answer:'短', choices:['短','炭'],
+    meaning:{'短':'みじかい','炭':'すみ'} },
+
+  // はん（坂・板）
+  { type:'onaji', tag:'同じ読み：はん',
+    sentence:'きゅうな @@ を のぼる。', read:'さか',
+    answer:'坂', choices:['坂','板'],
+    meaning:{'坂':'さか','板':'いた'} },
+  { type:'onaji', tag:'同じ読み：はん',
+    sentence:'あつい 木の @@。', read:'いた',
+    answer:'板', choices:['板','坂'],
+    meaning:{'板':'いた','坂':'さか'} },
+
+  // きゅう（急・宮）
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'@@ いで 学校へ 行く。', read:'いそ',
+    answer:'急', choices:['急','宮'],
+    meaning:{'急':'いそぐ','宮':'みや（お宮）'} },
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'お @@ に おまいりする。', read:'みや',
+    answer:'宮', choices:['宮','急'],
+    meaning:{'宮':'みや（お宮）','急':'いそぐ'} },
+
+  // しょ（暑・所）
+  { type:'onaji', tag:'同じ読み：しょ',
+    sentence:'夏は とても @@ い。', read:'あつ',
+    answer:'暑', choices:['暑','所'],
+    meaning:{'暑':'あつい（気おん）','所':'ところ'} },
+  { type:'onaji', tag:'同じ読み：しょ',
+    sentence:'ひろい @@ で あそぶ。', read:'ところ',
+    answer:'所', choices:['所','暑'],
+    meaning:{'所':'ところ','暑':'あつい（気おん）'} },
+
+  // み（味・実）
+  { type:'onaji', tag:'同じ読み：み',
+    sentence:'あまい @@ が する。', read:'あじ',
+    answer:'味', choices:['味','実'],
+    meaning:{'味':'あじ','実':'み（木の実）'} },
+  { type:'onaji', tag:'同じ読み：み',
+    sentence:'木の @@ が あかく なる。', read:'み',
+    answer:'実', choices:['実','味'],
+    meaning:{'実':'み（木の実）','味':'あじ'} },
+
+  // しょう（消・勝）
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'ろうそくの 火を @@ す。', read:'け',
+    answer:'消', choices:['消','勝'],
+    meaning:{'消':'けす','勝':'かつ'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'しあいに @@ つ。', read:'か',
+    answer:'勝', choices:['勝','消'],
+    meaning:{'勝':'かつ','消':'けす'} },
+
+  // こ（湖・古）
+  { type:'onaji', tag:'同じ読み：こ',
+    sentence:'大きな @@ で つりを する。', read:'みずうみ',
+    answer:'湖', choices:['湖','古'],
+    meaning:{'湖':'みずうみ','古':'ふるい'} },
+  { type:'onaji', tag:'同じ読み：こ',
+    sentence:'@@ い 本を 読む。', read:'ふる',
+    answer:'古', choices:['古','湖'],
+    meaning:{'古':'ふるい','湖':'みずうみ'} },
+
+  // しょく（植・食・色）
+  { type:'onaji', tag:'同じ読み：しょく',
+    sentence:'にわに 木を @@ える。', read:'う',
+    answer:'植', choices:['植','食','色'],
+    meaning:{'植':'うえる','食':'たべる','色':'いろ'} },
+
+  // ── 3年生の「同じ読み」グループ（つづき・第3波）──
+  // けつ（血・決）
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'ころんで けがして @@ が 出る。', read:'ち',
+    answer:'血', choices:['血','決'],
+    meaning:{'血':'ち','決':'きめる'} },
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'やる ことを @@ める。', read:'き',
+    answer:'決', choices:['決','血'],
+    meaning:{'決':'きめる','血':'ち'} },
+
+  // らく（落・楽）
+  { type:'onaji', tag:'同じ読み：らく',
+    sentence:'ボールが ゆかに @@ ちる。', read:'お',
+    answer:'落', choices:['落','楽'],
+    meaning:{'落':'おちる','楽':'たのしい'} },
+  { type:'onaji', tag:'同じ読み：らく',
+    sentence:'とても @@ しい 一日だった。', read:'たの',
+    answer:'楽', choices:['楽','落'],
+    meaning:{'楽':'たのしい','落':'おちる'} },
+
+  // りょく（緑・力）
+  { type:'onaji', tag:'同じ読み：りょく',
+    sentence:'@@ いろの クレヨンで かく。', read:'みどり',
+    answer:'緑', choices:['緑','力'],
+    meaning:{'緑':'みどり','力':'ちから'} },
+  { type:'onaji', tag:'同じ読み：りょく',
+    sentence:'うでに @@ を 入れる。', read:'ちから',
+    answer:'力', choices:['力','緑'],
+    meaning:{'力':'ちから','緑':'みどり'} },
+
+  // ほう（放・方）
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'とりを 空に @@ す。', read:'はな',
+    answer:'放', choices:['放','方'],
+    meaning:{'放':'はなす','方':'ほう（むき）'} },
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'右の @@ を 見る。', read:'ほう',
+    answer:'方', choices:['方','放'],
+    meaning:{'方':'ほう（むき）','放':'はなす'} },
+
+  // ひょう（氷・表）
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'@@ は つめたい。', read:'こおり',
+    answer:'氷', choices:['氷','表'],
+    meaning:{'氷':'こおり','表':'おもて'} },
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'ノートの @@ がわに 名前を 書く。', read:'おもて',
+    answer:'表', choices:['表','氷'],
+    meaning:{'表':'おもて','氷':'こおり'} },
+
+  // き（起・帰・記）
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'朝 6時に @@ きる。', read:'お',
+    answer:'起', choices:['起','帰','記'],
+    meaning:{'起':'おきる','帰':'かえる','記':'しるす'} },
+
+  // そう（送・草・早）
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'友だちに プレゼントを @@ る。', read:'おく',
+    answer:'送', choices:['送','草','早'],
+    meaning:{'送':'おくる','草':'くさ','早':'はやい'} },
+
+  // く（苦・区）
+  { type:'onaji', tag:'同じ読み：く',
+    sentence:'この くすりは とても @@ い。', read:'にが',
+    answer:'苦', choices:['苦','区'],
+    meaning:{'苦':'にがい・くるしい','区':'く（地いきの区）'} },
+
+  // た（他・多）
+  { type:'onaji', tag:'同じ読み：た',
+    sentence:'@@ の クラスの 子と あそぶ。', read:'ほか',
+    answer:'他', choices:['他','多'],
+    meaning:{'他':'ほか','多':'おおい'} },
+
+  // さい（祭・才・西）
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'夏の おまつり、夏 @@ り。', read:'まつ',
+    answer:'祭', choices:['祭','才','西'],
+    meaning:{'祭':'まつり','才':'さい（年れいの才）','西':'にし'} },
+
+  // てん（転・鉄）
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'ボールが ころころ @@ がる。', read:'ころ',
+    answer:'転', choices:['転','鉄'],
+    meaning:{'転':'ころがる','鉄':'てつ（金ぞくの鉄）'} },
+
+  // もの（物・者）
+  { type:'onaji', tag:'同じ読み：もの',
+    sentence:'お店で 買い @@ を する。', read:'もの',
+    answer:'物', choices:['物','者'],
+    meaning:{'物':'もの（しなもの）','者':'もの（人）'} },
+
+  // 使い分け：きる（切る／着る）
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'はさみで 紙を @@ る。', read:'き',
+    answer:'切', choices:['切','着'],
+    meaning:{'切':'切る＝はさみなどで わける','着':'着る＝ふくを 身につける'} },
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'あたらしい ふくを @@ る。', read:'き',
+    answer:'着', choices:['着','切'],
+    meaning:{'着':'着る＝ふくを 身につける','切':'切る＝はさみなどで わける'} },
+
+  // てい（庭・定）
+  { type:'onaji', tag:'同じ読み：てい',
+    sentence:'@@ で 犬と あそぶ。', read:'にわ',
+    answer:'庭', choices:['庭','定'],
+    meaning:{'庭':'にわ','定':'てい（さだめる）'} },
+
+  // よう（陽・羊・葉）
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'東の 空に 太 @@ が のぼる。', read:'よう',
+    answer:'陽', choices:['陽','羊','葉'],
+    meaning:{'陽':'よう（太陽の陽）','羊':'ひつじ','葉':'はっぱ'} },
+
+  // いん（飲・員・院）
+  { type:'onaji', tag:'同じ読み：いん',
+    sentence:'コップで 水を @@ む。', read:'の',
+    answer:'飲', choices:['飲','員','院'],
+    meaning:{'飲':'のむ','員':'いん（店員の員）','院':'いん（病院の院）'} },
+
+  // おう（横・央）
+  { type:'onaji', tag:'同じ読み：おう',
+    sentence:'みんなで @@ に ならぶ。', read:'よこ',
+    answer:'横', choices:['横','央'],
+    meaning:{'横':'よこ','央':'おう（中央の央）'} },
+
+  // かん（寒・館・感）
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'冬の 朝は とても @@ い。', read:'さむ',
+    answer:'寒', choices:['寒','館','感'],
+    meaning:{'寒':'さむい','館':'かん（図書館の館）','感':'かん（かんじる）'} },
+
+  // がん（岸・岩・顔）
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'川の @@ べを あるく。', read:'きし',
+    answer:'岸', choices:['岸','岩','顔'],
+    meaning:{'岸':'きし','岩':'いわ','顔':'かお'} },
+
+  // ── 3年生の「同じ読み」グループ（つづき・第4波）──
+  // きょう（橋・強・京）
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'川に 木の @@ を かける。', read:'はし',
+    answer:'橋', choices:['橋','強','京'],
+    meaning:{'橋':'はし','強':'つよい','京':'きょう（東京の京）'} },
+
+  // しゃ（写・車・社）
+  { type:'onaji', tag:'同じ読み：しゃ',
+    sentence:'お手本を 紙に @@ す。', read:'うつ',
+    answer:'写', choices:['写','車','社'],
+    meaning:{'写':'うつす','車':'くるま','社':'しゃ（会社の社）'} },
+
+  // せき（昔・石・赤）
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'@@、ここに おしろが ありました。', read:'むかし',
+    answer:'昔', choices:['昔','石','赤'],
+    meaning:{'昔':'むかし','石':'いし','赤':'あかい'} },
+
+  // けい（係・軽・形・計）
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'クラスの とう番 @@ を きめる。', read:'かかり',
+    answer:'係', choices:['係','形','計'],
+    meaning:{'係':'かかり（とう番係）','形':'かたち','計':'はかる'} },
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'この にもつは とても @@ い。', read:'かる',
+    answer:'軽', choices:['軽','係','形'],
+    meaning:{'軽':'かるい','係':'かかり','形':'かたち'} },
+
+  // こん（根・今）
+  { type:'onaji', tag:'同じ読み：こん',
+    sentence:'木の @@ が 土の 中に ある。', read:'ね',
+    answer:'根', choices:['根','今'],
+    meaning:{'根':'ね（草木のね）','今':'いま'} },
+
+  // めい（命・名・明）
+  { type:'onaji', tag:'同じ読み：めい',
+    sentence:'生きものの @@ を 大切に する。', read:'いのち',
+    answer:'命', choices:['命','名','明'],
+    meaning:{'命':'いのち','名':'なまえ','明':'あかるい'} },
+
+  // もん（問・門・聞）
+  { type:'onaji', tag:'同じ読み：もん',
+    sentence:'わからない 所を 先生に @@ う。', read:'と',
+    answer:'問', choices:['問','門','聞'],
+    meaning:{'問':'とう（しつもん）','門':'もん（入口）','聞':'きく'} },
+
+  // ゆ（油・由）
+  { type:'onaji', tag:'同じ読み：ゆ',
+    sentence:'フライパンに @@ を ひく。', read:'あぶら',
+    answer:'油', choices:['油','由'],
+    meaning:{'油':'あぶら','由':'ゆ（理由の由）'} },
+
+  // ゆう（遊・友・有）
+  { type:'onaji', tag:'同じ読み：ゆう',
+    sentence:'公園で 友だちと @@ ぶ。', read:'あそ',
+    answer:'遊', choices:['遊','友','有'],
+    meaning:{'遊':'あそぶ','友':'ともだち','有':'ある（有名の有）'} },
+
+  // しん（真・神・深）
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'ゆきが つもって @@ っ白に なる。', read:'ま',
+    answer:'真', choices:['真','神','深'],
+    meaning:{'真':'ま（真っ白）','神':'かみさま','深':'ふかい'} },
+
+  // 使い分け：たま（玉・球）
+  { type:'tsukai', tag:'つかい分け：たま',
+    sentence:'やきゅうの ボールを @@ と いう。', read:'たま',
+    answer:'球', choices:['球','玉'],
+    meaning:{'球':'球＝スポーツの ボール','玉':'玉＝まるい もの・ビーだま'} },
+  { type:'tsukai', tag:'つかい分け：たま',
+    sentence:'ビーだまの @@ で あそぶ。', read:'たま',
+    answer:'玉', choices:['玉','球'],
+    meaning:{'玉':'玉＝まるい もの・ビーだま','球':'球＝スポーツの ボール'} },
+
+  // ── 3年生の「同じ読み」グループ（つづき・第5波）──
+  // えい（泳・駅）
+  { type:'onaji', tag:'同じ読み：えい',
+    sentence:'プールで すいすい @@ ぐ。', read:'およ',
+    answer:'泳', choices:['泳','駅'],
+    meaning:{'泳':'およぐ','駅':'えき（電車の駅）'} },
+
+  // や（屋・矢・野）
+  { type:'onaji', tag:'同じ読み：や',
+    sentence:'えきの 前の 本 @@ さんへ 行く。', read:'や',
+    answer:'屋', choices:['屋','矢','野'],
+    meaning:{'屋':'や（本屋などの屋）','矢':'や（弓矢）','野':'の（野原）'} },
+
+  // か（荷・化・花）
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'おもい @@ もつを はこぶ。', read:'に',
+    answer:'荷', choices:['荷','化','花'],
+    meaning:{'荷':'に（荷物）','化':'ばける','花':'はな'} },
+
+  // はい（配・倍）
+  { type:'onaji', tag:'同じ読み：はい',
+    sentence:'プリントを みんなに @@ る。', read:'くば',
+    answer:'配', choices:['配','倍'],
+    meaning:{'配':'くばる','倍':'ばい（2ばいの倍）'} },
+
+  // しゅ（主・守・取）
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'この いぬの かい @@ は だれ？', read:'ぬし',
+    answer:'主', choices:['主','守','取'],
+    meaning:{'主':'ぬし（持ち主）','守':'まもる','取':'とる'} },
+
+  // り（旅・理・里）
+  { type:'onaji', tag:'同じ読み：り',
+    sentence:'でんしゃで とおくへ @@ に 出かける。', read:'たび',
+    answer:'旅', choices:['旅','理','里'],
+    meaning:{'旅':'たび','理':'り（理科の理）','里':'さと'} },
+
+  // と（都・度・土）
+  { type:'onaji', tag:'同じ読み：と',
+    sentence:'むかしの @@ を たずねる。', read:'みやこ',
+    answer:'都', choices:['都','度','土'],
+    meaning:{'都':'みやこ','度':'ど（１度・２度の度）','土':'つち'} },
+
+  // ════════════════════════════════════════════
+  //  全配当字そろえに ともなう 拡充（1年・2年）
+  // ════════════════════════════════════════════
+  // せき（夕・石・赤）※1年
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'@@ がたに なって 空が あかい。', read:'ゆう',
+    answer:'夕', choices:['夕','石','赤'],
+    meaning:{'夕':'ゆうがた','石':'いし','赤':'あかい'} },
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'川で 白い @@ を ひろう。', read:'いし',
+    answer:'石', choices:['石','夕','赤'],
+    meaning:{'石':'いし','夕':'ゆうがた','赤':'あかい'} },
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'ポストは とても @@ い。', read:'あか',
+    answer:'赤', choices:['赤','夕','石'],
+    meaning:{'赤':'あかい','夕':'ゆうがた','石':'いし'} },
+
+  // けん（犬・見）※1年
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'@@ を かって さんぽする。', read:'いぬ',
+    answer:'犬', choices:['犬','見'],
+    meaning:{'犬':'いぬ','見':'みる'} },
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'テレビを じっと @@ る。', read:'み',
+    answer:'見', choices:['見','犬'],
+    meaning:{'見':'みる','犬':'いぬ'} },
+
+  // ちゅう（中・虫）※1年
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'はこの @@ に おもちゃを 入れる。', read:'なか',
+    answer:'中', choices:['中','虫'],
+    meaning:{'中':'なか','虫':'むし'} },
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'赤い @@ が とんでいる。', read:'むし',
+    answer:'虫', choices:['虫','中'],
+    meaning:{'虫':'むし','中':'なか'} },
+
+  // もく（目・木）※1年
+  { type:'onaji', tag:'同じ読み：もく',
+    sentence:'ねむくて @@ を とじる。', read:'め',
+    answer:'目', choices:['目','木'],
+    meaning:{'目':'め','木':'き（しょくぶつ）'} },
+
+  // きん（金・近）※1年
+  { type:'onaji', tag:'同じ読み：きん',
+    sentence:'お @@ を はらって 買いものする。', read:'かね',
+    answer:'金', choices:['金','近'],
+    meaning:{'金':'かね','近':'ちかい'} },
+
+  // ちょう（町・鳥・朝）※1年
+  { type:'onaji', tag:'同じ読み：ちょう',
+    sentence:'@@ の 人たちと あいさつする。', read:'まち',
+    answer:'町', choices:['町','鳥','朝'],
+    meaning:{'町':'まち','鳥':'とり','朝':'あさ'} },
+
+  // き（黄・木・気）※2年
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'バナナは @@ いろだ。', read:'き',
+    answer:'黄', choices:['黄','木','気'],
+    meaning:{'黄':'きいろ','木':'き（しょくぶつ）','気':'き（空気）'} },
+
+  // し（市・止・思・紙・姉）※2年
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'やさいの @@ が ひらく。', read:'いち',
+    answer:'市', choices:['市','思','紙'],
+    meaning:{'市':'いち（市場）','思':'おもう','紙':'かみ'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'赤しんごうで 車が @@ まる。', read:'と',
+    answer:'止', choices:['止','市','姉'],
+    meaning:{'止':'とまる','市':'いち（市場）','姉':'あね'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'これで 正しいと @@ う。', read:'おも',
+    answer:'思', choices:['思','紙','市'],
+    meaning:{'思':'おもう','紙':'かみ','市':'いち（市場）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'白い @@ に 字を 書く。', read:'かみ',
+    answer:'紙', choices:['紙','思','姉'],
+    meaning:{'紙':'かみ','思':'おもう','姉':'あね'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'ぼくの @@ は 中学生だ。', read:'あね',
+    answer:'姉', choices:['姉','思','市'],
+    meaning:{'姉':'あね','思':'おもう','市':'いち（市場）'} },
+
+  // せつ（雪・切）※2年
+  { type:'onaji', tag:'同じ読み：せつ',
+    sentence:'冬に 白い @@ が ふる。', read:'ゆき',
+    answer:'雪', choices:['雪','切'],
+    meaning:{'雪':'ゆき','切':'きる'} },
+  { type:'onaji', tag:'同じ読み：せつ',
+    sentence:'はさみで リボンを @@ る。', read:'き',
+    answer:'切', choices:['切','雪'],
+    meaning:{'切':'きる','雪':'ゆき'} },
+
+  // そう（走・草・早）※2年
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'グラウンドを 元気に @@ る。', read:'はし',
+    answer:'走', choices:['走','草','早'],
+    meaning:{'走':'はしる','草':'くさ','早':'はやい'} },
+
+  // ちゅう（昼・虫・注）※2年
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'@@ ごはんを みんなで 食べる。', read:'ひる',
+    answer:'昼', choices:['昼','虫','注'],
+    meaning:{'昼':'ひる','虫':'むし','注':'そそぐ'} },
+
+  // た（多・他）※2年
+  { type:'onaji', tag:'同じ読み：た',
+    sentence:'こうえんに 人が とても @@ い。', read:'おお',
+    answer:'多', choices:['多','他'],
+    meaning:{'多':'おおい','他':'ほか'} },
+
+  // めい（鳴・名・明）※2年
+  { type:'onaji', tag:'同じ読み：めい',
+    sentence:'にわとりが コケコッコーと @@ く。', read:'な',
+    answer:'鳴', choices:['鳴','名','明'],
+    meaning:{'鳴':'なく（鳥がなく）','名':'なまえ','明':'あかるい'} },
+
+  // わ（話・和）※2年
+  { type:'onaji', tag:'同じ読み：わ',
+    sentence:'友だちと 楽しく @@ す。', read:'はな',
+    answer:'話', choices:['話','和'],
+    meaning:{'話':'はなす','和':'わ（へいわの和）'} },
+
+  // か（何・夏・家）※2年
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'これは いったい @@ ですか。', read:'なに',
+    answer:'何', choices:['何','夏','家'],
+    meaning:{'何':'なに','夏':'なつ','家':'いえ'} },
+
+  // かい（絵・海・回）※2年
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'クレヨンで きれいな @@ を かく。', read:'え',
+    answer:'絵', choices:['絵','海','回'],
+    meaning:{'絵':'え','海':'うみ','回':'まわる'} },
+
+  // かく（角・画）※2年
+  { type:'onaji', tag:'同じ読み：かく',
+    sentence:'牛の あたまに @@ が ある。', read:'つの',
+    answer:'角', choices:['角','画'],
+    meaning:{'角':'つの・かど','画':'が（絵画の画）'} },
+
+  // さい（細・才・西）※2年
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'@@ い いとで ぬいものを する。', read:'ほそ',
+    answer:'細', choices:['細','才','西'],
+    meaning:{'細':'ほそい','才':'さい（年れいの才）','西':'にし'} },
+
+  // ぜん（前・全）※2年
+  { type:'onaji', tag:'同じ読み：ぜん',
+    sentence:'れつの 一ばん @@ に ならぶ。', read:'まえ',
+    answer:'前', choices:['前','全'],
+    meaning:{'前':'まえ','全':'ぜん（全部の全）'} },
+
+  // しゅ（首・守・取）※2年
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'キリンは @@ が とても ながい。', read:'くび',
+    answer:'首', choices:['首','守','取'],
+    meaning:{'首':'くび','守':'まもる','取':'とる'} },
+
+  // しょ（書・暑・所）※2年
+  { type:'onaji', tag:'同じ読み：しょ',
+    sentence:'ノートに ていねいに 字を @@ く。', read:'か',
+    answer:'書', choices:['書','暑','所'],
+    meaning:{'書':'かく','暑':'あつい','所':'ところ'} },
+
+  // ── 別の音読みで作る グループ（複数の読みも学べる）──
+  // えん（円・園・遠）
+  { type:'onaji', tag:'同じ読み：えん',
+    sentence:'とても @@ い 学校まで あるく。', read:'とお',
+    answer:'遠', choices:['遠','円','園'],
+    meaning:{'遠':'とおい','円':'まるい','園':'えん（公園の園）'} },
+  { type:'onaji', tag:'同じ読み：えん',
+    sentence:'ふちの @@ い おさらに のせる。', read:'まる',
+    answer:'円', choices:['円','遠','園'],
+    meaning:{'円':'まるい','遠':'とおい','園':'えん（公園の園）'} },
+  { type:'onaji', tag:'同じ読み：えん',
+    sentence:'どうぶつ @@ で パンダを 見る。', read:'えん',
+    answer:'園', choices:['園','遠','円'],
+    meaning:{'園':'えん（動物園の園）','遠':'とおい','円':'まるい'} },
+
+  // そく（足・速・息）
+  { type:'onaji', tag:'同じ読み：そく',
+    sentence:'かけっこで @@ が とても はやい。', read:'あし',
+    answer:'足', choices:['足','速','息'],
+    meaning:{'足':'あし','速':'スピードが はやい','息':'いき'} },
+  { type:'onaji', tag:'同じ読み：そく',
+    sentence:'大きく @@ を すって おちつく。', read:'いき',
+    answer:'息', choices:['息','足','速'],
+    meaning:{'息':'いき','足':'あし','速':'スピードが はやい'} },
+
+  // なん（男・南）
+  { type:'onaji', tag:'同じ読み：なん',
+    sentence:'@@ の子が 元気に 走る。', read:'おとこ',
+    answer:'男', choices:['男','南'],
+    meaning:{'男':'おとこ','南':'みなみ'} },
+
+  // うん（雲・運）
+  { type:'onaji', tag:'同じ読み：うん',
+    sentence:'空に 白い @@ が うかぶ。', read:'くも',
+    answer:'雲', choices:['雲','運'],
+    meaning:{'雲':'くも','運':'はこぶ'} },
+  { type:'onaji', tag:'同じ読み：うん',
+    sentence:'おもい にもつを 二かいへ @@ ぶ。', read:'はこ',
+    answer:'運', choices:['運','雲'],
+    meaning:{'運':'はこぶ','雲':'くも'} },
+
+  // じょう（乗・上・場）
+  { type:'onaji', tag:'同じ読み：じょう',
+    sentence:'バスに @@ って 出かける。', read:'の',
+    answer:'乗', choices:['乗','上','場'],
+    meaning:{'乗':'のる','上':'うえ','場':'ば（広場の場）'} },
+
+  // ず（頭・図・豆）
+  { type:'onaji', tag:'同じ読み：ず',
+    sentence:'かぜを ひいて @@ が いたい。', read:'あたま',
+    answer:'頭', choices:['頭','図','豆'],
+    meaning:{'頭':'あたま','図':'ず（地図の図）','豆':'まめ'} },
+
+  // ふ（風・父・負）
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'つよい @@ が ふいてくる。', read:'かぜ',
+    answer:'風', choices:['風','父','負'],
+    meaning:{'風':'かぜ','父':'ちち','負':'まける・せおう'} },
+
+  // じょ（女・助）
+  { type:'onaji', tag:'同じ読み：じょ',
+    sentence:'@@ の子と なわとびを する。', read:'おんな',
+    answer:'女', choices:['女','助'],
+    meaning:{'女':'おんな','助':'たすける'} },
+
+  // じん（人・神）
+  { type:'onaji', tag:'同じ読み：じん',
+    sentence:'えきで やさしい @@ に 出会う。', read:'ひと',
+    answer:'人', choices:['人','神'],
+    meaning:{'人':'ひと','神':'かみさま'} },
+
+  // りゅう（立・流）
+  { type:'onaji', tag:'同じ読み：りゅう',
+    sentence:'いすから さっと @@ つ。', read:'た',
+    answer:'立', choices:['立','流'],
+    meaning:{'立':'たつ','流':'ながれる'} },
+
+  // ろく（六・緑）
+  { type:'onaji', tag:'同じ読み：ろく',
+    sentence:'あめ玉が @@ つ ある。', read:'むっ',
+    answer:'六', choices:['六','緑'],
+    meaning:{'六':'むっつ（６）','緑':'みどり'} },
+
+  // げ（外・下・夏）
+  { type:'onaji', tag:'同じ読み：げ',
+    sentence:'ドアを あけて @@ に 出る。', read:'そと',
+    answer:'外', choices:['外','下','夏'],
+    meaning:{'外':'そと','下':'した','夏':'なつ'} },
+
+  // がく（学・楽）
+  { type:'onaji', tag:'同じ読み：がく',
+    sentence:'あたらしい かん字を @@ ぶ。', read:'まな',
+    answer:'学', choices:['学','楽'],
+    meaning:{'学':'まなぶ','楽':'たのしい'} },
+
+  // さ（左・作）
+  { type:'onaji', tag:'同じ読み：さ',
+    sentence:'@@ の 手を まっすぐ あげる。', read:'ひだり',
+    answer:'左', choices:['左','作'],
+    meaning:{'左':'ひだり','作':'つくる'} },
+
+  // だい（弟・大・内）
+  { type:'onaji', tag:'同じ読み：だい',
+    sentence:'ぼくの @@ は 5さいだ。', read:'おとうと',
+    answer:'弟', choices:['弟','大','内'],
+    meaning:{'弟':'おとうと','大':'おおきい','内':'うち'} },
+
+  // へい（平・病）
+  { type:'onaji', tag:'同じ読み：へい',
+    sentence:'@@ らな 一本道を あるく。', read:'たい',
+    answer:'平', choices:['平','病'],
+    meaning:{'平':'たいら','病':'びょうき・やまい'} },
+
+  // ══════════ 4年生の「同じ読み」グループ（第1波・あ〜こ）══════════
+  // あい（愛・相）
+  { type:'onaji', tag:'同じ読み：あい',
+    sentence:'ペットを 家ぞくのように @@ する。', read:'あい',
+    answer:'愛', choices:['愛','相'],
+    meaning:{'愛':'あい（大切に思う）','相':'あい（相手・あいて）'} },
+  // あん（案・安・暗）
+  { type:'onaji', tag:'同じ読み：あん',
+    sentence:'クラスで あそびの よい @@ を 出しあう。', read:'あん',
+    answer:'案', choices:['案','安','暗'],
+    meaning:{'案':'あん（考え・アイデア）','安':'やすい','暗':'くらい'} },
+  // い（以・衣・位）
+  { type:'onaji', tag:'同じ読み：い',
+    sentence:'三年生 @@ じょうが 校ていに あつまる。', read:'い',
+    answer:'以', choices:['以','衣','位'],
+    meaning:{'以':'い（〜より）','衣':'ころも','位':'くらい'} },
+  { type:'onaji', tag:'同じ読み：い',
+    sentence:'白い @@ るいに きがえる。', read:'い',
+    answer:'衣', choices:['衣','位','以'],
+    meaning:{'衣':'ころも（着るもの）','位':'くらい','以':'い（〜より）'} },
+  { type:'onaji', tag:'同じ読み：い',
+    sentence:'かけっこで 一 @@ に なった。', read:'い',
+    answer:'位', choices:['位','以','衣'],
+    meaning:{'位':'くらい（順位）','以':'い（〜より）','衣':'ころも'} },
+  // いん（印・員・院）
+  { type:'onaji', tag:'同じ読み：いん',
+    sentence:'本の 大切な ところに @@ を つける。', read:'しるし',
+    answer:'印', choices:['印','員','院'],
+    meaning:{'印':'しるし','員':'いん（係の人）','院':'いん（病院）'} },
+  // えい（英・栄・泳）
+  { type:'onaji', tag:'同じ読み：えい',
+    sentence:'@@ ごを ねっしんに ならう。', read:'えい',
+    answer:'英', choices:['英','栄','泳'],
+    meaning:{'英':'えい（英語）','栄':'さかえる','泳':'およぐ'} },
+  { type:'onaji', tag:'同じ読み：えい',
+    sentence:'むかし この 港町は とても @@ えた。', read:'さか',
+    answer:'栄', choices:['栄','英','泳'],
+    meaning:{'栄':'さかえる','英':'えい（英語）','泳':'およぐ'} },
+  // えん（塩・円・園）
+  { type:'onaji', tag:'同じ読み：えん',
+    sentence:'ゆで玉子に @@ を つけて 食べる。', read:'しお',
+    answer:'塩', choices:['塩','円','園'],
+    meaning:{'塩':'しお','円':'えん（お金・まる）','園':'えん（公園）'} },
+  // おく（億・屋）
+  { type:'onaji', tag:'同じ読み：おく',
+    sentence:'一 @@ 円を こえる 大きな ビルだ。', read:'おく',
+    answer:'億', choices:['億','屋'],
+    meaning:{'億':'おく（数の単位）','屋':'や（部屋・屋根）'} },
+  // か（加・果・課・貨）
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'スープに しおを 少し @@ える。', read:'くわ',
+    answer:'加', choices:['加','果','課'],
+    meaning:{'加':'くわえる','果':'はたす・くだもの','課':'か（教科の課）'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'やくそくを さいごまで @@ たす。', read:'は',
+    answer:'果', choices:['果','加','貨'],
+    meaning:{'果':'はたす・くだもの','加':'くわえる','貨':'か（お金・貨物）'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'きょうの 学しゅうは 三 @@ までだ。', read:'か',
+    answer:'課', choices:['課','加','果'],
+    meaning:{'課':'か（教科や仕事の区切り）','加':'くわえる','果':'はたす'} },
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'外国の お金を 日本の つう @@ に かえる。', read:'か',
+    answer:'貨', choices:['貨','加','課'],
+    meaning:{'貨':'か（お金・貨物）','加':'くわえる','課':'か（教科の課）'} },
+  // か（鹿・火・花）※鹿児島の鹿
+  { type:'onaji', tag:'同じ読み：か',
+    sentence:'@@ ごしまけんは 九州の 南に ある。', read:'か',
+    answer:'鹿', choices:['鹿','火','花'],
+    meaning:{'鹿':'か（鹿児島・しか）','火':'ひ','花':'はな'} },
+  // かい（改・械・会・開）
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'電車の ダイヤを @@ せいする。', read:'かい',
+    answer:'改', choices:['改','械','会'],
+    meaning:{'改':'かい（あらためる）','械':'かい（機械）','会':'あう・かい'} },
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'工場の き @@ を そうさする。', read:'かい',
+    answer:'械', choices:['械','改','開'],
+    meaning:{'械':'かい（道具・機械）','改':'あらためる','開':'ひらく'} },
+  // がい（害・街・外）
+  { type:'onaji', tag:'同じ読み：がい',
+    sentence:'たばこは 体に @@ が ある。', read:'がい',
+    answer:'害', choices:['害','街','外'],
+    meaning:{'害':'がい（悪いえいきょう）','街':'まち','外':'そと'} },
+  { type:'onaji', tag:'同じ読み：がい',
+    sentence:'ネオンが かがやく @@ を あるく。', read:'まち',
+    answer:'街', choices:['街','害','外'],
+    meaning:{'街':'まち','害':'がい（悪いえいきょう）','外':'そと'} },
+  // かく（各・覚・角・画）
+  { type:'onaji', tag:'同じ読み：かく',
+    sentence:'@@ じが おべんとうを もちよる。', read:'かく',
+    answer:'各', choices:['各','覚','角'],
+    meaning:{'各':'かく（それぞれ）','覚':'おぼえる','角':'かど・つの'} },
+  { type:'onaji', tag:'同じ読み：かく',
+    sentence:'九九を すらすら @@ える。', read:'おぼ',
+    answer:'覚', choices:['覚','各','画'],
+    meaning:{'覚':'おぼえる','各':'かく（それぞれ）','画':'が（絵をかく）'} },
+  // かん（完・官・管・関・観）
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'プラモデルが やっと @@ せいした。', read:'かん',
+    answer:'完', choices:['完','官','管','関','観'],
+    meaning:{'完':'かん（完成・おわり）','官':'かん（やくにん）','管':'くだ','関':'せき・かかわる','観':'かん（よく見る）'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'けいさつ @@ が パトロールする。', read:'かん',
+    answer:'官', choices:['官','完','観'],
+    meaning:{'官':'かん（やくにん）','完':'かん（完成）','観':'かん（よく見る）'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'ホースの @@ から 水が ふき出す。', read:'くだ',
+    answer:'管', choices:['管','関','官'],
+    meaning:{'管':'くだ（細いつつ）','関':'せき・かかわる','官':'かん（やくにん）'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'二つの 国の @@ しんを もつ。', read:'かん',
+    answer:'関', choices:['関','完','観'],
+    meaning:{'関':'せき・かかわる','完':'かん（完成）','観':'かん（よく見る）'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'アサガオを よく @@ さつする。', read:'かん',
+    answer:'観', choices:['観','完','管'],
+    meaning:{'観':'かん（よく見る）','完':'かん（完成）','管':'くだ'} },
+  // がん（願・岩・顔）
+  { type:'onaji', tag:'同じ読み：がん',
+    sentence:'合かくを 強く @@ う。', read:'ねが',
+    answer:'願', choices:['願','岩','顔'],
+    meaning:{'願':'ねがう','岩':'いわ','顔':'かお'} },
+  // が（賀・芽）
+  { type:'onaji', tag:'同じ読み：が',
+    sentence:'年 @@ じょうを 書いて 出す。', read:'が',
+    answer:'賀', choices:['賀','芽'],
+    meaning:{'賀':'が（おいわい）','芽':'め'} },
+  { type:'onaji', tag:'同じ読み：が',
+    sentence:'まいた たねから 小さな @@ が 出た。', read:'め',
+    answer:'芽', choices:['芽','賀'],
+    meaning:{'芽':'め（草木のめ）','賀':'が（おいわい）'} },
+  // き（希・季・旗・器・機・岐）
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'つよく @@ ぼうを もつ。', read:'き',
+    answer:'希', choices:['希','季','器'],
+    meaning:{'希':'き（ねがう・まれ）','季':'き（きせつ）','器':'うつわ'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'日本には 四つの @@ せつが ある。', read:'き',
+    answer:'季', choices:['季','希','機'],
+    meaning:{'季':'き（きせつ）','希':'き（ねがう）','機':'き（きかい）'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'うんどう会で 赤い @@ を ふる。', read:'はた',
+    answer:'旗', choices:['旗','希','季'],
+    meaning:{'旗':'はた','希':'き（ねがう）','季':'き（きせつ）'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'あたたかい りょうりを @@ に もりつける。', read:'うつわ',
+    answer:'器', choices:['器','機','旗'],
+    meaning:{'器':'うつわ','機':'き（きかい）','旗':'はた'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'そらを とぶ ひこう @@ を 見上げる。', read:'き',
+    answer:'機', choices:['機','器','希'],
+    meaning:{'機':'き（きかい）','器':'うつわ','希':'き（ねがう）'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'道が 左右に わかれる ぶん @@ 点。', read:'き',
+    answer:'岐', choices:['岐','季','希'],
+    meaning:{'岐':'き（道がわかれる）','季':'き（きせつ）','希':'き（ねがう）'} },
+  // きゅう（求・泣・給）
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'たすけを 大ごえで @@ める。', read:'もと',
+    answer:'求', choices:['求','泣','給'],
+    meaning:{'求':'もとめる','泣':'なく','給':'きゅう（きゅうしょく）'} },
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'ころんで いたくて @@ いた。', read:'な',
+    answer:'泣', choices:['泣','求','給'],
+    meaning:{'泣':'なく','求':'もとめる','給':'きゅう（きゅうしょく）'} },
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'学校で @@ しょくを 食べる。', read:'きゅう',
+    answer:'給', choices:['給','求','泣'],
+    meaning:{'給':'きゅう（あたえる・きゅうしょく）','求':'もとめる','泣':'なく'} },
+  // きょ（挙・去）
+  { type:'onaji', tag:'同じ読み：きょ',
+    sentence:'わかる人は 手を まっすぐ @@ げる。', read:'あ',
+    answer:'挙', choices:['挙','去'],
+    meaning:{'挙':'あげる（手をあげる）','去':'さる（去年）'} },
+  // きょう（共・協・鏡・競）
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'なかまと @@ に 力を 合わせる。', read:'とも',
+    answer:'共', choices:['共','協','競'],
+    meaning:{'共':'とも（いっしょ）','協':'きょう（力を合わせる）','競':'きそう'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'みんなで @@ 力して かたづける。', read:'きょう',
+    answer:'協', choices:['協','共','鏡'],
+    meaning:{'協':'きょう（力を合わせる）','共':'とも（いっしょ）','鏡':'かがみ'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'@@ に 顔を うつして かみを とかす。', read:'かがみ',
+    answer:'鏡', choices:['鏡','競','共'],
+    meaning:{'鏡':'かがみ','競':'きそう','共':'とも（いっしょ）'} },
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'ゴールめざして 二人で @@ う。', read:'きそ',
+    answer:'競', choices:['競','鏡','協'],
+    meaning:{'競':'きそう','鏡':'かがみ','協':'きょう（力を合わせる）'} },
+  // きょく（極・曲・局）
+  { type:'onaji', tag:'同じ読み：きょく',
+    sentence:'北 @@ には 氷の 海が ひろがる。', read:'きょく',
+    answer:'極', choices:['極','曲','局'],
+    meaning:{'極':'きょく（はて・きわめる）','曲':'まがる','局':'きょく（ゆうびん局）'} },
+  // くん（訓・君）
+  { type:'onaji', tag:'同じ読み：くん',
+    sentence:'かん字の @@ よみを ならう。', read:'くん',
+    answer:'訓', choices:['訓','君'],
+    meaning:{'訓':'くん（訓読み・おしえ）','君':'きみ'} },
+  // ぐん（軍・郡・群）
+  { type:'onaji', tag:'同じ読み：ぐん',
+    sentence:'おもちゃの @@ たいを ならべる。', read:'ぐん',
+    answer:'軍', choices:['軍','郡','群'],
+    meaning:{'軍':'ぐん（ぐんたい）','郡':'ぐん（市や郡）','群':'むれ'} },
+  { type:'onaji', tag:'同じ読み：ぐん',
+    sentence:'となりの @@ から 学校に 通う。', read:'ぐん',
+    answer:'郡', choices:['郡','軍','群'],
+    meaning:{'郡':'ぐん（市や郡）','軍':'ぐん（ぐんたい）','群':'むれ'} },
+  { type:'onaji', tag:'同じ読み：ぐん',
+    sentence:'ひつじの @@ れを おいかける。', read:'む',
+    answer:'群', choices:['群','軍','郡'],
+    meaning:{'群':'むれ（むれる）','軍':'ぐん（ぐんたい）','郡':'ぐん（市や郡）'} },
+  // けい（径・景）
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'円の はん @@ を ものさしで はかる。', read:'けい',
+    answer:'径', choices:['径','景','形'],
+    meaning:{'径':'けい（さしわたし・半径）','景':'けい（けしき）','形':'かたち'} },
+  { type:'onaji', tag:'同じ読み：けい',
+    sentence:'山の上からの @@ しきが きれいだ。', read:'けい',
+    answer:'景', choices:['景','径','軽'],
+    meaning:{'景':'けい（けしき）','径':'けい（半径）','軽':'かるい'} },
+  // けつ（欠・結）
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'おちゃわんの ふちが すこし @@ ける。', read:'か',
+    answer:'欠', choices:['欠','結','決'],
+    meaning:{'欠':'かける（足りない）','結':'むすぶ','決':'きめる'} },
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'くつひもを かたく @@ ぶ。', read:'むす',
+    answer:'結', choices:['結','欠','血'],
+    meaning:{'結':'むすぶ','欠':'かける','血':'ち'} },
+  // けん（建・健・験）
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'野原に 新しい 家を @@ てる。', read:'た',
+    answer:'建', choices:['建','健','験'],
+    meaning:{'建':'たてる','健':'けん（けんこう）','験':'けん（じっけん）'} },
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'まい日 走って @@ こうな 体を つくる。', read:'けん',
+    answer:'健', choices:['健','建','県'],
+    meaning:{'健':'けん（じょうぶ・けんこう）','建':'たてる','県':'けん（都道府県）'} },
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'りかの じっ @@ で 水を あたためる。', read:'けん',
+    answer:'験', choices:['験','建','健'],
+    meaning:{'験':'けん（ためす・じっけん）','建':'たてる','健':'けん（けんこう）'} },
+  // こ（固・古・庫）
+  { type:'onaji', tag:'同じ読み：こ',
+    sentence:'ねん土を ぎゅっと @@ める。', read:'かた',
+    answer:'固', choices:['固','古','庫'],
+    meaning:{'固':'かためる','古':'ふるい','庫':'こ（倉庫）'} },
+  // こう（功・好・候・康・香）
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'じっけんが せい @@ する。', read:'こう',
+    answer:'功', choices:['功','好','候'],
+    meaning:{'功':'こう（てがら）','好':'このむ','候':'こう（てんこう）'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'おにぎりが 何より @@ きだ。', read:'す',
+    answer:'好', choices:['好','功','香'],
+    meaning:{'好':'すき・このむ','功':'こう（てがら）','香':'かおり'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'天 @@ が だんだん よくなる。', read:'こう',
+    answer:'候', choices:['候','康','好'],
+    meaning:{'候':'こう（てんこう・きせつ）','康':'こう（けんこう）','好':'このむ'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'けん @@ しんだんを うける。', read:'こう',
+    answer:'康', choices:['康','候','功'],
+    meaning:{'康':'こう（けんこう・やすらか）','候':'こう（てんこう）','功':'こう（てがら）'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'花だんから よい @@ りが ただよう。', read:'かお',
+    answer:'香', choices:['香','好','康'],
+    meaning:{'香':'かおり','好':'このむ','康':'こう（けんこう）'} },
+
+  // ══════════ 4年生の「同じ読み」グループ（第2波・さ〜と）══════════
+  // さ（差・佐・左）
+  { type:'onaji', tag:'同じ読み：さ',
+    sentence:'二つの たかさの @@ を 見くらべる。', read:'さ',
+    answer:'差', choices:['差','佐','左'],
+    meaning:{'差':'さ（ちがい・さす）','佐':'さ（佐賀・たすける）','左':'ひだり'} },
+  { type:'onaji', tag:'同じ読み：さ',
+    sentence:'@@ がけんは 九州に ある。', read:'さ',
+    answer:'佐', choices:['佐','差','左'],
+    meaning:{'佐':'さ（佐賀県・たすける）','差':'さ（ちがい）','左':'ひだり'} },
+  // さい（菜・最・埼）
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'畑で とれた 野 @@ を 食べる。', read:'さい',
+    answer:'菜', choices:['菜','最','才'],
+    meaning:{'菜':'さい（野菜・な）','最':'もっとも','才':'さい（才のう・年）'} },
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'クラスで @@ こう記ろくを 出す。', read:'さい',
+    answer:'最', choices:['最','菜','細'],
+    meaning:{'最':'さい（もっとも）','菜':'さい（野菜）','細':'ほそい'} },
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'@@ たまけんに すんでいる。', read:'さい',
+    answer:'埼', choices:['埼','最','菜'],
+    meaning:{'埼':'さい（埼玉県）','最':'もっとも','菜':'な'} },
+  // さき（崎・先）
+  { type:'onaji', tag:'同じ読み：さき',
+    sentence:'みや @@ けんは 九州の 南だ。', read:'さき',
+    answer:'崎', choices:['崎','先'],
+    meaning:{'崎':'さき（宮崎県・みさき）','先':'さき（先に行く）'} },
+  // さく（昨・作）
+  { type:'onaji', tag:'同じ読み：さく',
+    sentence:'@@ じつ 雨が ふった。', read:'さく',
+    answer:'昨', choices:['昨','作'],
+    meaning:{'昨':'さく（昨日＝きのう）','作':'つくる'} },
+  // さつ（札・刷・察）
+  { type:'onaji', tag:'同じ読み：さつ',
+    sentence:'千円 @@ で 買いものを する。', read:'さつ',
+    answer:'札', choices:['札','刷','察'],
+    meaning:{'札':'さつ（お札・ふだ）','刷':'する（印刷）','察':'さつ（気づく）'} },
+  { type:'onaji', tag:'同じ読み：さつ',
+    sentence:'ポスターを たくさん いん @@ する。', read:'さつ',
+    answer:'刷', choices:['刷','札','察'],
+    meaning:{'刷':'さつ（印刷・する）','札':'ふだ','察':'さつ（けいさつ）'} },
+  { type:'onaji', tag:'同じ読み：さつ',
+    sentence:'そっと あい手の 気もちを @@ する。', read:'さつ',
+    answer:'察', choices:['察','札','刷'],
+    meaning:{'察':'さつ（おしはかる・けいさつ）','札':'ふだ','刷':'する（印刷）'} },
+  // さん（参・産・散）
+  { type:'onaji', tag:'同じ読み：さん',
+    sentence:'お母さんと おはかに @@ る。', read:'まい',
+    answer:'参', choices:['参','産','散'],
+    meaning:{'参':'まいる（行く）','産':'うむ','散':'ちる'} },
+  { type:'onaji', tag:'同じ読み：さん',
+    sentence:'にわとりが たまごを @@ む。', read:'う',
+    answer:'産', choices:['産','参','散'],
+    meaning:{'産':'うむ','参':'まいる','散':'ちる'} },
+  { type:'onaji', tag:'同じ読み：さん',
+    sentence:'風で 花びらが ひらひら @@ る。', read:'ち',
+    answer:'散', choices:['散','参','産'],
+    meaning:{'散':'ちる','参':'まいる','産':'うむ'} },
+  // さか（阪・坂）
+  { type:'onaji', tag:'同じ読み：さか',
+    sentence:'おお @@ には 大きな しろが ある。', read:'さか',
+    answer:'阪', choices:['阪','坂'],
+    meaning:{'阪':'さか（大阪）','坂':'さか（坂道）'} },
+  // し（氏・司・試）
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'山田 @@ が だいひょうで あいさつする。', read:'し',
+    answer:'氏', choices:['氏','司','試'],
+    meaning:{'氏':'し（〜さん・うじ）','司':'し（つかさどる）','試':'こころみる'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'学級会の @@ かいを つとめる。', read:'し',
+    answer:'司', choices:['司','氏','試'],
+    meaning:{'司':'し（つかさどる・司会）','氏':'うじ','試':'ためす'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'じっけんを 何度も @@ みる。', read:'こころ',
+    answer:'試', choices:['試','氏','司'],
+    meaning:{'試':'こころみる・ためす','氏':'うじ','司':'し（司会）'} },
+  // じ（児・治・滋・辞）
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'@@ どうかんで 友だちと あそぶ。', read:'じ',
+    answer:'児', choices:['児','治','辞'],
+    meaning:{'児':'じ（子ども）','治':'なおす','辞':'じ（辞書・やめる）'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'けがが 早く @@ る。', read:'なお',
+    answer:'治', choices:['治','児','滋'],
+    meaning:{'治':'なおる・なおす','児':'じ（子ども）','滋':'じ（滋賀県）'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'@@ がけんには 大きな みずうみが ある。', read:'じ',
+    answer:'滋', choices:['滋','児','治'],
+    meaning:{'滋':'じ（滋賀県）','児':'じ（子ども）','治':'なおす'} },
+  { type:'onaji', tag:'同じ読み：じ',
+    sentence:'わからない ことばを @@ しょで しらべる。', read:'じ',
+    answer:'辞', choices:['辞','児','滋'],
+    meaning:{'辞':'じ（辞書・ことば）','児':'じ（子ども）','滋':'じ（滋賀県）'} },
+  // しつ（失・室）
+  { type:'onaji', tag:'同じ読み：しつ',
+    sentence:'大切な かさを どこかで @@ くす。', read:'な',
+    answer:'失', choices:['失','室'],
+    meaning:{'失':'うしなう（なくす）','室':'しつ（教室）'} },
+  // しゃく（借・昔・石）
+  { type:'onaji', tag:'同じ読み：しゃく',
+    sentence:'ともだちに 本を @@ りる。', read:'か',
+    answer:'借', choices:['借','昔','石'],
+    meaning:{'借':'かりる','昔':'むかし','石':'いし'} },
+  // しゅ（種・主・守）
+  { type:'onaji', tag:'同じ読み：しゅ',
+    sentence:'アサガオの @@ を まく。', read:'たね',
+    answer:'種', choices:['種','主','守'],
+    meaning:{'種':'たね','主':'ぬし・おも','守':'まもる'} },
+  // しゅう（周・週）
+  { type:'onaji', tag:'同じ読み：しゅう',
+    sentence:'校ていの @@ りを 走る。', read:'まわ',
+    answer:'周', choices:['周','週'],
+    meaning:{'周':'まわり','週':'しゅう（一週間）'} },
+  // しゅく（祝・宿）
+  { type:'onaji', tag:'同じ読み：しゅく',
+    sentence:'たんじょう日を みんなで @@ う。', read:'いわ',
+    answer:'祝', choices:['祝','宿'],
+    meaning:{'祝':'いわう','宿':'やど（宿題）'} },
+  // しょ（初・書・所）
+  { type:'onaji', tag:'同じ読み：しょ',
+    sentence:'@@ めて 一人で 電車に のる。', read:'はじ',
+    answer:'初', choices:['初','書','所'],
+    meaning:{'初':'はじめ・はつ','書':'かく','所':'しょ（場所）'} },
+  // しょう（松・笑・唱・焼・照）
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'にわの @@ の 木が 大きい。', read:'まつ',
+    answer:'松', choices:['松','笑','唱'],
+    meaning:{'松':'まつ','笑':'わらう','唱':'となえる'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'おかしくて 大きな声で @@ う。', read:'わら',
+    answer:'笑', choices:['笑','松','焼'],
+    meaning:{'笑':'わらう','松':'まつ','焼':'やく'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'クラスで がっ @@ を する。', read:'しょう',
+    answer:'唱', choices:['唱','松','照'],
+    meaning:{'唱':'しょう（となえる・合唱）','松':'まつ','照':'てる'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'さかなを こんがり @@ く。', read:'や',
+    answer:'焼', choices:['焼','笑','松'],
+    meaning:{'焼':'やく・やける','笑':'わらう','松':'まつ'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'月が よる道を あかるく @@ らす。', read:'て',
+    answer:'照', choices:['照','焼','唱'],
+    meaning:{'照':'てる・てらす','焼':'やく','唱':'となえる'} },
+  // じょう（城・縄・上）
+  { type:'onaji', tag:'同じ読み：じょう',
+    sentence:'山の上に 古い お @@ が ある。', read:'しろ',
+    answer:'城', choices:['城','縄','上'],
+    meaning:{'城':'しろ','縄':'なわ','上':'うえ'} },
+  { type:'onaji', tag:'同じ読み：じょう',
+    sentence:'大むかしの @@ もん時代を ならう。', read:'じょう',
+    answer:'縄', choices:['縄','城','上'],
+    meaning:{'縄':'じょう（縄文・なわ）','城':'しろ','上':'うえ'} },
+  // しん（臣・信）
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'むかしの 大 @@ が おしろに あつまる。', read:'しん',
+    answer:'臣', choices:['臣','信','新'],
+    meaning:{'臣':'しん（けらい・大臣）','信':'しん（しんじる）','新':'あたらしい'} },
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'友だちを 心から @@ じる。', read:'しん',
+    answer:'信', choices:['信','臣','進'],
+    meaning:{'信':'しん（しんじる）','臣':'しん（大臣）','進':'すすむ'} },
+  // せい（成・省・清・静）
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'たてた けいかくが ついに @@ りたつ。', read:'な',
+    answer:'成', choices:['成','省','清'],
+    meaning:{'成':'なる（成りたつ）','省':'はぶく','清':'きよい'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'むだを @@ いて シンプルに する。', read:'はぶ',
+    answer:'省', choices:['省','成','静'],
+    meaning:{'省':'はぶく','成':'なる','静':'しずか'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'@@ らかな ながれの 川であそぶ。', read:'きよ',
+    answer:'清', choices:['清','成','静'],
+    meaning:{'清':'きよい','成':'なる','静':'しずか'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'としょかんでは @@ かに する。', read:'しず',
+    answer:'静', choices:['静','清','省'],
+    meaning:{'静':'しずか','清':'きよい','省':'はぶく'} },
+  // せき（席・積）
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'電車の あいた @@ に すわる。', read:'せき',
+    answer:'席', choices:['席','積','石'],
+    meaning:{'席':'せき（すわる場所）','積':'つむ','石':'いし'} },
+  { type:'onaji', tag:'同じ読み：せき',
+    sentence:'ふゆ 道に 雪が どんどん @@ もる。', read:'つ',
+    answer:'積', choices:['積','席','赤'],
+    meaning:{'積':'つむ・つもる','席':'せき（すわる場所）','赤':'あか'} },
+  // せつ（折・節・説）
+  { type:'onaji', tag:'同じ読み：せつ',
+    sentence:'色紙を まん中で 二つに @@ る。', read:'お',
+    answer:'折', choices:['折','節','説'],
+    meaning:{'折':'おる','節':'ふし','説':'とく（せつめい）'} },
+  { type:'onaji', tag:'同じ読み：せつ',
+    sentence:'竹の @@ を 一つずつ かぞえる。', read:'ふし',
+    answer:'節', choices:['節','折','説'],
+    meaning:{'節':'ふし','折':'おる','説':'とく（せつめい）'} },
+  { type:'onaji', tag:'同じ読み：せつ',
+    sentence:'あそびかたを みんなに @@ めいする。', read:'せつ',
+    answer:'説', choices:['説','折','節'],
+    meaning:{'説':'せつ（せつめい・とく）','折':'おる','節':'ふし'} },
+  // せん（浅・戦・選）
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'この 川は こどもでも わたれるほど @@ い。', read:'あさ',
+    answer:'浅', choices:['浅','戦','船'],
+    meaning:{'浅':'あさい','戦':'たたかう','船':'ふね'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'ゆうしゃが まおうと @@ う。', read:'たたか',
+    answer:'戦', choices:['戦','浅','線'],
+    meaning:{'戦':'たたかう','浅':'あさい','線':'せん（直線）'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'クラスの だいひょうを 一人 @@ ぶ。', read:'えら',
+    answer:'選', choices:['選','戦','線'],
+    meaning:{'選':'えらぶ','戦':'たたかう','線':'せん（直線）'} },
+  // そう（争・倉・巣）
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'おもちゃの とりあいで 弟と @@ う。', read:'あらそ',
+    answer:'争', choices:['争','倉','巣'],
+    meaning:{'争':'あらそう','倉':'くら','巣':'す'} },
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'古い @@ に 米を しまう。', read:'くら',
+    answer:'倉', choices:['倉','争','巣'],
+    meaning:{'倉':'くら','争':'あらそう','巣':'す'} },
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'つばめが 屋ねに @@ を つくる。', read:'す',
+    answer:'巣', choices:['巣','倉','争'],
+    meaning:{'巣':'す','倉':'くら','争':'あらそう'} },
+  // そく（束・側）
+  { type:'onaji', tag:'同じ読み：そく',
+    sentence:'花を 一 @@ 買って かえる。', read:'たば',
+    answer:'束', choices:['束','側','足'],
+    meaning:{'束':'たば','側':'がわ','足':'あし'} },
+  { type:'onaji', tag:'同じ読み：そく',
+    sentence:'道の 右 @@ を ならんで あるく。', read:'がわ',
+    answer:'側', choices:['側','束','息'],
+    meaning:{'側':'がわ','束':'たば','息':'いき'} },
+  // そん（孫・村）
+  { type:'onaji', tag:'同じ読み：そん',
+    sentence:'おじいさんの @@ は 三人 いる。', read:'まご',
+    answer:'孫', choices:['孫','村'],
+    meaning:{'孫':'まご','村':'むら'} },
+  // たい（帯・隊）
+  { type:'onaji', tag:'同じ読み：たい',
+    sentence:'ズボンを @@ で とめる。', read:'おび',
+    answer:'帯', choices:['帯','隊','体'],
+    meaning:{'帯':'おび','隊':'たい（ぐんたい）','体':'からだ'} },
+  { type:'onaji', tag:'同じ読み：たい',
+    sentence:'ぼうけん @@ が 出ぱつする。', read:'たい',
+    answer:'隊', choices:['隊','帯','対'],
+    meaning:{'隊':'たい（あつまり・部隊）','帯':'おび','対':'たい（向かい合う）'} },
+  // たん（単・炭・短）
+  { type:'onaji', tag:'同じ読み：たん',
+    sentence:'えい語の @@ ごを おぼえる。', read:'たん',
+    answer:'単', choices:['単','炭','短'],
+    meaning:{'単':'たん（ひとつ・単語）','炭':'すみ','短':'みじかい'} },
+  // ち（置・地・知）
+  { type:'onaji', tag:'同じ読み：ち',
+    sentence:'読んだ 本を つくえに @@ く。', read:'お',
+    answer:'置', choices:['置','地','知'],
+    meaning:{'置':'おく','地':'ち（土地）','知':'しる'} },
+  // ちゅう（仲・沖）
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'友だちと @@ よく あそぶ。', read:'なか',
+    answer:'仲', choices:['仲','沖','注'],
+    meaning:{'仲':'なか（仲よし）','沖':'おき','注':'そそぐ'} },
+  { type:'onaji', tag:'同じ読み：ちゅう',
+    sentence:'@@ の ほうに 大きな 船が 見える。', read:'おき',
+    answer:'沖', choices:['沖','仲','柱'],
+    meaning:{'沖':'おき（海の沖）','仲':'なか','柱':'はしら'} },
+  // ちょう（兆・町・鳥）
+  { type:'onaji', tag:'同じ読み：ちょう',
+    sentence:'よくない ことが おこりそうな @@ しを かんじる。', read:'きざ',
+    answer:'兆', choices:['兆','町','鳥'],
+    meaning:{'兆':'きざし（しるし）','町':'まち','鳥':'とり'} },
+  // てい（低・底）
+  { type:'onaji', tag:'同じ読み：てい',
+    sentence:'クラスで せが 一番 @@ い。', read:'ひく',
+    answer:'低', choices:['低','底','定'],
+    meaning:{'低':'ひくい','底':'そこ','定':'てい（定まる）'} },
+  { type:'onaji', tag:'同じ読み：てい',
+    sentence:'プールの @@ に 足が とどく。', read:'そこ',
+    answer:'底', choices:['底','低','弟'],
+    meaning:{'底':'そこ','低':'ひくい','弟':'おとうと'} },
+  // てき（的・笛）
+  { type:'onaji', tag:'同じ読み：てき',
+    sentence:'矢が @@ の まん中に あたる。', read:'まと',
+    answer:'的', choices:['的','笛'],
+    meaning:{'的':'まと','笛':'ふえ'} },
+  // てん（典・店・点）
+  { type:'onaji', tag:'同じ読み：てん',
+    sentence:'じ @@ で ことばの いみを しらべる。', read:'てん',
+    answer:'典', choices:['典','店','点'],
+    meaning:{'典':'てん（辞典・きまり）','店':'みせ','点':'てん（点数）'} },
+  // でん（伝・田・電）
+  { type:'onaji', tag:'同じ読み：でん',
+    sentence:'メモで 用件を 友だちに @@ える。', read:'つた',
+    answer:'伝', choices:['伝','田','電'],
+    meaning:{'伝':'つたえる','田':'た（田んぼ）','電':'でん（電気）'} },
+  // と（徒・都）
+  { type:'onaji', tag:'同じ読み：と',
+    sentence:'@@ ほで 学校へ 行く。', read:'と',
+    answer:'徒', choices:['徒','都','図'],
+    meaning:{'徒':'と（あるいて・生徒）','都':'と（都会）','図':'ず（地図）'} },
+  // ど（努・土・度）
+  { type:'onaji', tag:'同じ読み：ど',
+    sentence:'ゆうしょうを めざして 毎日 @@ める。', read:'つと',
+    answer:'努', choices:['努','土','度'],
+    meaning:{'努':'つとめる（がんばる）','土':'つち','度':'ど（一度）'} },
+  // とう（灯・冬・島）
+  { type:'onaji', tag:'同じ読み：とう',
+    sentence:'へやの でん @@ を つける。', read:'とう',
+    answer:'灯', choices:['灯','冬','島'],
+    meaning:{'灯':'とう（あかり・ひ）','冬':'ふゆ','島':'しま'} },
+  // どう（働・同・動）
+  { type:'onaji', tag:'同じ読み：どう',
+    sentence:'父は まい日 工場で @@ く。', read:'はたら',
+    answer:'働', choices:['働','同','動'],
+    meaning:{'働':'はたらく','同':'おなじ','動':'うごく'} },
+  // とく（特・徳）
+  { type:'onaji', tag:'同じ読み：とく',
+    sentence:'きょうは べつ @@ な 日だ。', read:'とく',
+    answer:'特', choices:['特','徳'],
+    meaning:{'特':'とく（とくべつ）','徳':'とく（人のよい心）'} },
+  { type:'onaji', tag:'同じ読み：とく',
+    sentence:'人の ために つくす 道 @@ を まなぶ。', read:'とく',
+    answer:'徳', choices:['徳','特'],
+    meaning:{'徳':'とく（りっぱな心・道徳）','特':'とく（とくべつ）'} },
+
+  // ══════════ 4年生の「同じ読み」グループ（第3波・な〜ろ）══════════
+  // な（奈・名）※奈良の奈
+  { type:'onaji', tag:'同じ読み：な',
+    sentence:'@@ らけんには 大ぶつが ある。', read:'な',
+    answer:'奈', choices:['奈','名'],
+    meaning:{'奈':'な（奈良県）','名':'な（名前）'} },
+  // あつ（熱・暑）
+  { type:'onaji', tag:'同じ読み：あつ',
+    sentence:'ストーブの 近くは とても @@ い。', read:'あつ',
+    answer:'熱', choices:['熱','暑'],
+    meaning:{'熱':'あつい（物・体温が）','暑':'あつい（気温が）'} },
+  { type:'onaji', tag:'同じ読み：あつ',
+    sentence:'なつの ひるまは とても @@ い。', read:'あつ',
+    answer:'暑', choices:['暑','熱'],
+    meaning:{'暑':'あつい（気温が）','熱':'あつい（物・体温が）'} },
+  // ねん（念・年）
+  { type:'onaji', tag:'同じ読み：ねん',
+    sentence:'りょこうの き @@ しゃしんを とる。', read:'ねん',
+    answer:'念', choices:['念','年'],
+    meaning:{'念':'ねん（きもち・記念）','年':'ねん（とし）'} },
+  // ぜん（然・前・全）
+  { type:'onaji', tag:'同じ読み：ぜん',
+    sentence:'野山の し @@ を 大切に する。', read:'ぜん',
+    answer:'然', choices:['然','前','全'],
+    meaning:{'然':'ぜん（自然・そのまま）','前':'まえ','全':'ぜん（ぜんぶ）'} },
+  // はい（敗・配）
+  { type:'onaji', tag:'同じ読み：はい',
+    sentence:'しあいに @@ れて くやしい。', read:'やぶ',
+    answer:'敗', choices:['敗','配'],
+    meaning:{'敗':'やぶれる（まける）','配':'くばる'} },
+  // ばい（梅・売・倍）
+  { type:'onaji', tag:'同じ読み：ばい',
+    sentence:'にわの @@ の 花が さく。', read:'うめ',
+    answer:'梅', choices:['梅','売','倍'],
+    meaning:{'梅':'うめ','売':'うる','倍':'ばい（二倍）'} },
+  // はく（博・白）
+  { type:'onaji', tag:'同じ読み：はく',
+    sentence:'@@ ぶつかんで きょうりゅうを 見る。', read:'はく',
+    answer:'博', choices:['博','白'],
+    meaning:{'博':'はく（博物館・ひろい）','白':'しろ'} },
+  // はん（飯・反・半）
+  { type:'onaji', tag:'同じ読み：はん',
+    sentence:'ゆう @@ に カレーを 食べる。', read:'はん',
+    answer:'飯', choices:['飯','反','半'],
+    meaning:{'飯':'はん（ごはん・めし）','反':'はん（反たい）','半':'はん（半分）'} },
+  // ひ（飛・皮・悲）
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'とりが 空たかく @@ ぶ。', read:'と',
+    answer:'飛', choices:['飛','皮','悲'],
+    meaning:{'飛':'とぶ','皮':'かわ','悲':'かなしい'} },
+  // ひつ（必・筆）
+  { type:'onaji', tag:'同じ読み：ひつ',
+    sentence:'やくそくは @@ ず まもる。', read:'かなら',
+    answer:'必', choices:['必','筆'],
+    meaning:{'必':'かならず','筆':'ふで'} },
+  // ひょう（票・標・氷・表）
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'せんきょで 一 @@ を 入れる。', read:'ひょう',
+    answer:'票', choices:['票','標','氷'],
+    meaning:{'票':'ひょう（とうひょうの票）','標':'ひょう（目標）','氷':'こおり'} },
+  { type:'onaji', tag:'同じ読み：ひょう',
+    sentence:'じぶんの もく @@ を きめて がんばる。', read:'ひょう',
+    answer:'標', choices:['標','票','表'],
+    meaning:{'標':'ひょう（目標・しるし）','票':'ひょう（投票）','表':'おもて'} },
+  // ふ（不・夫・付・府・阜・富）
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'天気が わるくて 気もちが @@ 安に なる。', read:'ふ',
+    answer:'不', choices:['不','夫','付'],
+    meaning:{'不':'ふ（…でない）','夫':'おっと','付':'つける'} },
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'わたしの 父は 母の @@ です。', read:'おっと',
+    answer:'夫', choices:['夫','不','付'],
+    meaning:{'夫':'おっと','不':'ふ（…でない）','付':'つける'} },
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'ノートに シールを @@ ける。', read:'つ',
+    answer:'付', choices:['付','府','夫'],
+    meaning:{'付':'つける・つく','府':'ふ（県や府）','夫':'おっと'} },
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'おお さか @@ は 西日本に ある。', read:'ふ',
+    answer:'府', choices:['府','不','付'],
+    meaning:{'府':'ふ（県や府）','不':'ふ（…でない）','付':'つける'} },
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'ぎ @@ けんは 山が 多い。', read:'ふ',
+    answer:'阜', choices:['阜','不','府'],
+    meaning:{'阜':'ふ（岐阜県）','不':'ふ（…でない）','府':'ふ（県や府）'} },
+  { type:'onaji', tag:'同じ読み：ふ',
+    sentence:'魚が たくさん とれる ゆたかで @@ んだ 海。', read:'と',
+    answer:'富', choices:['富','不','夫'],
+    meaning:{'富':'とむ（ゆたか）','不':'ふ（…でない）','夫':'おっと'} },
+  // ふく（副・服・福）
+  { type:'onaji', tag:'同じ読み：ふく',
+    sentence:'がっきゅう委員の @@ いいんに なる。', read:'ふく',
+    answer:'副', choices:['副','服','福'],
+    meaning:{'副':'ふく（つきそい・副）','服':'ふく（ようふく）','福':'ふく（しあわせ）'} },
+  // へい（兵・平）
+  { type:'onaji', tag:'同じ読み：へい',
+    sentence:'おもちゃの @@ たいを ならべて あそぶ。', read:'へい',
+    answer:'兵', choices:['兵','平'],
+    meaning:{'兵':'へい（兵たい）','平':'たいら'} },
+  // わか（別・分）
+  { type:'onaji', tag:'同じ読み：わか',
+    sentence:'友だちと えきで @@ れる。', read:'わか',
+    answer:'別', choices:['別','分'],
+    meaning:{'別':'わかれる（はなれる）','分':'わかれる（分かれ道）'} },
+  // へん（辺・変・返）
+  { type:'onaji', tag:'同じ読み：へん',
+    sentence:'この @@ りで すこし ひとやすみ する。', read:'あた',
+    answer:'辺', choices:['辺','変','返'],
+    meaning:{'辺':'あたり','変':'かわる','返':'かえす'} },
+  { type:'onaji', tag:'同じ読み：へん',
+    sentence:'しんごうが 赤に @@ わる。', read:'か',
+    answer:'変', choices:['変','返','辺'],
+    meaning:{'変':'かわる・かえる','返':'かえす','辺':'あたり'} },
+  // べん（便・勉）
+  { type:'onaji', tag:'同じ読み：べん',
+    sentence:'えきが ちかくて とても @@ りだ。', read:'べん',
+    answer:'便', choices:['便','勉'],
+    meaning:{'便':'べん（べんり・たより）','勉':'べん（べんきょう）'} },
+  // ほう（包・法・方）
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'プレゼントを 紙で きれいに @@ む。', read:'つつ',
+    answer:'包', choices:['包','法','方'],
+    meaning:{'包':'つつむ','法':'ほう（きまり）','方':'ほう（むき）'} },
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'えい語の ぶん @@ を ならう。', read:'ほう',
+    answer:'法', choices:['法','包','方'],
+    meaning:{'法':'ほう（きまり・文法）','包':'つつむ','方':'ほう（むき）'} },
+  // ぼく（牧・木・目）
+  { type:'onaji', tag:'同じ読み：ぼく',
+    sentence:'ひろい @@ じょうで 牛を かう。', read:'ぼく',
+    answer:'牧', choices:['牧','木','目'],
+    meaning:{'牧':'ぼく（牧場）','木':'き','目':'め'} },
+  // もう（望・毛）
+  { type:'onaji', tag:'同じ読み：もう',
+    sentence:'ゆめが かなうことを 強く @@ む。', read:'のぞ',
+    answer:'望', choices:['望','毛'],
+    meaning:{'望':'のぞむ（ねがう）','毛':'け'} },
+  // まん（満・万）
+  { type:'onaji', tag:'同じ読み：まん',
+    sentence:'コップに 水が なみなみと @@ ちる。', read:'み',
+    answer:'満', choices:['満','万'],
+    meaning:{'満':'みちる（いっぱい）','万':'まん（一万）'} },
+  // み（未・味）
+  { type:'onaji', tag:'同じ読み：み',
+    sentence:'まだ かんせいしていない @@ かんせいの 絵。', read:'み',
+    answer:'未', choices:['未','味'],
+    meaning:{'未':'み（まだ…ない）','味':'あじ'} },
+  // ぶ（無・分・歩）
+  { type:'onaji', tag:'同じ読み：ぶ',
+    sentence:'じこも なく @@ じに 家へ かえる。', read:'ぶ',
+    answer:'無', choices:['無','分','歩'],
+    meaning:{'無':'ぶ・む（ない・無事）','分':'ぶ（ぶんりょう）','歩':'ぶ（歩あい）'} },
+  // やく（約・役・薬）
+  { type:'onaji', tag:'同じ読み：やく',
+    sentence:'ともだちと あそぶ @@ そくを する。', read:'やく',
+    answer:'約', choices:['約','役','薬'],
+    meaning:{'約':'やく（やくそく）','役':'やく（やくわり）','薬':'くすり'} },
+  // ゆう（勇・友・有）
+  { type:'onaji', tag:'同じ読み：ゆう',
+    sentence:'@@ きを 出して 手を あげる。', read:'ゆう',
+    answer:'勇', choices:['勇','友','有'],
+    meaning:{'勇':'ゆう（ゆうき・いさむ）','友':'とも','有':'ゆう（ある）'} },
+  // よう（要・養・洋）
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'この 話の だいじな @@ てんを まとめる。', read:'よう',
+    answer:'要', choices:['要','養','洋'],
+    meaning:{'要':'よう（かなめ・大事）','養':'やしなう','洋':'よう（西洋）'} },
+  { type:'onaji', tag:'同じ読み：よう',
+    sentence:'うまれた 子犬を 大切に @@ う。', read:'やしな',
+    answer:'養', choices:['養','要','洋'],
+    meaning:{'養':'やしなう（そだてる）','要':'よう（かなめ）','洋':'よう（西洋）'} },
+  // り（利・里・理）
+  { type:'onaji', tag:'同じ読み：り',
+    sentence:'この どうぐは とても べん @@ だ。', read:'り',
+    answer:'利', choices:['利','里','理'],
+    meaning:{'利':'り（べんり・きく）','里':'さと','理':'り（りゆう）'} },
+  // りょう（良・料・量）
+  { type:'onaji', tag:'同じ読み：りょう',
+    sentence:'てんきが @@ くて 気もちいい。', read:'よ',
+    answer:'良', choices:['良','料','量'],
+    meaning:{'良':'よい','料':'りょう（りょうきん）','量':'りょう（ぶんりょう）'} },
+  { type:'onaji', tag:'同じ読み：りょう',
+    sentence:'電車の @@ きんを はらう。', read:'りょう',
+    answer:'料', choices:['料','量','両'],
+    meaning:{'料':'りょう（りょうきん）','量':'りょう（ぶんりょう）','両':'りょう（両手）'} },
+  { type:'onaji', tag:'同じ読み：りょう',
+    sentence:'さとうの ぶん @@ を はかりで しらべる。', read:'りょう',
+    answer:'量', choices:['量','料','良'],
+    meaning:{'量':'りょう（ぶんりょう・はかる）','料':'りょう（りょうきん）','良':'よい'} },
+  // りん（輪・林）
+  { type:'onaji', tag:'同じ読み：りん',
+    sentence:'じてん車の @@ が くるくる まわる。', read:'わ',
+    answer:'輪', choices:['輪','林'],
+    meaning:{'輪':'わ（タイヤ・わっか）','林':'はやし'} },
+  // れい（令・冷・例）
+  { type:'onaji', tag:'同じ読み：れい',
+    sentence:'ごう @@ を かけて せいれつする。', read:'れい',
+    answer:'令', choices:['令','冷','例'],
+    meaning:{'令':'れい（めいれい）','冷':'つめたい','例':'たとえ'} },
+  { type:'onaji', tag:'同じ読み：れい',
+    sentence:'つめたい 水で ほてった 手を @@ やす。', read:'ひ',
+    answer:'冷', choices:['冷','令','例'],
+    meaning:{'冷':'ひやす・つめたい','令':'れい（めいれい）','例':'たとえ'} },
+  { type:'onaji', tag:'同じ読み：れい',
+    sentence:'じょうずな つかい方の @@ を しめす。', read:'れい',
+    answer:'例', choices:['例','令','冷'],
+    meaning:{'例':'れい（たとえ・れい）','令':'れい（めいれい）','冷':'つめたい'} },
+  // れん（連・練）
+  { type:'onaji', tag:'同じ読み：れん',
+    sentence:'いもうとを @@ れて 出かける。', read:'つ',
+    answer:'連', choices:['連','練'],
+    meaning:{'連':'つれる（つらなる）','練':'れん（れんしゅう）'} },
+  // ろう（老・労）
+  { type:'onaji', tag:'同じ読み：ろう',
+    sentence:'年を とって こしが まがった @@ いた 犬。', read:'お',
+    answer:'老', choices:['老','労'],
+    meaning:{'老':'おいる（年をとる）','労':'ろう（はたらく・くろう）'} },
+  { type:'onaji', tag:'同じ読み：ろう',
+    sentence:'やりとげるまで たくさんの く @@ を かさねる。', read:'ろう',
+    answer:'労', choices:['労','老'],
+    meaning:{'労':'ろう（はたらく・くろう）','老':'おいる（年をとる）'} },
+  // ろく（録・六）
+  { type:'onaji', tag:'同じ読み：ろく',
+    sentence:'テレビ番ぐみを @@ がする。', read:'ろく',
+    answer:'録', choices:['録','六'],
+    meaning:{'録':'ろく（きろく・録画）','六':'ろく（６）'} },
+
+  // ── 4年生 同じ読み（追加・とりこぼし回収）──
+  // ぎょ（漁・魚）
+  { type:'onaji', tag:'同じ読み：ぎょ',
+    sentence:'とおくの 海まで @@ ぎょうに 出る。', read:'ぎょ',
+    answer:'漁', choices:['漁','魚'],
+    meaning:{'漁':'ぎょ（魚や貝をとる）','魚':'さかな'} },
+  // い（井・以・衣）
+  { type:'onaji', tag:'同じ読み：い',
+    sentence:'むかしは @@ どから 水を くんだ。', read:'い',
+    answer:'井', choices:['井','以','衣'],
+    meaning:{'井':'い（井戸）','以':'い（〜より）','衣':'ころも'} },
+  // ぞく（続・族）
+  { type:'onaji', tag:'同じ読み：ぞく',
+    sentence:'おもしろくて 本を 読み @@ ける。', read:'つづ',
+    answer:'続', choices:['続','族'],
+    meaning:{'続':'つづく・つづける','族':'ぞく（家族）'} },
+
+  // ══════════ 全学年 追加グループ（同じ読み・別の音よみ）══════════
+  // みょう（名・明・命）
+  { type:'onaji', tag:'同じ読み：みょう',
+    sentence:'自分の @@ まえを 大きく 書く。', read:'な',
+    answer:'名', choices:['名','明','命'],
+    meaning:{'名':'な（名前）','明':'あかるい','命':'いのち'} },
+  { type:'onaji', tag:'同じ読み：みょう',
+    sentence:'一つしか ない 大切な @@ 。', read:'いのち',
+    answer:'命', choices:['命','名','明'],
+    meaning:{'命':'いのち','名':'な（名前）','明':'あかるい'} },
+  // ごう（合・強・業）
+  { type:'onaji', tag:'同じ読み：ごう',
+    sentence:'手と 手を ぴったり @@ わせる。', read:'あ',
+    answer:'合', choices:['合','強','業'],
+    meaning:{'合':'あう・あわせる','強':'つよい','業':'ぎょう（じゅぎょう）'} },
+  { type:'onaji', tag:'同じ読み：ごう',
+    sentence:'風が だんだん @@ くなる。', read:'つよ',
+    answer:'強', choices:['強','合','業'],
+    meaning:{'強':'つよい','合':'あう・あわせる','業':'ぎょう（じゅぎょう）'} },
+  // ふう（風・夫・富）
+  { type:'onaji', tag:'同じ読み：ふう',
+    sentence:'つよい @@ が ふいて ぼうしが とぶ。', read:'かぜ',
+    answer:'風', choices:['風','夫','富'],
+    meaning:{'風':'かぜ','夫':'おっと','富':'とむ（ゆたか）'} },
+  { type:'onaji', tag:'同じ読み：ふう',
+    sentence:'母の けっこん あい手＝ @@ 。', read:'おっと',
+    answer:'夫', choices:['夫','風','富'],
+    meaning:{'夫':'おっと','風':'かぜ','富':'とむ（ゆたか）'} },
+  // じつ（日・実）
+  { type:'onaji', tag:'同じ読み：じつ',
+    sentence:'あさがおの たねが ぷっくり @@ る。', read:'みの',
+    answer:'実', choices:['実','日'],
+    meaning:{'実':'みのる（み）','日':'ひ（太陽・ひにち）'} },
+  { type:'onaji', tag:'同じ読み：じつ',
+    sentence:'あしたは よい @@ に なりそうだ。', read:'ひ',
+    answer:'日', choices:['日','実'],
+    meaning:{'日':'ひ（太陽・ひにち）','実':'みのる（み）'} },
+  // け（家・化）
+  { type:'onaji', tag:'同じ読み：け',
+    sentence:'まほうで カエルに @@ ける。', read:'ば',
+    answer:'化', choices:['化','家'],
+    meaning:{'化':'ばける（かわる）','家':'いえ'} },
+  { type:'onaji', tag:'同じ読み：け',
+    sentence:'夕方に なって @@ へ かえる。', read:'いえ',
+    answer:'家', choices:['家','化'],
+    meaning:{'家':'いえ','化':'ばける（かわる）'} },
+  // じき（食・直）
+  { type:'onaji', tag:'同じ読み：じき',
+    sentence:'こわれた 時計を ていねいに @@ す。', read:'なお',
+    answer:'直', choices:['直','食'],
+    meaning:{'直':'なおす（直接）','食':'たべる'} },
+  { type:'onaji', tag:'同じ読み：じき',
+    sentence:'あさごはんを しっかり @@ べる。', read:'た',
+    answer:'食', choices:['食','直'],
+    meaning:{'食':'たべる','直':'なおす（直接）'} },
+  // びょう（病・平）
+  { type:'onaji', tag:'同じ読み：びょう',
+    sentence:'かぜを ひいて @@ きに なる。', read:'びょう',
+    answer:'病', choices:['病','平'],
+    meaning:{'病':'びょう（病気・やまい）','平':'たいら（平等）'} },
+  { type:'onaji', tag:'同じ読み：びょう',
+    sentence:'おかしを みんなで @@ とうに 分ける。', read:'びょう',
+    answer:'平', choices:['平','病'],
+    meaning:{'平':'たいら（平等）','病':'びょう（病気・やまい）'} },
+  // ぎょう（行・業）
+  { type:'onaji', tag:'同じ読み：ぎょう',
+    sentence:'本を 一 @@ ずつ ていねいに 読む。', read:'ぎょう',
+    answer:'行', choices:['行','業'],
+    meaning:{'行':'ぎょう（文の行・いく）','業':'ぎょう（じゅぎょう）'} },
+  { type:'onaji', tag:'同じ読み：ぎょう',
+    sentence:'今日の じゅ @@ は さんすうだ。', read:'ぎょう',
+    answer:'業', choices:['業','行'],
+    meaning:{'業':'ぎょう（じゅぎょう・しごと）','行':'ぎょう（文の行・いく）'} },
+
+  // ══════════ 全学年 追加グループ（使い分け）══════════
+  // あつい（暑い・熱い）
+  { type:'tsukai', tag:'つかい分け：あつい',
+    sentence:'なつの ひるまは とても @@ い。', read:'あつ',
+    answer:'暑', choices:['暑','熱'],
+    meaning:{'暑':'あつい（気温が）','熱':'あつい（物・体温が）'} },
+  { type:'tsukai', tag:'つかい分け：あつい',
+    sentence:'やかんの お湯が とても @@ い。', read:'あつ',
+    answer:'熱', choices:['熱','暑'],
+    meaning:{'熱':'あつい（物・体温が）','暑':'あつい（気温が）'} },
+  // はかる（計る・量る・図る）
+  { type:'tsukai', tag:'つかい分け：はかる',
+    sentence:'ストップウォッチで 時間を @@ る。', read:'はか',
+    answer:'計', choices:['計','量','図'],
+    meaning:{'計':'はかる（時間・数を）','量':'はかる（重さ・かさを）','図':'はかる（くわだてる）・ず'} },
+  { type:'tsukai', tag:'つかい分け：はかる',
+    sentence:'はかりで にもつの 重さを @@ る。', read:'はか',
+    answer:'量', choices:['量','計','図'],
+    meaning:{'量':'はかる（重さ・かさを）','計':'はかる（時間・数を）','図':'はかる（くわだてる）・ず'} },
+  // なおす（治す・直す）
+  { type:'tsukai', tag:'つかい分け：なおす',
+    sentence:'薬を のんで かぜを @@ す。', read:'なお',
+    answer:'治', choices:['治','直'],
+    meaning:{'治':'なおす（病気・けがを）','直':'なおす（物・まちがいを）'} },
+  { type:'tsukai', tag:'つかい分け：なおす',
+    sentence:'まちがえた 字を けして @@ す。', read:'なお',
+    answer:'直', choices:['直','治'],
+    meaning:{'直':'なおす（物・まちがいを）','治':'なおす（病気・けがを）'} },
+  // かえる（変える・代える・帰る）
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'へやの かざりつけを すっかり @@ える。', read:'か',
+    answer:'変', choices:['変','代','帰'],
+    meaning:{'変':'かえる（ようすを）','代':'かえる（別のものに）','帰':'かえる（家へもどる）'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'やぶれた ボールを 新しいのに @@ える。', read:'か',
+    answer:'代', choices:['代','変','帰'],
+    meaning:{'代':'かえる（別のものに）','変':'かえる（ようすを）','帰':'かえる（家へもどる）'} },
+  { type:'tsukai', tag:'つかい分け：かえる',
+    sentence:'夕方に なって 家へ @@ る。', read:'かえ',
+    answer:'帰', choices:['帰','変','代'],
+    meaning:{'帰':'かえる（家へもどる）','変':'かえる（ようすを）','代':'かえる（別のものに）'} },
+  // はやい（早い・速い）
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'今朝は いつもより @@ く おきた。', read:'はや',
+    answer:'早', choices:['早','速'],
+    meaning:{'早':'はやい（時こくが）','速':'はやい（スピードが）'} },
+  { type:'tsukai', tag:'つかい分け：はやい',
+    sentence:'チーターは 走るのが とても @@ い。', read:'はや',
+    answer:'速', choices:['速','早'],
+    meaning:{'速':'はやい（スピードが）','早':'はやい（時こくが）'} },
+  // つく（付く・着く）
+  { type:'tsukai', tag:'つかい分け：つく',
+    sentence:'ころんで ふくに どろが @@ く。', read:'つ',
+    answer:'付', choices:['付','着'],
+    meaning:{'付':'つく（くっつく）','着':'つく（とうちゃくする）'} },
+  { type:'tsukai', tag:'つかい分け：つく',
+    sentence:'ながい たびの すえ 海に @@ く。', read:'つ',
+    answer:'着', choices:['着','付'],
+    meaning:{'着':'つく（とうちゃくする）','付':'つく（くっつく）'} },
+
+  // ===== 5年生の問題 =====
+  // ── 同じ読み：こう（効・厚・耕・構・興）──
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'この くすりは よく @@ く。', read:'き',
+    answer:'効', choices:['効','厚','耕'],
+    meaning:{'効':'きく（ききめがある）','厚':'あつい','耕':'たがやす'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'この じしょは とても @@ い。', read:'あつ',
+    answer:'厚', choices:['厚','効','構'],
+    meaning:{'厚':'あつい（あつみがある）','効':'きく','構':'かまえる'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'トラクターで 畑を @@ す。', read:'たがや',
+    answer:'耕', choices:['耕','興','効'],
+    meaning:{'耕':'たがやす（畑を）','興':'おこす','効':'きく'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'カメラを しっかり @@ える。', read:'かま',
+    answer:'構', choices:['構','厚','耕'],
+    meaning:{'構':'かまえる（しせいをとる）','厚':'あつい','耕':'たがやす'} },
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'あたらしい 町を @@ す。', read:'おこ',
+    answer:'興', choices:['興','効','構'],
+    meaning:{'興':'おこす（新しくはじめる）','効':'きく','構':'かまえる'} },
+
+  // ── 同じ読み：さい（再・災・妻・際）──
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'らいねん @@ び 会いましょう。', read:'ふたた',
+    answer:'再', choices:['再','災','際'],
+    meaning:{'再':'ふたたび（もういちど）','災':'わざわい','際':'きわ'} },
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'火の @@ いに 気をつける。', read:'わざわ',
+    answer:'災', choices:['災','妻','再'],
+    meaning:{'災':'わざわい（さいなん）','妻':'つま','再':'ふたたび'} },
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'となりの 家の @@ さん。', read:'つま',
+    answer:'妻', choices:['妻','際','災'],
+    meaning:{'妻':'つま（おくさん）','際':'きわ','災':'わざわい'} },
+  { type:'onaji', tag:'同じ読み：さい',
+    sentence:'みずうみの @@ に 立つ。', read:'きわ',
+    answer:'際', choices:['際','再','妻'],
+    meaning:{'際':'きわ（ふち・はし）','再':'ふたたび','妻':'つま'} },
+
+  // ── 同じ読み：げん（限・現・減）──
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'時間を 三十ぷんに @@ る。', read:'かぎ',
+    answer:'限', choices:['限','現','減'],
+    meaning:{'限':'かぎる（くぎりをつける）','現':'あらわれる','減':'へる'} },
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'ヒーローが とつぜん @@ れる。', read:'あらわ',
+    answer:'現', choices:['現','減','限'],
+    meaning:{'現':'あらわれる（すがたを出す）','減':'へる','限':'かぎる'} },
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'水が だんだん @@ る。', read:'へ',
+    answer:'減', choices:['減','限','現'],
+    meaning:{'減':'へる（少なくなる）','限':'かぎる','現':'あらわれる'} },
+
+  // ── 同じ読み：ひ（費・比・肥）──
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'お金を むだに @@ やす。', read:'つい',
+    answer:'費', choices:['費','比','肥'],
+    meaning:{'費':'ついやす（お金をつかう）','比':'くらべる','肥':'こえる'} },
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'二つの 大きさを @@ べる。', read:'くら',
+    answer:'比', choices:['比','肥','費'],
+    meaning:{'比':'くらべる','肥':'こえる','費':'ついやす'} },
+  { type:'onaji', tag:'同じ読み：ひ',
+    sentence:'土が よく @@ える。', read:'こ',
+    answer:'肥', choices:['肥','比','費'],
+    meaning:{'肥':'こえる（土がよくなる）','比':'くらべる','費':'ついやす'} },
+
+  // ── 同じ読み：む（務・夢）──
+  { type:'onaji', tag:'同じ読み：む',
+    sentence:'学きゅう委員を @@ める。', read:'つと',
+    answer:'務', choices:['務','夢','無'],
+    meaning:{'務':'つとめる（役目をする）','夢':'ゆめ','無':'ない'} },
+  { type:'onaji', tag:'同じ読み：む',
+    sentence:'ゆうべ たのしい @@ を 見た。', read:'ゆめ',
+    answer:'夢', choices:['夢','務','無'],
+    meaning:{'夢':'ゆめ','務':'つとめる','無':'ない'} },
+
+  // ── 同じ読み：ほう（報・豊）──
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'うけた おんに @@ いる。', read:'むく',
+    answer:'報', choices:['報','豊','放'],
+    meaning:{'報':'むくいる（おかえしする）','豊':'ゆたか','放':'はなす'} },
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'しぜんの @@ かな 村。', read:'ゆた',
+    answer:'豊', choices:['豊','報','放'],
+    meaning:{'豊':'ゆたか（たっぷり）','報':'むくいる','放':'はなす'} },
+
+  // ── 同じ読み：ぼう（防・暴）──
+  { type:'onaji', tag:'同じ読み：ぼう',
+    sentence:'つめたい 風を @@ ぐ。', read:'ふせ',
+    answer:'防', choices:['防','暴','望'],
+    meaning:{'防':'ふせぐ（まもる）','暴':'あばれる','望':'のぞむ'} },
+  { type:'onaji', tag:'同じ読み：ぼう',
+    sentence:'馬が きゅうに @@ れる。', read:'あば',
+    answer:'暴', choices:['暴','防','望'],
+    meaning:{'暴':'あばれる','防':'ふせぐ','望':'のぞむ'} },
+
+  // ── 同じ読み：き（寄・喜）──
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'本だなに 体を @@ せる。', read:'よ',
+    answer:'寄', choices:['寄','喜','記'],
+    meaning:{'寄':'よせる（近づける）','喜':'よろこぶ','記':'しるす'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'プレゼントに とても @@ ぶ。', read:'よろこ',
+    answer:'喜', choices:['喜','寄','記'],
+    meaning:{'喜':'よろこぶ','寄':'よせる','記':'しるす'} },
+
+  // ── つかい分け：つとめる（務める・努める）──
+  { type:'tsukai', tag:'つかい分け：つとめる',
+    sentence:'クラスの 委員長を @@ める。', read:'つとめる',
+    answer:'務める', choices:['務める','努める'],
+    meaning:{'務める':'役目・係をする','努める':'力をつくす・がんばる'} },
+  { type:'tsukai', tag:'つかい分け：つとめる',
+    sentence:'毎日 れんしゅうに @@ める。', read:'つとめる',
+    answer:'努める', choices:['努める','務める'],
+    meaning:{'努める':'力をつくす・がんばる','務める':'役目・係をする'} },
+
+  // ── つかい分け：うつる／うつす（移る・写す）──
+  { type:'tsukai', tag:'つかい分け：うつる',
+    sentence:'せきを となりに @@ る。', read:'うつる',
+    answer:'移る', choices:['移る','写る'],
+    meaning:{'移る':'べつの ところに動く','写る':'写真などに うつる'} },
+  { type:'tsukai', tag:'つかい分け：うつす',
+    sentence:'こくばんの 字を ノートに @@ す。', read:'うつす',
+    answer:'写す', choices:['写す','移す'],
+    meaning:{'写す':'書きうつす・写真をとる','移す':'べつの ところへ動かす'} },
+
+  // ── つかい分け：おさめる（修める・治める）──
+  { type:'tsukai', tag:'つかい分け：おさめる',
+    sentence:'外国で 学問を @@ める。', read:'おさめる',
+    answer:'修める', choices:['修める','治める'],
+    meaning:{'修める':'学問・わざを身につける','治める':'国・社会をおさめる'} },
+  { type:'tsukai', tag:'つかい分け：おさめる',
+    sentence:'王さまが 国を @@ める。', read:'おさめる',
+    answer:'治める', choices:['治める','修める'],
+    meaning:{'治める':'国・社会をおさめる','修める':'学問・わざを身につける'} },
+
+  // ── つかい分け：たつ（断つ）──
+  { type:'tsukai', tag:'つかい分け：たつ',
+    sentence:'悪い しゅうかんを @@ つ。', read:'たつ',
+    answer:'断つ', choices:['断つ','立つ','建つ'],
+    meaning:{'断つ':'つづいていたものを やめる・切る','立つ':'たちあがる','建つ':'建物がたつ'} },
+
+  // ── つかい分け：はかる（測る／計る・量る）──
+  { type:'tsukai', tag:'つかい分け：はかる',
+    sentence:'プールの 深さを @@ る。', read:'はかる',
+    answer:'測る', choices:['測る','計る','量る'],
+    meaning:{'測る':'長さ・深さをはかる','計る':'時間・数をはかる','量る':'重さ・かさをはかる'} },
+
+  // ===== 5年生×低学年の同音字（5年が答え・5年/ぜんぶモードに出る）=====
+  // ── 同じ読み：にん（任・人）──
+  { type:'onaji', tag:'同じ読み：にん',
+    sentence:'係の 仕事を きみに @@ せる。', read:'まか',
+    answer:'任', choices:['任','人'],
+    meaning:{'任':'まかせる（役目をあずける）','人':'ひと'} },
+  // ── 同じ読み：だん（断・男）──
+  { type:'onaji', tag:'同じ読み：だん',
+    sentence:'さそいを ていねいに @@ る。', read:'ことわ',
+    answer:'断', choices:['断','男'],
+    meaning:{'断':'ことわる（やめておく）','男':'おとこ'} },
+  // ── 同じ読み：ちく（築・竹）──
+  { type:'onaji', tag:'同じ読み：ちく',
+    sentence:'大きな 城を @@ く。', read:'きず',
+    answer:'築', choices:['築','竹'],
+    meaning:{'築':'きずく（つくりあげる）','竹':'たけ'} },
+  // ── 同じ読み：りつ（率・立）──
+  { type:'onaji', tag:'同じ読み：りつ',
+    sentence:'チームを 先頭で @@ いる。', read:'ひき',
+    answer:'率', choices:['率','立'],
+    meaning:{'率':'ひきいる（先に立ってつれていく）','立':'たつ'} },
+  // ── 同じ読み：ふん（粉・分）──
+  { type:'onaji', tag:'同じ読み：ふん',
+    sentence:'小むぎを ひいて @@ に する。', read:'こな',
+    answer:'粉', choices:['粉','分'],
+    meaning:{'粉':'こな（こまかいつぶ）','分':'わける・ぶん'} },
+  // ── 同じ読み：どく（独・読）──
+  { type:'onaji', tag:'同じ読み：どく',
+    sentence:'たった @@ りで 旅に 出る。', read:'ひと',
+    answer:'独', choices:['独','読'],
+    meaning:{'独':'ひとり（自分だけ）','読':'よむ'} },
+  // ── 同じ読み：しき（織・色）──
+  { type:'onaji', tag:'同じ読み：しき',
+    sentence:'きれいな 布を きかいで @@ る。', read:'お',
+    answer:'織', choices:['織','色'],
+    meaning:{'織':'おる（糸で布をつくる）','色':'いろ'} },
+  // ── 同じ読み：ほ（保・歩）──
+  { type:'onaji', tag:'同じ読み：ほ',
+    sentence:'やくそくを ずっと @@ つ。', read:'たも',
+    answer:'保', choices:['保','歩'],
+    meaning:{'保':'たもつ（そのままつづける）','歩':'あるく'} },
+  // ── 同じ読み：ぼ（墓・母）──
+  { type:'onaji', tag:'同じ読み：ぼ',
+    sentence:'ご先ぞの @@ に 手を 合わせる。', read:'はか',
+    answer:'墓', choices:['墓','母'],
+    meaning:{'墓':'はか','母':'はは'} },
+  // ── 同じ読み：ぶつ（仏・物）──
+  { type:'onaji', tag:'同じ読み：ぶつ',
+    sentence:'おてらの @@ さまを おがむ。', read:'ほとけ',
+    answer:'仏', choices:['仏','物'],
+    meaning:{'仏':'ほとけ（仏さま）','物':'もの'} },
+  // ── 同じ読み：は（破・波）──
+  { type:'onaji', tag:'同じ読み：は',
+    sentence:'いらない 紙を @@ る。', read:'やぶ',
+    answer:'破', choices:['破','波'],
+    meaning:{'破':'やぶる（さく・こわす）','波':'なみ'} },
+  // ── 同じ読み：じゅ（授・受）──
+  { type:'onaji', tag:'同じ読み：じゅ',
+    sentence:'がんばった 人に メダルを @@ ける。', read:'さず',
+    answer:'授', choices:['授','受'],
+    meaning:{'授':'さずける（あたえる）','受':'うける'} },
+  // ── 同じ読み：ひん（貧・品）──
+  { type:'onaji', tag:'同じ読み：ひん',
+    sentence:'むかしは とても @@ しい くらしだった。', read:'まず',
+    answer:'貧', choices:['貧','品'],
+    meaning:{'貧':'まずしい（びんぼう）','品':'しな（しなもの）'} },
+  // ── 同じ読み：めん（綿・面）──
+  { type:'onaji', tag:'同じ読み：めん',
+    sentence:'ふとんに @@ を つめる。', read:'わた',
+    answer:'綿', choices:['綿','面'],
+    meaning:{'綿':'わた（やわらかいせんい）','面':'めん・おもて'} },
+  // ── 同じ読み：る（留・流）──
+  { type:'onaji', tag:'同じ読み：る',
+    sentence:'小鳥が 木の えだに @@ まる。', read:'と',
+    answer:'留', choices:['留','流'],
+    meaning:{'留':'とまる（同じ所にとどまる）','流':'ながれる'} },
+  // ── 同じ読み：ざい（罪・財・在）──
+  { type:'onaji', tag:'同じ読み：ざい',
+    sentence:'@@ を おかして つかまる。', read:'つみ',
+    answer:'罪', choices:['罪','財','在'],
+    meaning:{'罪':'つみ（悪いおこない）','財':'たから・ざいさん','在':'ある'} },
+  // ── 同じ読み：ぞう（増・像・造）──
+  { type:'onaji', tag:'同じ読み：ぞう',
+    sentence:'町の 人口が だんだん @@ える。', read:'ふ',
+    answer:'増', choices:['増','像','造'],
+    meaning:{'増':'ふえる（多くなる）','像':'すがた・かたち','造':'つくる'} },
+
+  // ===== 5年生の使い分け（既存グループに5年の答えを追加）=====
+  // ── つかい分け：あつい（厚い／暑い・熱い）──
+  { type:'tsukai', tag:'つかい分け：あつい',
+    sentence:'この いたは とても @@ い。', read:'あつ',
+    answer:'厚', choices:['厚','暑','熱'],
+    meaning:{'厚':'あつい（あつみがある）','暑':'あつい（気温が）','熱':'あつい（物・体温が）'} },
+  // ── つかい分け：たつ（絶つ／断つ・立つ）──
+  { type:'tsukai', tag:'つかい分け：たつ',
+    sentence:'わるい なかまとの えんを @@ つ。', read:'たつ',
+    answer:'絶つ', choices:['絶つ','断つ','立つ'],
+    meaning:{'絶つ':'すっかり やめる・とぎれさせる','断つ':'つづいていたものを 切る','立つ':'たちあがる'} },
+  // ── つかい分け：つくる（造る／作る）──
+  { type:'tsukai', tag:'つかい分け：つくる',
+    sentence:'ぞうせんじょで 大きな 船を @@ る。', read:'つくる',
+    answer:'造る', choices:['造る','作る'],
+    meaning:{'造る':'大きなもの・船などをつくる','作る':'こしらえる・手でつくる'} },
+
+  // ===== 6年生の問題 =====
+  // ── 同じ読み：すい（推・垂）──
+  { type:'onaji', tag:'同じ読み：すい',
+    sentence:'学きゅう委員に 友だちを @@ す。', read:'お',
+    answer:'推', choices:['推','垂','水'],
+    meaning:{'推':'おす（よいとすすめる）','垂':'たれる','水':'みず'} },
+  { type:'onaji', tag:'同じ読み：すい',
+    sentence:'ロープを 下に @@ らす。', read:'た',
+    answer:'垂', choices:['垂','推','水'],
+    meaning:{'垂':'たらす（下げる）','推':'おす','水':'みず'} },
+  // ── 同じ読み：ぎ（疑・技）──
+  { type:'onaji', tag:'同じ読み：ぎ',
+    sentence:'本当か どうか @@ う。', read:'うたが',
+    answer:'疑', choices:['疑','技','義'],
+    meaning:{'疑':'うたがう','技':'わざ','義':'ただしいすじみち'} },
+  // ── 同じ読み：ぜつ（舌・絶）──
+  { type:'onaji', tag:'同じ読み：ぜつ',
+    sentence:'アイスで @@ が つめたい。', read:'した',
+    answer:'舌', choices:['舌','絶'],
+    meaning:{'舌':'した（口の中の）','絶':'たえる・たつ'} },
+  // ── 同じ読み：らん（乱・卵）──
+  { type:'onaji', tag:'同じ読み：らん',
+    sentence:'かみの毛が 風で @@ れる。', read:'みだ',
+    answer:'乱', choices:['乱','卵'],
+    meaning:{'乱':'みだれる（ばらばらになる）','卵':'たまご'} },
+  { type:'onaji', tag:'同じ読み：らん',
+    sentence:'にわとりが @@ を うむ。', read:'たまご',
+    answer:'卵', choices:['卵','乱'],
+    meaning:{'卵':'たまご','乱':'みだれる'} },
+  // ── 同じ読み：つう（痛・通）──
+  { type:'onaji', tag:'同じ読み：つう',
+    sentence:'ころんで ひざが @@ い。', read:'いた',
+    answer:'痛', choices:['痛','通'],
+    meaning:{'痛':'いたい','通':'とおる'} },
+  // ── 同じ読み：にゅう（乳・入）──
+  { type:'onaji', tag:'同じ読み：にゅう',
+    sentence:'赤ちゃんが @@ を のむ。', read:'ちち',
+    answer:'乳', choices:['乳','入'],
+    meaning:{'乳':'ちち（ミルク）','入':'はいる'} },
+  // ── 同じ読み：よく（欲・浴）──
+  { type:'onaji', tag:'同じ読み：よく',
+    sentence:'新しい 本が @@ しい。', read:'ほ',
+    answer:'欲', choices:['欲','浴'],
+    meaning:{'欲':'ほしい','浴':'あびる'} },
+  // ── 同じ読み：はい（拝・背・肺・俳）──
+  { type:'onaji', tag:'同じ読み：はい',
+    sentence:'神社で 神さまを @@ む。', read:'おが',
+    answer:'拝', choices:['拝','背','肺'],
+    meaning:{'拝':'おがむ','背':'せなか','肺':'はい（こきゅうのきかん）'} },
+  { type:'onaji', tag:'同じ読み：はい',
+    sentence:'つくえに @@ を むけて すわる。', read:'せ',
+    answer:'背', choices:['背','拝','俳'],
+    meaning:{'背':'せ・せなか','拝':'おがむ','俳':'はいく（の俳）'} },
+  // ── 同じ読み：せん（洗・染・泉）──
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'よごれた 手を 水で @@ う。', read:'あら',
+    answer:'洗', choices:['洗','泉','染'],
+    meaning:{'洗':'あらう','泉':'いずみ','染':'そめる'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'白い ぬのを 赤く @@ める。', read:'そ',
+    answer:'染', choices:['染','洗','泉'],
+    meaning:{'染':'そめる（色をつける）','洗':'あらう','泉':'いずみ'} },
+  { type:'onaji', tag:'同じ読み：せん',
+    sentence:'山おくの @@ から 水が わく。', read:'いずみ',
+    answer:'泉', choices:['泉','洗','宣'],
+    meaning:{'泉':'いずみ','洗':'あらう','宣':'のべつたえる（宣言の宣）'} },
+  // ── 同じ読み：たん（探・担）──
+  { type:'onaji', tag:'同じ読み：たん',
+    sentence:'なくした かぎを @@ す。', read:'さが',
+    answer:'探', choices:['探','担','段'],
+    meaning:{'探':'さがす','担':'かつぐ','段':'だん（階段の段）'} },
+  { type:'onaji', tag:'同じ読み：たん',
+    sentence:'おもい にもつを かたに @@ ぐ。', read:'かつ',
+    answer:'担', choices:['担','探','段'],
+    meaning:{'担':'かつぐ（肩にのせる）','探':'さがす','段':'だん'} },
+  // ── 同じ読み：こう（降・紅・鋼）──
+  { type:'onaji', tag:'同じ読み：こう',
+    sentence:'雨が ざあざあ @@ る。', read:'ふ',
+    answer:'降', choices:['降','紅','鋼'],
+    meaning:{'降':'ふる（雨や雪が）','紅':'べに（あかい色）','鋼':'はがね（かたい鉄）'} },
+
+  // ── つかい分け：おさめる（収める・納める／修める・治める）──
+  { type:'tsukai', tag:'つかい分け：おさめる',
+    sentence:'大会で よい せいせきを @@ める。', read:'おさめる',
+    answer:'収める', choices:['収める','修める','治める'],
+    meaning:{'収める':'よい結果を 手に入れる','修める':'学問・わざを身につける','治める':'国・社会をおさめる'} },
+  { type:'tsukai', tag:'つかい分け：おさめる',
+    sentence:'国に ぜいきんを @@ める。', read:'おさめる',
+    answer:'納める', choices:['納める','収める','修める'],
+    meaning:{'納める':'お金・品物を わたす','収める':'よい結果を手に入れる','修める':'学問を身につける'} },
+  // ── つかい分け：うつる（映る／移る・写る）──
+  { type:'tsukai', tag:'つかい分け：うつる',
+    sentence:'みずうみに 山が きれいに @@ る。', read:'うつる',
+    answer:'映る', choices:['映る','移る','写る'],
+    meaning:{'映る':'光・かげが すがたを見せる','移る':'べつの ところに動く','写る':'写真に うつる'} },
+  // ── つかい分け：つとめる（勤める／務める・努める）──
+  { type:'tsukai', tag:'つかい分け：つとめる',
+    sentence:'お父さんは 会社に @@ める。', read:'つとめる',
+    answer:'勤める', choices:['勤める','務める','努める'],
+    meaning:{'勤める':'つとめ先で 仕事をする','務める':'役目・係をする','努める':'力をつくす'} },
+  // ── つかい分け：そなえる（供える／備える）──
+  { type:'tsukai', tag:'つかい分け：そなえる',
+    sentence:'おはかに 花を @@ える。', read:'そなえる',
+    answer:'供える', choices:['供える','備える'],
+    meaning:{'供える':'神仏に ささげる','備える':'いざという時の用意をする'} },
+
+  // ===== 6年生×低学年の同音字（6年が答え・6年/ぜんぶモードに出る）=====
+  // ── 同じ読み：い（異・医・意）──
+  { type:'onaji', tag:'同じ読み：い',
+    sentence:'二人の 答えが @@ なる。', read:'こと',
+    answer:'異', choices:['異','医','意'],
+    meaning:{'異':'ことなる（ちがう）','医':'いしゃ','意':'こころ・きもち'} },
+  // ── 同じ読み：かい（灰・海）──
+  { type:'onaji', tag:'同じ読み：かい',
+    sentence:'もえた あとに @@ が のこる。', read:'はい',
+    answer:'灰', choices:['灰','海'],
+    meaning:{'灰':'はい（もえたあとの粉）','海':'うみ'} },
+  // ── 同じ読み：き（机・記・起）──
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'へやに 木の @@ を おく。', read:'つくえ',
+    answer:'机', choices:['机','記','起'],
+    meaning:{'机':'つくえ','記':'しるす','起':'おきる'} },
+  // ── 同じ読み：きゅう（吸・球・急）──
+  { type:'onaji', tag:'同じ読み：きゅう',
+    sentence:'ストローで ジュースを @@ う。', read:'す',
+    answer:'吸', choices:['吸','球','急'],
+    meaning:{'吸':'すう（口でひきこむ）','球':'たま','急':'いそぐ'} },
+  // ── 同じ読み：きょう（胸・橋・鏡）──
+  { type:'onaji', tag:'同じ読み：きょう',
+    sentence:'うれしくて @@ が どきどきする。', read:'むね',
+    answer:'胸', choices:['胸','橋','鏡'],
+    meaning:{'胸':'むね','橋':'はし','鏡':'かがみ'} },
+  // ── 同じ読み：きん（筋・金・近）──
+  { type:'onaji', tag:'同じ読み：きん',
+    sentence:'うでに 太い @@ が うきでる。', read:'すじ',
+    answer:'筋', choices:['筋','金','近'],
+    meaning:{'筋':'すじ（きん肉のすじ）','金':'かね','近':'ちかい'} },
+  // ── 同じ読み：けつ（穴・血・決）──
+  { type:'onaji', tag:'同じ読み：けつ',
+    sentence:'じめんに 大きな @@ を ほる。', read:'あな',
+    answer:'穴', choices:['穴','血','決'],
+    meaning:{'穴':'あな','血':'ち','決':'きめる'} },
+  // ── 同じ読み：けん（絹・県・研）──
+  { type:'onaji', tag:'同じ読み：けん',
+    sentence:'なめらかな @@ の 糸。', read:'きぬ',
+    answer:'絹', choices:['絹','県','研'],
+    meaning:{'絹':'きぬ（やわらかいせんい）','県':'けん（地いき）','研':'みがく・けんきゅう'} },
+  // ── 同じ読み：げん（源・原・元）──
+  { type:'onaji', tag:'同じ読み：げん',
+    sentence:'川の @@ を たずねて 山に のぼる。', read:'みなもと',
+    answer:'源', choices:['源','原','元'],
+    meaning:{'源':'みなもと（おおもと）','原':'はら（野原）','元':'もと'} },
+  // ── 同じ読み：こん（困・根・今）──
+  { type:'onaji', tag:'同じ読み：こん',
+    sentence:'道に まよって ほとほと @@ る。', read:'こま',
+    answer:'困', choices:['困','根','今'],
+    meaning:{'困':'こまる','根':'ね（草木のね）','今':'いま'} },
+  // ── 同じ読み：さ（砂・差・査）──
+  { type:'onaji', tag:'同じ読み：さ',
+    sentence:'海べの 白い @@ で あそぶ。', read:'すな',
+    answer:'砂', choices:['砂','差','査'],
+    meaning:{'砂':'すな','差':'さ（ちがい）','査':'しらべる（けんさの査）'} },
+  // ── 同じ読み：じゅう（縦・住・重）──
+  { type:'onaji', tag:'同じ読み：じゅう',
+    sentence:'紙に せんを @@ に 引く。', read:'たて',
+    answer:'縦', choices:['縦','住','重'],
+    meaning:{'縦':'たて（上下のむき）','住':'すむ','重':'おもい'} },
+  // ── 同じ読み：しん（針・森・新）──
+  { type:'onaji', tag:'同じ読み：しん',
+    sentence:'とけいの @@ が 十二を さす。', read:'はり',
+    answer:'針', choices:['針','森','新'],
+    meaning:{'針':'はり（とがった金ぐ）','森':'もり','新':'あたらしい'} },
+  // ── 同じ読み：じょう（蒸・場）──
+  { type:'onaji', tag:'同じ読み：じょう',
+    sentence:'やさいを なべで @@ す。', read:'む',
+    answer:'蒸', choices:['蒸','場','常'],
+    meaning:{'蒸':'むす（湯気でやわらかくする）','場':'ば（ばしょ）','常':'つね・いつも'} },
+  // ── 同じ読み：そう（窓・送・相）──
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'へやの @@ を あけて かぜを 入れる。', read:'まど',
+    answer:'窓', choices:['窓','送','相'],
+    meaning:{'窓':'まど','送':'おくる','相':'あい・すがた'} },
+  // ── 同じ読み：ぞう（蔵・増・造）──
+  { type:'onaji', tag:'同じ読み：ぞう',
+    sentence:'古い @@ に 米を しまう。', read:'くら',
+    answer:'蔵', choices:['蔵','増','造'],
+    meaning:{'蔵':'くら（物をしまう建物）','増':'ふえる','造':'つくる'} },
+  // ── 同じ読み：ふく（腹・服・福）──
+  { type:'onaji', tag:'同じ読み：ふく',
+    sentence:'食べすぎて @@ が いっぱいだ。', read:'はら',
+    answer:'腹', choices:['腹','服','福'],
+    meaning:{'腹':'はら（おなか）','服':'ふく（着るもの）','福':'しあわせ'} },
+  // ── 同じ読み：ほ（補・保・歩）──
+  { type:'onaji', tag:'同じ読み：ほ',
+    sentence:'たりない ぶんを あとから @@ う。', read:'おぎな',
+    answer:'補', choices:['補','保','歩'],
+    meaning:{'補':'おぎなう（たす）','保':'たもつ','歩':'あるく'} },
+  // ── 同じ読み：ほう（宝・報・豊）──
+  { type:'onaji', tag:'同じ読み：ほう',
+    sentence:'海ぞくの かくした @@ を さがす。', read:'たから',
+    answer:'宝', choices:['宝','報','豊'],
+    meaning:{'宝':'たから','報':'むくいる・しらせ','豊':'ゆたか'} },
+  // ── 同じ読み：やく（訳・薬・役）──
+  { type:'onaji', tag:'同じ読み：やく',
+    sentence:'ちこくした @@ を 先生に 話す。', read:'わけ',
+    answer:'訳', choices:['訳','薬','役'],
+    meaning:{'訳':'わけ（りゆう）','薬':'くすり','役':'やく（やくわり）'} },
+  // ── 同じ読み：り（裏・里・理）──
+  { type:'onaji', tag:'同じ読み：り',
+    sentence:'紙の @@ に 名前を 書く。', read:'うら',
+    answer:'裏', choices:['裏','里','理'],
+    meaning:{'裏':'うら（はんたいの面）','里':'さと','理':'ことわり・りゆう'} },
+
+  // ===== 6年生の使い分け =====
+  // ── つかい分け：しお（潮／塩）──
+  { type:'tsukai', tag:'つかい分け：しお',
+    sentence:'海の @@ が だんだん みちてくる。', read:'しお',
+    answer:'潮', choices:['潮','塩'],
+    meaning:{'潮':'海の水の みちひき','塩':'しょっぱい ちょうみりょう'} },
+  // ── つかい分け：あたたかい（暖かい／温かい）──
+  { type:'tsukai', tag:'つかい分け：あたたかい',
+    sentence:'春らしい @@ かい 一日だ。', read:'あたた',
+    answer:'暖', choices:['暖','温'],
+    meaning:{'暖':'あたたかい（気こう・くうきが）','温':'あたたかい（お湯・物が）'} },
+
+  // ===== 同訓異字（同じ訓で使い分け・全学年）=====
+  // ── つかい分け：あらわす（表す・現す・著す）──
+  { type:'tsukai', tag:'つかい分け：あらわす',
+    sentence:'うれしい 気もちを ことばで @@ す。', read:'あらわす',
+    answer:'表す', choices:['表す','現す','著す'],
+    meaning:{'表す':'考え・気もちを外に出す','現す':'すがたを見せる','著す':'本を書いて世に出す'} },
+  { type:'tsukai', tag:'つかい分け：あらわす',
+    sentence:'ヒーローが とつぜん すがたを @@ す。', read:'あらわす',
+    answer:'現す', choices:['現す','表す','著す'],
+    meaning:{'現す':'すがたを見せる','表す':'考え・気もちを外に出す','著す':'本を書いて世に出す'} },
+  { type:'tsukai', tag:'つかい分け：あらわす',
+    sentence:'学者が けんきゅうの 本を @@ す。', read:'あらわす',
+    answer:'著す', choices:['著す','表す','現す'],
+    meaning:{'著す':'本を書いて世に出す','表す':'考え・気もちを外に出す','現す':'すがたを見せる'} },
+  // ── つかい分け：おる（折る・織る）──
+  { type:'tsukai', tag:'つかい分け：おる',
+    sentence:'木の えだを ぽきっと @@ る。', read:'おる',
+    answer:'折る', choices:['折る','織る'],
+    meaning:{'折る':'曲げて 切りはなす','織る':'糸で 布をつくる'} },
+  { type:'tsukai', tag:'つかい分け：おる',
+    sentence:'はたで うつくしい ぬのを @@ る。', read:'おる',
+    answer:'織る', choices:['織る','折る'],
+    meaning:{'織る':'糸で 布をつくる','折る':'曲げて 切りはなす'} },
+  // ── つかい分け：きく（聞く・効く・利く）──
+  { type:'tsukai', tag:'つかい分け：きく',
+    sentence:'すきな 音楽を @@ く。', read:'きく',
+    answer:'聞く', choices:['聞く','効く','利く'],
+    meaning:{'聞く':'音・声を 耳でとらえる','効く':'ききめが ある','利く':'よく はたらく'} },
+  { type:'tsukai', tag:'つかい分け：きく',
+    sentence:'かぜぐすりが よく @@ く。', read:'きく',
+    answer:'効く', choices:['効く','聞く','利く'],
+    meaning:{'効く':'ききめが ある','聞く':'音・声を 耳でとらえる','利く':'よく はたらく'} },
+  { type:'tsukai', tag:'つかい分け：きく',
+    sentence:'犬は 鼻が よく @@ いて においが わかる。', read:'きく',
+    answer:'利く', choices:['利く','聞く','効く'],
+    meaning:{'利く':'よく はたらく','聞く':'音・声を 耳でとらえる','効く':'ききめが ある'} },
+  // ── つかい分け：なく（鳴く・泣く）──
+  { type:'tsukai', tag:'つかい分け：なく',
+    sentence:'小とりが ちゅんちゅん @@ く。', read:'なく',
+    answer:'鳴く', choices:['鳴く','泣く'],
+    meaning:{'鳴く':'動物が 声を出す','泣く':'人が なみだを流す'} },
+  { type:'tsukai', tag:'つかい分け：なく',
+    sentence:'ころんで いたくて @@ く。', read:'なく',
+    answer:'泣く', choices:['泣く','鳴く'],
+    meaning:{'泣く':'人が なみだを流す','鳴く':'動物が 声を出す'} },
+  // ── つかい分け：のぼる（上る・登る）──
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'えきの かいだんを @@ る。', read:'のぼる',
+    answer:'上る', choices:['上る','登る'],
+    meaning:{'上る':'上のほうへ 行く','登る':'高い所へ よじのぼる'} },
+  { type:'tsukai', tag:'つかい分け：のぼる',
+    sentence:'なつ休みに けわしい 山に @@ る。', read:'のぼる',
+    answer:'登る', choices:['登る','上る'],
+    meaning:{'登る':'高い所へ よじのぼる','上る':'上のほうへ 行く'} },
+  // ── つかい分け：わかれる（分かれる・別れる）──
+  { type:'tsukai', tag:'つかい分け：わかれる',
+    sentence:'道が 二つに @@ れる。', read:'わかれる',
+    answer:'分かれる', choices:['分かれる','別れる'],
+    meaning:{'分かれる':'いくつかに 分かれる','別れる':'人と はなれる'} },
+  { type:'tsukai', tag:'つかい分け：わかれる',
+    sentence:'えきで 友だちと @@ れる。', read:'わかれる',
+    answer:'別れる', choices:['別れる','分かれる'],
+    meaning:{'別れる':'人と はなれる','分かれる':'いくつかに 分かれる'} },
+  // ── つかい分け：うつ（打つ・討つ）──
+  { type:'tsukai', tag:'つかい分け：うつ',
+    sentence:'くぎを かなづちで @@ つ。', read:'うつ',
+    answer:'打つ', choices:['打つ','討つ'],
+    meaning:{'打つ':'たたく・ぶつける','討つ':'てきを せめる'} },
+  { type:'tsukai', tag:'つかい分け：うつ',
+    sentence:'むかしの 武士が かたきを @@ つ。', read:'うつ',
+    answer:'討つ', choices:['討つ','打つ'],
+    meaning:{'討つ':'てきを せめる','打つ':'たたく・ぶつける'} },
+  // ── つかい分け：さめる（冷める・覚める）──
+  { type:'tsukai', tag:'つかい分け：さめる',
+    sentence:'あつい お茶が だんだん @@ める。', read:'さめる',
+    answer:'冷める', choices:['冷める','覚める'],
+    meaning:{'冷める':'ねつが下がる・つめたくなる','覚める':'目がさめる・ねむりからおきる'} },
+  { type:'tsukai', tag:'つかい分け：さめる',
+    sentence:'あさ はやく 目が @@ める。', read:'さめる',
+    answer:'覚める', choices:['覚める','冷める'],
+    meaning:{'覚める':'ねむりからおきる','冷める':'ねつが下がる・つめたくなる'} },
+  // ── つかい分け：すむ（住む・済む）──
+  { type:'tsukai', tag:'つかい分け：すむ',
+    sentence:'新しい 家に かぞくで @@ む。', read:'すむ',
+    answer:'住む', choices:['住む','済む'],
+    meaning:{'住む':'そこで くらす','済む':'ようじが おわる'} },
+  { type:'tsukai', tag:'つかい分け：すむ',
+    sentence:'しゅくだいが ぜんぶ @@ む。', read:'すむ',
+    answer:'済む', choices:['済む','住む'],
+    meaning:{'済む':'ようじが おわる','住む':'そこで くらす'} },
+  // ── つかい分け：はじめ（初め・始め）──
+  { type:'tsukai', tag:'つかい分け：はじめ',
+    sentence:'なつの @@ は まだ すずしい。', read:'はじめ',
+    answer:'初め', choices:['初め','始め'],
+    meaning:{'初め':'時期の はじめのころ','始め':'ものごとを スタートすること'} },
+  { type:'tsukai', tag:'つかい分け：はじめ',
+    sentence:'しごと @@ の あいさつを する。', read:'はじめ',
+    answer:'始め', choices:['始め','初め'],
+    meaning:{'始め':'ものごとを スタートすること','初め':'時期の はじめのころ'} },
+  // ── つかい分け：まじる（交じる・混じる）──
+  { type:'tsukai', tag:'つかい分け：まじる',
+    sentence:'おじいさんの かみに 白いものが @@ る。', read:'まじる',
+    answer:'交じる', choices:['交じる','混じる'],
+    meaning:{'交じる':'べつの ものが入りまじる（見分けられる）','混じる':'とけあって まざる'} },
+  { type:'tsukai', tag:'つかい分け：まじる',
+    sentence:'水に 赤い 絵のぐが @@ る。', read:'まじる',
+    answer:'混じる', choices:['混じる','交じる'],
+    meaning:{'混じる':'とけあって まざる','交じる':'べつの ものが入りまじる'} },
+  // ── つかい分け：さす（指す・差す）──
+  { type:'tsukai', tag:'つかい分け：さす',
+    sentence:'地図で 北の ほうを @@ す。', read:'さす',
+    answer:'指す', choices:['指す','差す'],
+    meaning:{'指す':'ゆびや やじるしで しめす','差す':'かさをさす・光がさしこむ'} },
+  { type:'tsukai', tag:'つかい分け：さす',
+    sentence:'雨が ふってきて かさを @@ す。', read:'さす',
+    answer:'差す', choices:['差す','指す'],
+    meaning:{'差す':'かさをさす・光がさしこむ','指す':'ゆびや やじるしで しめす'} },
+
+  // ===== 同訓異字 第2弾（同じ訓で使い分け・全学年）=====
+  // ── つかい分け：やさしい（易しい・優しい）──
+  { type:'tsukai', tag:'つかい分け：やさしい',
+    sentence:'この もんだいは とても @@ しい。', read:'やさしい',
+    answer:'易しい', choices:['易しい','優しい'],
+    meaning:{'易しい':'かんたん（むずかしくない）','優しい':'親切・おだやか'} },
+  { type:'tsukai', tag:'つかい分け：やさしい',
+    sentence:'おばあちゃんは とても @@ しい。', read:'やさしい',
+    answer:'優しい', choices:['優しい','易しい'],
+    meaning:{'優しい':'親切・おだやか','易しい':'かんたん（むずかしくない）'} },
+  // ── つかい分け：へる（減る・経る）──
+  { type:'tsukai', tag:'つかい分け：へる',
+    sentence:'おかしの 数が だんだん @@ る。', read:'へる',
+    answer:'減る', choices:['減る','経る'],
+    meaning:{'減る':'数や量が 少なくなる','経る':'時間や 場所を とおる'} },
+  { type:'tsukai', tag:'つかい分け：へる',
+    sentence:'あれから 十年の 月日が @@ る。', read:'へる',
+    answer:'経る', choices:['経る','減る'],
+    meaning:{'経る':'時間や 場所を とおる','減る':'数や量が 少なくなる'} },
+  // ── つかい分け：やぶれる（破れる・敗れる）──
+  { type:'tsukai', tag:'つかい分け：やぶれる',
+    sentence:'とがった くぎで ふくが @@ れる。', read:'やぶれる',
+    answer:'破れる', choices:['破れる','敗れる'],
+    meaning:{'破れる':'布・紙が さける','敗れる':'しょうぶに 負ける'} },
+  { type:'tsukai', tag:'つかい分け：やぶれる',
+    sentence:'けっしょうで つよい チームに @@ れる。', read:'やぶれる',
+    answer:'敗れる', choices:['敗れる','破れる'],
+    meaning:{'敗れる':'しょうぶに 負ける','破れる':'布・紙が さける'} },
+  // ── つかい分け：うむ（生む・産む）──
+  { type:'tsukai', tag:'つかい分け：うむ',
+    sentence:'新しい アイデアを @@ む。', read:'うむ',
+    answer:'生む', choices:['生む','産む'],
+    meaning:{'生む':'新しく つくりだす','産む':'子や 卵を うむ'} },
+  { type:'tsukai', tag:'つかい分け：うむ',
+    sentence:'ねこが 子どもを 三びき @@ む。', read:'うむ',
+    answer:'産む', choices:['産む','生む'],
+    meaning:{'産む':'子や 卵を うむ','生む':'新しく つくりだす'} },
+  // ── つかい分け：おう（追う・負う）──
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'にげる どろぼうを @@ う。', read:'おう',
+    answer:'追う', choices:['追う','負う'],
+    meaning:{'追う':'あとを おいかける','負う':'せおう・ひきうける'} },
+  { type:'tsukai', tag:'つかい分け：おう',
+    sentence:'重い せきにんを @@ う。', read:'おう',
+    answer:'負う', choices:['負う','追う'],
+    meaning:{'負う':'せおう・ひきうける','追う':'あとを おいかける'} },
+  // ── つかい分け：のぞむ（望む・臨む）──
+  { type:'tsukai', tag:'つかい分け：のぞむ',
+    sentence:'心から せかいの へいわを @@ む。', read:'のぞむ',
+    answer:'望む', choices:['望む','臨む'],
+    meaning:{'望む':'こうあってほしいと ねがう','臨む':'その場に 出る・面する'} },
+  { type:'tsukai', tag:'つかい分け：のぞむ',
+    sentence:'だいじな しあいに 真けんに @@ む。', read:'のぞむ',
+    answer:'臨む', choices:['臨む','望む'],
+    meaning:{'臨む':'その場に 出る・面する','望む':'こうあってほしいと ねがう'} },
+  // ── つかい分け：かう（買う・飼う）──
+  { type:'tsukai', tag:'つかい分け：かう',
+    sentence:'お店で あたらしい パンを @@ う。', read:'かう',
+    answer:'買う', choices:['買う','飼う'],
+    meaning:{'買う':'お金をはらって 手に入れる','飼う':'動物を やしなう'} },
+  { type:'tsukai', tag:'つかい分け：かう',
+    sentence:'家で 犬を 一ぴき @@ う。', read:'かう',
+    answer:'飼う', choices:['飼う','買う'],
+    meaning:{'飼う':'動物を やしなう','買う':'お金をはらって 手に入れる'} },
+  // ── つかい分け：きる（切る・着る）──
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'ナイフで パンを 半分に @@ る。', read:'きる',
+    answer:'切る', choices:['切る','着る'],
+    meaning:{'切る':'はもので たつ・はなす','着る':'服を 身につける'} },
+  { type:'tsukai', tag:'つかい分け：きる',
+    sentence:'あたらしい 服を @@ る。', read:'きる',
+    answer:'着る', choices:['着る','切る'],
+    meaning:{'着る':'服を 身につける','切る':'はもので たつ・はなす'} },
+  // ── つかい分け：たてる（立てる・建てる）──
+  { type:'tsukai', tag:'つかい分け：たてる',
+    sentence:'本を たなに まっすぐ @@ てる。', read:'たてる',
+    answer:'立てる', choices:['立てる','建てる'],
+    meaning:{'立てる':'まっすぐ おこす','建てる':'たてものを つくる'} },
+  { type:'tsukai', tag:'つかい分け：たてる',
+    sentence:'野はらに 新しい 家を @@ てる。', read:'たてる',
+    answer:'建てる', choices:['建てる','立てる'],
+    meaning:{'建てる':'たてものを つくる','立てる':'まっすぐ おこす'} },
+  // ── つかい分け：とまる（止まる・留まる）──
+  { type:'tsukai', tag:'つかい分け：とまる',
+    sentence:'赤しんごうで 車が @@ まる。', read:'とまる',
+    answer:'止まる', choices:['止まる','留まる'],
+    meaning:{'止まる':'動きが やむ','留まる':'同じ所に とどまる'} },
+  { type:'tsukai', tag:'つかい分け：とまる',
+    sentence:'その 思い出が 心に いつまでも @@ まる。', read:'とまる',
+    answer:'留まる', choices:['留まる','止まる'],
+    meaning:{'留まる':'同じ所に とどまる','止まる':'動きが やむ'} },
+  // ── つかい分け：はなす（話す・放す）──
+  { type:'tsukai', tag:'つかい分け：はなす',
+    sentence:'友だちと 楽しく @@ す。', read:'はなす',
+    answer:'話す', choices:['話す','放す'],
+    meaning:{'話す':'ことばで つたえる','放す':'つかまえていたものを 自由にする'} },
+  { type:'tsukai', tag:'つかい分け：はなす',
+    sentence:'つかまえた 虫を 野に @@ す。', read:'はなす',
+    answer:'放す', choices:['放す','話す'],
+    meaning:{'放す':'つかまえていたものを 自由にする','話す':'ことばで つたえる'} },
+  // ── つかい分け：さげる（下げる・提げる）──
+  { type:'tsukai', tag:'つかい分け：さげる',
+    sentence:'へやの おんどを すこし @@ げる。', read:'さげる',
+    answer:'下げる', choices:['下げる','提げる'],
+    meaning:{'下げる':'ひくくする・うしろへ やる','提げる':'手に ぶらさげて 持つ'} },
+  { type:'tsukai', tag:'つかい分け：さげる',
+    sentence:'手に おもい かばんを @@ げて あるく。', read:'さげる',
+    answer:'提げる', choices:['提げる','下げる'],
+    meaning:{'提げる':'手に ぶらさげて 持つ','下げる':'ひくくする・うしろへ やる'} },
+  // ── つかい分け：とる（取る・採る）──
+  { type:'tsukai', tag:'つかい分け：とる',
+    sentence:'たなの 本を 手に @@ る。', read:'とる',
+    answer:'取る', choices:['取る','採る'],
+    meaning:{'取る':'手に もつ・つかむ','採る':'えらんで 取り入れる・さいしゅうする'} },
+  { type:'tsukai', tag:'つかい分け：とる',
+    sentence:'山で きのこを たくさん @@ る。', read:'とる',
+    answer:'採る', choices:['採る','取る'],
+    meaning:{'採る':'えらんで 取り入れる・さいしゅうする','取る':'手に もつ・つかむ'} },
+
+  // ===== 5・6年漢字どうしの同じ読み（高学年に多い同音字）=====
+  // ── 同じ読み：しょう（招・傷・障 ＋証/賞/将）──
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'友だちを たんじょう会に @@ く。', read:'まね',
+    answer:'招', choices:['招','傷','証'],
+    meaning:{'招':'まねく（よぶ）','傷':'きず','証':'あかし（しょうこ）'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'ころんで ひざに @@ を つくる。', read:'きず',
+    answer:'傷', choices:['傷','障','賞'],
+    meaning:{'傷':'きず','障':'さわる・さしさわり','賞':'しょう（ごほうび）'} },
+  { type:'onaji', tag:'同じ読み：しょう',
+    sentence:'目に @@ る ほどの まぶしさ。', read:'さわ',
+    answer:'障', choices:['障','招','将'],
+    meaning:{'障':'さわる（さしさわる）','招':'まねく','将':'しょう（大将の将）'} },
+  // ── 同じ読み：せい（勢・盛・誠 ＋制/精/製）──
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'うみの 波の @@ いが つよい。', read:'いきお',
+    answer:'勢', choices:['勢','制','聖'],
+    meaning:{'勢':'いきおい','制':'きまり（せいど）','聖':'せい（せいなる）'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'ごはんを 山のように @@ る。', read:'も',
+    answer:'盛', choices:['盛','精','製'],
+    meaning:{'盛':'もる（高くつむ）','精':'せい（せいみつ）','製':'つくる（せいぞう）'} },
+  { type:'onaji', tag:'同じ読み：せい',
+    sentence:'@@ を こめて 手紙を 書く。', read:'まこと',
+    answer:'誠', choices:['誠','性','政'],
+    meaning:{'誠':'まこと（うそのない心）','性':'せい（せいしつ）','政':'まつりごと'} },
+  // ── 同じ読み：そう（奏・装・操 ＋総/創/層）──
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'ピアノで うつくしい 曲を @@ でる。', read:'かな',
+    answer:'奏', choices:['奏','装','総'],
+    meaning:{'奏':'かなでる（えんそうする）','装':'よそおう','総':'そう（ぜんたい）'} },
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'ぶたいの ために 身を きれいに @@ う。', read:'よそお',
+    answer:'装', choices:['装','操','創'],
+    meaning:{'装':'よそおう（みじたくする）','操':'あやつる','創':'つくる（そうぞう）'} },
+  { type:'onaji', tag:'同じ読み：そう',
+    sentence:'ラジコンを 自ゆうに @@ る。', read:'あやつ',
+    answer:'操', choices:['操','奏','層'],
+    meaning:{'操':'あやつる（うごかす）','奏':'かなでる','層':'そう（かさなり）'} },
+  // ── 同じ読み：かん（幹・慣・巻・干 ＋刊/看/簡）──
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'木の ふとい @@ に さわる。', read:'みき',
+    answer:'幹', choices:['幹','刊','看'],
+    meaning:{'幹':'みき（木のみき）','刊':'かん（出ぱん）','看':'かん（見まもる）'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'新しい 学校に だんだん @@ れる。', read:'な',
+    answer:'慣', choices:['慣','簡','巻'],
+    meaning:{'慣':'なれる','簡':'かん（かんたん）','巻':'まく'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'うでに ほうたいを ぐるぐる @@ く。', read:'ま',
+    answer:'巻', choices:['巻','干','幹'],
+    meaning:{'巻':'まく（くるくる）','干':'ほす','幹':'みき'} },
+  { type:'onaji', tag:'同じ読み：かん',
+    sentence:'せんたく物を 日なたに @@ す。', read:'ほ',
+    answer:'干', choices:['干','看','刊'],
+    meaning:{'干':'ほす（かわかす）','看':'かん（見まもる）','刊':'かん（出ぱん）'} },
+  // ── 同じ読み：し（支・枝・示・至・私 ＋史/師/視）──
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'たおれそうな 木を 棒で @@ える。', read:'ささ',
+    answer:'支', choices:['支','史','士'],
+    meaning:{'支':'ささえる','史':'し（れきし）','士':'し（さむらい・〇〇士）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'木の @@ に 小鳥が とまる。', read:'えだ',
+    answer:'枝', choices:['枝','師','資'],
+    meaning:{'枝':'えだ','師':'し（先生）','資':'し（しげん・しきん）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'正しい やり方を 手本で @@ す。', read:'しめ',
+    answer:'示', choices:['示','志','視'],
+    meaning:{'示':'しめす','志':'こころざし','視':'し（見る）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'この 道は 駅に @@ る。', read:'いた',
+    answer:'至', choices:['至','私','詞'],
+    meaning:{'至':'いたる（とどく）','私':'わたし','詞':'し（ことば・かし）'} },
+  { type:'onaji', tag:'同じ読み：し',
+    sentence:'これは @@ の 大切な 本です。', read:'わたし',
+    answer:'私', choices:['私','姿','誌'],
+    meaning:{'私':'わたし','姿':'すがた','誌':'し（ざっし）'} },
+  // ── 同じ読み：き（危・貴 ＋机/規/揮）──
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'ここは @@ ないから 近よらないで。', read:'あぶ',
+    answer:'危', choices:['危','机','規'],
+    meaning:{'危':'あぶない','机':'つくえ','規':'き（きそく）'} },
+  { type:'onaji', tag:'同じ読み：き',
+    sentence:'とても @@ とい たからものだ。', read:'たっと',
+    answer:'貴', choices:['貴','規','揮'],
+    meaning:{'貴':'たっとい（とうとい）','規':'き（きそく）','揮':'き（はっき）'} },
+];
+
+/* ============ ゲーム処理 ============ */
+const $ = id => document.getElementById(id);
+let deck = [], idx = 0, answers = [], order = [], wrongQuestions = [];
+let currentMode = 'all', currentGrade = 'all', currentCount = '10';
+let combo = 0, sessionMaxCombo = 0, sessionComebacks = 0;
+const scoreCount = ()=> answers.filter(a => a && a.correct).length;
+
+/* ===== セーブ（localStorage）と コレクション ===== */
+const STORE_KEY = 'kanjiQuiz.v1';
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveStore(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e){} }
+let store = loadStore();
+store.kanji   = store.kanji   || {};   // { 漢字: 正解した回数 }
+store.medals  = store.medals  || {};   // { メダルID: true }
+store.wrong   = store.wrong   || {};   // { 問題ID: true } まちがえた問題（復習リスト）
+store.bestCombo = store.bestCombo || 0;
+store.plays   = store.plays   || 0;
+store.perfect = store.perfect || false;
+store.totalCorrect = store.totalCorrect || 0;  // 累計 正解数
+store.perfectCount = store.perfectCount || 0;   // 全問正解した回数
+store.comebacks    = store.comebacks    || 0;   // まちがいを なおした回数
+store.dailyTotal   = store.dailyTotal   || 0;   // デイリーを やった のべ回数
+store.daily   = store.daily   || { streak:0, bestStreak:0, lastDay:null };
+store.unlocked3 = store.unlocked3 || false;     // 3年生 解放ずみか
+store.soundOn = (store.soundOn === undefined) ? true : store.soundOn;  // 音声 ON/OFF（初期ON）
+const SAVE_VERSION = 3;
+store.version = SAVE_VERSION;                    // セーブの版（将来の移行用）
+saveStore();
+
+// 問題に固定ID（BANKの並びは静的なので index をIDにする）
+BANK.forEach((q,i)=>{ q.id = i; });
+
+// 集められる漢字＝配当のぜんぶ（DBにある全字）。
+// 「同じ読み／使い分け」で出ない字も「読みクイズ」(自動生成) で集められるので、図鑑は配当どおり全字。
+const COLLECTIBLE = Object.keys(KANJI)
+  .sort((a,b)=> KANJI[a].g - KANJI[b].g || KANJI[a].s - KANJI[b].s || (a<b?-1:1));
+
+const dexCount    = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 1).length;
+const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).length;
+// その学年の図鑑をすべて集めたか
+const dexGradeDone = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g===g).every(ch => (store.kanji[ch]||0) >= 1);
+
+// ── 学年の解放（3〜6年）：前の学年までを図鑑コンプリートで解放。問題がまだ無い学年は「じゅんび中」 ──
+const MAXGRADE = 6;
+const COLLECTIBLE12 = COLLECTIBLE.filter(ch => KANJI[ch].g <= 2);   // ※旧コード互換
+const gradeHasContent = (g)=> COLLECTIBLE.some(ch => KANJI[ch].g === g);   // その学年の問題があるか
+const collectiblesUpTo = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g <= g);
+// g学年以下「だけ」で実際に集められる正解漢字（選択肢に上位学年を含む問題は出題されないので除外）。
+// これを使わないと、答えはg以下でも選択肢に上の学年が混ざる問題しか無い字が永久に集まらず、解放が詰む。
+const collectableUpTo = (g)=> [...new Set(
+  BANK.filter(q => q.choices.every(c => wordGrade(c) <= g))
+      .flatMap(q => [...q.answer].filter(c => KANJI[c] && KANJI[c].g <= g))
+)];
+function gradeUnlocked(g){
+  if(g <= 2) return true;
+  if(!gradeHasContent(g)) return false;            // 問題がまだ無い学年は あそべない（じゅんび中）
+  if(store['unlocked'+g]) return true;
+  const lower = collectableUpTo(g-1);              // ※実際に集められる字だけを条件にする
+  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
+}
+function grade3Unlocked(){ return gradeUnlocked(3); }   // 互換
+function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
+// 新たに解放した学年があれば その最上位の学年番号を返す（無ければ 0）
+function checkUnlock(){
+  let unlockedNow = 0;
+  for(let g=3; g<=MAXGRADE; g++){
+    if(gradeHasContent(g) && !store['unlocked'+g] && gradeUnlocked(g)){
+      store['unlocked'+g] = true; unlockedNow = g;
+    }
+  }
+  if(unlockedNow) saveStore();
+  return unlockedNow;
+}
+
+// 正解した漢字を記録（2段階：1回で図鑑入り→3回で★）
+function recordCorrect(answer){
+  [...answer].filter(c => KANJI[c]).forEach(ch=>{
+    store.kanji[ch] = (store.kanji[ch]||0) + 1;
+  });
+  saveStore();
+}
+
+/* ===== 読みクイズ（KANJIデータから自動生成。全学年・全漢字に対応） ===== */
+const kataToHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+// その漢字の「読み」候補をひらがなで返す（音＝カタカナ→ひら／訓＝送りがな込み お(いる)→おいる）
+function yomiReadings(ch){
+  const k = KANJI[ch]; if(!k) return [];
+  const on  = (k.on ||[]).map(kataToHira);
+  const kun = (k.kun||[]).map(r => r.replace(/[()]/g,''));
+  return [...new Set([...on, ...kun])].filter(Boolean);
+}
+const GRADE_NAME = {1:'1年',2:'2年',3:'3年',4:'4年',5:'5年',6:'6年'};
+// 1字ぶんの読みクイズを作る（答え＝その字の読みの一つ。ダミー＝他の字の読み）
+function makeYomiQ(ch){
+  const mine = yomiReadings(ch);
+  const answer = mine[Math.floor(Math.random()*mine.length)];
+  const mineSet = new Set(mine);
+  const pool = [];
+  for(const c of Object.keys(KANJI)){
+    if(c===ch) continue;
+    for(const r of yomiReadings(c)){ if(!mineSet.has(r)) pool.push(r); }
+  }
+  const dummies = [], seen = new Set([answer]);
+  for(const r of shuffle(pool)){ if(dummies.length>=3) break; if(!seen.has(r)){ seen.add(r); dummies.push(r); } }
+  return { type:'yomi', kanji:ch, answer, choices: shuffle([answer, ...dummies]),
+           tag:`読みクイズ：${GRADE_NAME[KANJI[ch].g]||''}`, id:'y'+ch };
+}
+// いま選んでいる学年の読みクイズ問題リストを作る
+function buildYomiPool(){
+  const { ans } = gradeSpec();
+  return Object.keys(KANJI).filter(c => ans.has(KANJI[c].g)).map(makeYomiQ);
+}
+
+// メダル定義
+const MEDALS = [
+  // ── あそぶ（プレイ回数）──
+  {id:'firstClear', icon:'🎫', name:'はじめの一歩',  desc:'1かい あそんだ',    test:()=> store.plays>=1},
+  {id:'play5',      icon:'🎮', name:'5かい あそんだ', desc:'5かい あそんだ',    test:()=> store.plays>=5},
+  {id:'play10',     icon:'🎯', name:'10かい あそんだ',desc:'10かい あそんだ',   test:()=> store.plays>=10},
+  {id:'play20',     icon:'🕹️', name:'20かい あそんだ',desc:'20かい あそんだ',   test:()=> store.plays>=20},
+  {id:'play30',     icon:'🎲', name:'30かい あそんだ',desc:'30かい あそんだ',   test:()=> store.plays>=30},
+  {id:'play40',     icon:'🎰', name:'40かい あそんだ',desc:'40かい あそんだ',   test:()=> store.plays>=40},
+  {id:'play50',     icon:'🏅', name:'50かい あそんだ',desc:'50かい あそんだ',   test:()=> store.plays>=50},
+  {id:'play75',     icon:'🎖️', name:'75かい あそんだ',desc:'75かい あそんだ',   test:()=> store.plays>=75},
+  {id:'play100',    icon:'💎', name:'100かい あそんだ',desc:'100かい あそんだ', test:()=> store.plays>=100},
+  {id:'play150',    icon:'🏆', name:'150かい あそんだ',desc:'150かい あそんだ', test:()=> store.plays>=150},
+  {id:'play200',    icon:'👑', name:'200かい あそんだ',desc:'200かい あそんだ', test:()=> store.plays>=200},
+  {id:'play300',    icon:'🌌', name:'300かい あそんだ',desc:'300かい あそんだ', test:()=> store.plays>=300},
+  {id:'play500',    icon:'🦄', name:'500かい あそんだ',desc:'500かい あそんだ', test:()=> store.plays>=500},
+  {id:'play1000',   icon:'🌠', name:'1000かい あそんだ',desc:'1000かい あそんだ',test:()=> store.plays>=1000},
+  // ── ぜんもん正かい ──
+  {id:'perfect',    icon:'💯', name:'ぜんもん せいかい', desc:'1かいで ぜんぶ正かい',  test:()=> store.perfect},
+  {id:'perfect3',   icon:'🥉', name:'全問正かい 3かい', desc:'ぜんもん正かいを 3かい', test:()=> store.perfectCount>=3},
+  {id:'perfect5',   icon:'🥈', name:'全問正かい 5かい', desc:'ぜんもん正かいを 5かい', test:()=> store.perfectCount>=5},
+  {id:'perfect10',  icon:'🥇', name:'全問正かい 10かい',desc:'ぜんもん正かいを 10かい',test:()=> store.perfectCount>=10},
+  {id:'perfect15',  icon:'🎗️', name:'全問正かい 15かい',desc:'ぜんもん正かいを 15かい',test:()=> store.perfectCount>=15},
+  {id:'perfect20',  icon:'🏆', name:'全問正かい 20かい',desc:'ぜんもん正かいを 20かい',test:()=> store.perfectCount>=20},
+  {id:'perfect30',  icon:'👑', name:'全問正かい 30かい',desc:'ぜんもん正かいを 30かい',test:()=> store.perfectCount>=30},
+  {id:'perfect50',  icon:'🎉', name:'全問正かい 50かい',desc:'ぜんもん正かいを 50かい',test:()=> store.perfectCount>=50},
+  // ── 累計せいかい数 ──
+  {id:'correct50',  icon:'✏️', name:'50もん 正かい',  desc:'ぜんぶで 50もん正かい',  test:()=> store.totalCorrect>=50},
+  {id:'correct100', icon:'📘', name:'100もん 正かい', desc:'ぜんぶで 100もん正かい', test:()=> store.totalCorrect>=100},
+  {id:'correct200', icon:'📗', name:'200もん 正かい', desc:'ぜんぶで 200もん正かい', test:()=> store.totalCorrect>=200},
+  {id:'correct300', icon:'📙', name:'300もん 正かい', desc:'ぜんぶで 300もん正かい', test:()=> store.totalCorrect>=300},
+  {id:'correct500', icon:'📕', name:'500もん 正かい', desc:'ぜんぶで 500もん正かい', test:()=> store.totalCorrect>=500},
+  {id:'correct750', icon:'📚', name:'750もん 正かい', desc:'ぜんぶで 750もん正かい', test:()=> store.totalCorrect>=750},
+  {id:'correct1000',icon:'📜', name:'1000もん 正かい',desc:'ぜんぶで 1000もん正かい',test:()=> store.totalCorrect>=1000},
+  {id:'correct2000',icon:'🧾', name:'2000もん 正かい',desc:'ぜんぶで 2000もん正かい',test:()=> store.totalCorrect>=2000},
+  {id:'correct3000',icon:'📰', name:'3000もん 正かい',desc:'ぜんぶで 3000もん正かい',test:()=> store.totalCorrect>=3000},
+  {id:'correct5000',icon:'📊', name:'5000もん 正かい',desc:'ぜんぶで 5000もん正かい',test:()=> store.totalCorrect>=5000},
+  // ── コンボ ──
+  {id:'firstCombo', icon:'✌️', name:'はじめての コンボ', desc:'2れんぞく 正かい',  test:()=> store.bestCombo>=2},
+  {id:'combo3',     icon:'🔥', name:'コンボ 3',  desc:'3れんぞく 正かい',  test:()=> store.bestCombo>=3},
+  {id:'combo5',     icon:'🌶️', name:'コンボ 5',  desc:'5れんぞく 正かい',  test:()=> store.bestCombo>=5},
+  {id:'combo7',     icon:'💥', name:'コンボ 7',  desc:'7れんぞく 正かい',  test:()=> store.bestCombo>=7},
+  {id:'combo10',    icon:'⚡', name:'コンボ 10', desc:'10れんぞく 正かい', test:()=> store.bestCombo>=10},
+  {id:'combo15',    icon:'☄️', name:'コンボ 15', desc:'15れんぞく 正かい', test:()=> store.bestCombo>=15},
+  {id:'combo20',    icon:'🌈', name:'コンボ 20', desc:'20れんぞく 正かい', test:()=> store.bestCombo>=20},
+  {id:'combo25',    icon:'🎆', name:'コンボ 25', desc:'25れんぞく 正かい', test:()=> store.bestCombo>=25},
+  {id:'combo30',    icon:'💪', name:'コンボ 30', desc:'30れんぞく 正かい', test:()=> store.bestCombo>=30},
+  {id:'combo40',    icon:'🐉', name:'コンボ 40', desc:'40れんぞく 正かい', test:()=> store.bestCombo>=40},
+  {id:'combo50',    icon:'🦅', name:'コンボ 50', desc:'50れんぞく 正かい', test:()=> store.bestCombo>=50},
+  // ── まちがい なおし ──
+  {id:'comeback5',  icon:'🩹', name:'なおし はじめ', desc:'まちがいを 5もん なおした',  test:()=> store.comebacks>=5},
+  {id:'comeback10', icon:'🔁', name:'まちがい なおし', desc:'まちがいを 10もん なおした', test:()=> store.comebacks>=10},
+  {id:'comeback25', icon:'🔧', name:'なおし名人',     desc:'まちがいを 25もん なおした', test:()=> store.comebacks>=25},
+  {id:'comeback50', icon:'🛠️', name:'なおし達人',     desc:'まちがいを 50もん なおした', test:()=> store.comebacks>=50},
+  {id:'comeback75', icon:'⚙️', name:'なおし職人',     desc:'まちがいを 75もん なおした', test:()=> store.comebacks>=75},
+  {id:'comeback100',icon:'🏗️', name:'なおし王',       desc:'まちがいを 100もん なおした',test:()=> store.comebacks>=100},
+  // ── かん字ずかん ──
+  {id:'firstDex',   icon:'📄', name:'ずかん はじめ', desc:'図かんに 1字',  test:()=> dexCount()>=1},
+  {id:'dex5',       icon:'📃', name:'ずかん 5字',   desc:'図かんに 5字',  test:()=> dexCount()>=5},
+  {id:'dex10',      icon:'📗', name:'ずかん 10字',  desc:'図かんに 10字',  test:()=> dexCount()>=10},
+  {id:'dex25',      icon:'📒', name:'ずかん 25字',  desc:'図かんに 25字',  test:()=> dexCount()>=25},
+  {id:'dex50',      icon:'📚', name:'ずかん 50字',  desc:'図かんに 50字',  test:()=> dexCount()>=50},
+  {id:'dex75',      icon:'📙', name:'ずかん 75字',  desc:'図かんに 75字',  test:()=> dexCount()>=75},
+  {id:'dex100',     icon:'📕', name:'ずかん 100字', desc:'図かんに 100字', test:()=> dexCount()>=100},
+  {id:'dex125',     icon:'📔', name:'ずかん 125字', desc:'図かんに 125字', test:()=> dexCount()>=125},
+  {id:'dex150',     icon:'📓', name:'ずかん 150字', desc:'図かんに 150字', test:()=> dexCount()>=150},
+  {id:'dex175',     icon:'🗞️', name:'ずかん 175字', desc:'図かんに 175字', test:()=> dexCount()>=175},
+  {id:'dex200',     icon:'📖', name:'ずかん 200字', desc:'図かんに 200字', test:()=> dexCount()>=200},
+  {id:'dexAll',     icon:'👑', name:'ずかん コンプリート', desc:'ぜんぶ 図かんに', test:()=> dexCount()>=COLLECTIBLE.length},
+  // ── 学年ずかん コンプ ──
+  {id:'dexG1',      icon:'🟢', name:'1年 ずかん コンプ', desc:'1年の かん字を ぜんぶ', test:()=> dexGradeDone(1)},
+  {id:'dexG2',      icon:'🔵', name:'2年 ずかん コンプ', desc:'2年の かん字を ぜんぶ', test:()=> dexGradeDone(2)},
+  {id:'dexG3',      icon:'🟣', name:'3年 ずかん コンプ', desc:'3年の かん字を ぜんぶ', test:()=> dexGradeDone(3)},
+  // ── マスター（★）──
+  {id:'firstStar',  icon:'⭐', name:'はじめての ★',  desc:'★を 1字',   test:()=> masterCount()>=1},
+  {id:'master5',    icon:'✴️', name:'マスター 5字',  desc:'★を 5字',   test:()=> masterCount()>=5},
+  {id:'master10',   icon:'🌟', name:'マスター 10字', desc:'★を 10字',  test:()=> masterCount()>=10},
+  {id:'master25',   icon:'✨', name:'マスター 25字', desc:'★を 25字',  test:()=> masterCount()>=25},
+  {id:'master50',   icon:'💫', name:'マスター 50字', desc:'★を 50字',  test:()=> masterCount()>=50},
+  {id:'master75',   icon:'🌠', name:'マスター 75字', desc:'★を 75字',  test:()=> masterCount()>=75},
+  {id:'master100',  icon:'🪐', name:'マスター 100字',desc:'★を 100字', test:()=> masterCount()>=100},
+  {id:'master150',  icon:'☀️', name:'マスター 150字',desc:'★を 150字', test:()=> masterCount()>=150},
+  {id:'masterAll',  icon:'🏵️', name:'ぜんぶ マスター', desc:'ぜんぶ ★に', test:()=> masterCount()>=COLLECTIBLE.length},
+  {id:'grandMaster',icon:'🏆', name:'グランドマスター', desc:'図かん＆★を ぜんぶ', test:()=> dexCount()>=COLLECTIBLE.length && masterCount()>=COLLECTIBLE.length},
+  // ── デイリー（連続日数）──
+  {id:'daily2',     icon:'🌱', name:'2日 れんぞく',  desc:'チャレンジ 2日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=2},
+  {id:'daily3',     icon:'📅', name:'3日 れんぞく',  desc:'チャレンジ 3日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=3},
+  {id:'daily5',     icon:'🗓️', name:'5日 れんぞく',  desc:'チャレンジ 5日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=5},
+  {id:'daily7',     icon:'📆', name:'7日 れんぞく',  desc:'チャレンジ 7日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=7},
+  {id:'daily10',    icon:'🎍', name:'10日 れんぞく', desc:'チャレンジ 10日れんぞく', test:()=> (store.daily?.bestStreak||0)>=10},
+  {id:'daily14',    icon:'🎋', name:'14日 れんぞく', desc:'チャレンジ 14日れんぞく', test:()=> (store.daily?.bestStreak||0)>=14},
+  {id:'daily21',    icon:'🎏', name:'21日 れんぞく', desc:'チャレンジ 21日れんぞく', test:()=> (store.daily?.bestStreak||0)>=21},
+  {id:'daily30',    icon:'🏮', name:'30日 れんぞく', desc:'チャレンジ 30日れんぞく', test:()=> (store.daily?.bestStreak||0)>=30},
+  {id:'daily50',    icon:'🎐', name:'50日 れんぞく', desc:'チャレンジ 50日れんぞく', test:()=> (store.daily?.bestStreak||0)>=50},
+  {id:'daily100',   icon:'🎇', name:'100日 れんぞく',desc:'チャレンジ 100日れんぞく',test:()=> (store.daily?.bestStreak||0)>=100},
+  // ── デイリー（のべ回数）──
+  {id:'dailyT1',    icon:'🔔', name:'デイリー はじめ', desc:'デイリーを 1かい',   test:()=> store.dailyTotal>=1},
+  {id:'dailyT5',    icon:'🪧', name:'デイリー 5かい',  desc:'デイリーを 5かい',   test:()=> store.dailyTotal>=5},
+  {id:'dailyT10',   icon:'📌', name:'デイリー 10かい', desc:'デイリーを 10かい',  test:()=> store.dailyTotal>=10},
+  {id:'dailyT30',   icon:'📍', name:'デイリー 30かい', desc:'デイリーを 30かい',  test:()=> store.dailyTotal>=30},
+  {id:'dailyT50',   icon:'🧭', name:'デイリー 50かい', desc:'デイリーを 50かい',  test:()=> store.dailyTotal>=50},
+  {id:'dailyT100',  icon:'🗺️', name:'デイリー 100かい',desc:'デイリーを 100かい', test:()=> store.dailyTotal>=100},
+  // ── さらに 上の チャレンジ ──
+  {id:'play250',    icon:'🛸', name:'250かい あそんだ',desc:'250かい あそんだ', test:()=> store.plays>=250},
+  {id:'perfect40',  icon:'🎀', name:'全問正かい 40かい',desc:'ぜんもん正かいを 40かい',test:()=> store.perfectCount>=40},
+  {id:'correct400', icon:'📑', name:'400もん 正かい', desc:'ぜんぶで 400もん正かい', test:()=> store.totalCorrect>=400},
+  {id:'correct1500',icon:'🗂️', name:'1500もん 正かい',desc:'ぜんぶで 1500もん正かい',test:()=> store.totalCorrect>=1500},
+  {id:'combo35',    icon:'🌪️', name:'コンボ 35', desc:'35れんぞく 正かい', test:()=> store.bestCombo>=35},
+  {id:'dex15',      icon:'🧧', name:'ずかん 15字', desc:'図かんに 15字', test:()=> dexCount()>=15},
+  {id:'master125',  icon:'💠', name:'マスター 125字',desc:'★を 125字', test:()=> masterCount()>=125},
+  {id:'comeback15', icon:'🩺', name:'なおし 15もん', desc:'まちがいを 15もん なおした', test:()=> store.comebacks>=15},
+  {id:'dailyT75',   icon:'🛰️', name:'デイリー 75かい',desc:'デイリーを 75かい', test:()=> store.dailyTotal>=75},
+  // ── 解放・とくべつ ──
+  {id:'unlock3',    icon:'🔓', name:'3年生 かいきん', desc:'1・2年を ぜんぶ 図かんに', test:()=> grade3Unlocked()},
+];
+function checkMedals(){
+  const newly = [];
+  MEDALS.forEach(m=>{
+    if(!store.medals[m.id] && m.test()){ store.medals[m.id]=true; newly.push(m); }
+  });
+  if(newly.length) saveStore();
+  return newly;
+}
+
+/* ===== 累計正解数で 育つ 称号（あいぼうが しんかする） ===== */
+// 累計正解数のしきい値は 1〜6年生まで拡充する前提で 高め・多段に設定（キングの上も用意）
+const STAGES = [
+  {need:0,     icon:'🥚',   title:'漢字みならい'},
+  {need:30,    icon:'🐣',   title:'漢字かけだし'},
+  {need:80,    icon:'🐥',   title:'漢字がんばりや'},
+  {need:150,   icon:'🐦',   title:'漢字じょうず'},
+  {need:300,   icon:'🦜',   title:'漢字もの知り'},
+  {need:500,   icon:'🦉',   title:'漢字はかせ'},
+  {need:800,   icon:'🦅',   title:'漢字せんせい'},
+  {need:1200,  icon:'🐺',   title:'漢字名人'},
+  {need:1800,  icon:'🦁',   title:'漢字達人'},
+  {need:2600,  icon:'🐲',   title:'漢字マスター'},
+  {need:3800,  icon:'🐉',   title:'漢字グランドマスター'},
+  {need:5500,  icon:'👑',   title:'漢字キング'},
+  {need:8000,  icon:'🌟',   title:'漢字チャンピオン'},
+  {need:11500, icon:'☄️',   title:'漢字レジェンド'},
+  {need:16000, icon:'🧙',   title:'漢字仙人'},
+  {need:22000, icon:'🐉✨', title:'漢字の神さま'},
+  {need:30000, icon:'🌌',   title:'漢字うちゅういち'},
+];
+function rankStage(n){
+  let s = 0;
+  STAGES.forEach((e,i)=>{ if(n >= e.need) s = i; });
+  return s;
+}
+
+/* ===== 音（Web Audio：音声ファイル不要・オフラインでも鳴る） ===== */
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx){
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state === 'suspended'){ try{ audioCtx.resume(); }catch(e){} }
+  return audioCtx;
+}
+// 単音（オシレーター）
+function tone(freq, startAt, dur, type='sine', vol=0.2){
+  const ctx = getCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + startAt;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.03);
+}
+function playSound(name){
+  if(!store.soundOn) return;
+  const ctx = getCtx(); if(!ctx) return;
+  if(name === 'correct'){              // 正解「ピン♪ ポーン♪」（ドアベル風の鐘）
+    // 鐘らしく：基音＋オクターブ上の倍音を重ね、長めに残響
+    tone(1318, 0,    0.55, 'sine', 0.26);  // ピン（E6）
+    tone(2637, 0,    0.30, 'sine', 0.08);  // 倍音
+    tone(1047, 0.18, 0.70, 'sine', 0.26);  // ポーン（C6）
+    tone(2093, 0.18, 0.35, 'sine', 0.08);  // 倍音
+  } else if(name === 'wrong'){         // 不正解「ブッ ブー」（番組風の濁ったブザー）
+    // 半音ちがいの2音を重ねて、わざと濁った（不協和な）ブザーにする
+    tone(233, 0,    0.20, 'sawtooth', 0.11); // ブッ
+    tone(220, 0,    0.20, 'sawtooth', 0.11);
+    tone(220, 0.26, 0.55, 'sawtooth', 0.11); // ブー（少し下げて長く）
+    tone(207, 0.26, 0.55, 'sawtooth', 0.11);
+  } else if(name === 'cracker'){       // クラッカー「パン！」＋キラキラ
+    const dur = 0.16;
+    const buf = ctx.createBuffer(1, Math.max(1, ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i = 0; i < data.length; i++){
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);  // 破裂ノイズ
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const g = ctx.createGain(); g.gain.value = 0.32;
+    src.connect(g).connect(ctx.destination); src.start();
+    tone(1046, 0.04, 0.12, 'triangle', 0.18);   // キラキラ上昇
+    tone(1568, 0.13, 0.16, 'triangle', 0.18);
+    tone(2093, 0.23, 0.20, 'triangle', 0.16);
+  }
+}
+
+// 紙ふぶき
+function confettiBurst(n){
+  playSound('cracker');
+  const emo = ['🎉','⭐','✨','🎊','🌟'];
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'confetti';
+    s.textContent = emo[i % emo.length];
+    s.style.left = (2 + (i*9 + (i*i)%13) % 96) + 'vw';   // indexで散らす（乱数不要）
+    const dur = 1.3 + (i % 7) * 0.18;
+    s.style.fontSize = (1 + (i % 4) * 0.3) + 'rem';
+    s.style.animation = `fall ${dur}s linear forwards`;
+    document.body.appendChild(s);
+    setTimeout(()=> s.remove(), dur*1000 + 120);
+  }
+}
+
+function shuffle(a){
+  a = a.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/* ===== デイリーチャレンジ ===== */
+let isDaily = false;
+// その日のローカル日付を「epochからの日数」で（連続日数の計算用）
+function todayIndex(){
+  const d = new Date();
+  return Math.floor((d.getTime() - d.getTimezoneOffset()*60000) / 86400000);
+}
+// 日付をタネにした決定的シャッフル（同じ日は全員・何回でも同じ10問）
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a>>>15, 1 | a);
+    t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+function seededShuffle(arr, seed){
+  const r = mulberry32(seed); const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function startDaily(){
+  isDaily = true;
+  const maxC = maxUnlockedGrade();   // 解放ぶんだけ出題
+  const pool = BANK.filter(q => q.choices.every(c=>wordGrade(c)<=maxC) && wordGrade(q.answer)<=maxC);
+  deck = seededShuffle(pool, todayIndex()).slice(0, 10);
+  idx = 0; answers = []; order = []; combo = 0; sessionMaxCombo = 0; sessionComebacks = 0;
+  showOnly('quiz'); render();
+}
+function updateDailyStreak(){
+  const dy = store.daily, ti = todayIndex();
+  if(dy.lastDay !== ti){
+    dy.streak = (dy.lastDay === ti-1) ? (dy.streak||0)+1 : 1;
+    dy.lastDay = ti;
+    dy.bestStreak = Math.max(dy.bestStreak||0, dy.streak);
+    saveStore();
+  }
+}
+
+/* ===== 復習（まちがえた問題） ===== */
+const reviewList = ()=> BANK.filter(q => store.wrong[q.id]);
+function startReview(){
+  let pool = reviewList();
+  if(pool.length === 0){
+    alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。');
+    return;
+  }
+  isDaily = false;
+  let d = shuffle(pool);
+  if(d.length > 20) d = d.slice(0, 20);   // 1回は最大20問
+  startWithDeck(d);
+}
+
+/* 学年フィルタ：選んだ学年で「習った字だけ」を出す
+   - maxG までの字しか選択肢に出さない（知らない字を見せない）
+   - 単一学年（1 or 2）のときは、正解の字がその学年のものに限定 */
+// currentGrade（'1','2','3','all'）→ {許す正解学年, 選択肢の最大学年}
+function gradeSpec(){
+  let g = currentGrade;
+  if(g === 'all'){
+    let s = '12';
+    for(let x=3; x<=MAXGRADE; x++){ if(gradeUnlocked(x)) s += x; }
+    g = s;
+  }
+  const set = g.split('').map(Number);
+  return { ans: new Set(set), maxC: Math.max(...set) };
+}
+function gradeOK(q){
+  const { ans, maxC } = gradeSpec();
+  for(const c of q.choices){ if(wordGrade(c) > maxC) return false; }  // 知らない字は出さない
+  return ans.has(wordGrade(q.answer));                                 // 正解の学年が対象か
+}
+
+function startMode(mode){
+  currentMode = mode;
+  let pool;
+  if(mode==='yomi'){
+    pool = buildYomiPool();                                   // 読みクイズ（自動生成）
+  } else if(mode==='all'){
+    pool = BANK.filter(q => gradeOK(q)).concat(buildYomiPool()); // ①②＋読みクイズ
+  } else {
+    pool = BANK.filter(q => q.type===mode && gradeOK(q));
+  }
+  if(pool.length === 0){
+    alert('この 学年と モードの くみあわせには まだ もんだいが ありません。\nべつの 学年か モードを えらんでね。');
+    return;
+  }
+  isDaily = false;
+  let d = shuffle(pool);
+  if(currentCount !== 'all') d = d.slice(0, Number(currentCount));
+  startWithDeck(d);
+}
+
+// 任意の問題リストでクイズを開始（まちがい復習でも使う）
+function startWithDeck(questions){
+  isDaily = false;
+  deck = shuffle(questions);
+  idx = 0; answers = []; order = [];
+  combo = 0; sessionMaxCombo = 0; sessionComebacks = 0;
+  showOnly('quiz');
+  render();
+}
+
+// 正解の漢字の 画数・音読み・訓読み を KANJI DB から作る
+function kanjiMemo(word){
+  const chars = [...word].filter(c => KANJI[c]);
+  if(!chars.length) return '';
+  return chars.map(c=>{
+    const k = KANJI[c];
+    const on  = k.on.length  ? '音:'+k.on.join('・')  : '';
+    const kun = k.kun.length ? '訓:'+k.kun.join('・') : '';
+    return `<b>${c}</b>（${k.s}画）` + [on,kun].filter(Boolean).join(' ／ ');
+  }).join('<br>');
+}
+
+function showFeedback(q, isOK){
+  const fb = $('feedback');
+  fb.className = 'feedback show ' + (isOK?'good':'bad');
+  $('fbHead').textContent = isOK ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
+  if(q.type==='yomi'){
+    let yh = `<div class="fb-sentence"><b>${q.kanji}</b> ＝ <b>${q.answer}</b></div>`;
+    q.choices.forEach(c=>{ yh += `<div class="fb-line">${c===q.answer?'✅':'　'} ${c}</div>`; });
+    const ym = kanjiMemo(q.kanji);
+    if(ym) yh += `<div class="fb-kanji">📖 ${ym}</div>`;
+    $('fbBody').innerHTML = yh;
+    return;
+  }
+  // 完成した文（空らんに正解を入れたもの）
+  const parts = q.sentence.split('@@');
+  let html = `<div class="fb-sentence">${parts[0]}<b>${q.answer}</b>${parts[1]}</div>`;
+  // 解説：えらべた言葉ぜんぶの意味
+  q.choices.forEach(c=>{
+    const mark = (c===q.answer)?'✅':'　';
+    html += `<div class="fb-line">${mark} <b>${c}</b>… ${q.meaning[c]}</div>`;
+  });
+  // 漢字メモ（画数・音訓）
+  const memo = kanjiMemo(q.answer);
+  if(memo) html += `<div class="fb-kanji">📖 ${memo}</div>`;
+  $('fbBody').innerHTML = html;
+}
+
+function render(){
+  const q = deck[idx];
+  $('tag').textContent = q.tag;
+  $('count').textContent = `だい ${idx+1} / ${deck.length} もん`;
+  $('score').textContent = `せいかい ${scoreCount()}`;
+  $('prog').style.width = (idx/deck.length*100) + '%';
+  $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
+  $('combo').textContent = '';        // コンボ表示は回答時だけ出す
+
+  if(q.type==='yomi'){
+    $('question').innerHTML = '<div class="yomi-q">この かん字の 読みは？</div><div class="bigkanji">'+q.kanji+'</div>';
+    $('readline').innerHTML = '音（おん）か 訓（くん）の 読みを えらんでね';
+  } else {
+    // 文を組み立て（@@ を空らんに）
+    const parts = q.sentence.split('@@');
+    $('question').innerHTML = parts[0] +
+      '<span class="blank" role="img" aria-label="ここに かん字が 入る">○</span>' + parts[1];
+    $('readline').innerHTML = '読み：<b>' + q.read + '</b>';
+  }
+
+  const answered = answers[idx];
+  // 選択肢の並びは問題ごとに固定（戻っても入れ替わらない）
+  if(!order[idx]) order[idx] = shuffle(q.choices);
+  const box = $('choices'); box.innerHTML='';
+  order[idx].forEach(c=>{
+    const b = document.createElement('button');
+    b.className='choice';
+    // 読みクイズは読み（ひらがな）をそのまま／通常問題は送りがなを小さく
+    if(q.type==='yomi'){ b.textContent = c; }
+    else { b.innerHTML = c.replace(/[ぁ-ん]+/g, m=>`<span style="font-size:1rem">${m}</span>`); }
+    if(answered){
+      b.disabled = true;
+      if(c===q.answer) b.classList.add('ok');
+      if(!answered.correct && c===answered.picked) b.classList.add('ng');
+    } else {
+      b.onclick = ()=> choose(b, c, q);
+    }
+    box.appendChild(b);
+  });
+  // すでに答えた問題なら、解説をそのまま表示
+  if(answered){ showFeedback(q, answered.correct); }
+  else { $('feedback').className='feedback'; }
+}
+
+function choose(btn, picked, q){
+  if(answers[idx]) return;            // 二重回答ふせぎ
+  const isOK = picked===q.answer;
+  answers[idx] = { picked, correct:isOK };
+  [...$('choices').children].forEach(b=>{
+    b.disabled = true;
+    if(b.textContent===q.answer) b.classList.add('ok');
+  });
+  playSound(isOK ? 'correct' : 'wrong');
+  if(isOK){
+    combo++;
+    sessionMaxCombo = Math.max(sessionMaxCombo, combo);
+    if(combo > store.bestCombo) store.bestCombo = combo;
+    store.totalCorrect++;
+    if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; sessionComebacks++; }  // 復習で克服
+    recordCorrect(q.type==='yomi' ? q.kanji : q.answer);   // 図鑑に記録（読みクイズは漢字を集める）
+    showCombo(combo);
+    if(combo===3 || combo===5 || combo>=10 && combo%5===0) confettiBurst(14);
+  } else {
+    combo = 0;
+    if(q.type!=='yomi') store.wrong[q.id] = true;         // 復習リストに追加（読みクイズは自動生成なので対象外）
+    saveStore();
+    btn.classList.add('ng');
+    $('combo').textContent = '';
+  }
+  showFeedback(q, isOK);
+  $('score').textContent = `せいかい ${scoreCount()}`;
+}
+
+function showCombo(n){
+  const el = $('combo');
+  if(n >= 2){
+    el.textContent = `🔥 ${n}れんぞく`;
+    el.className = 'pop';
+    setTimeout(()=>{ el.className=''; }, 450);
+  } else {
+    el.textContent = '';
+  }
+}
+
+function next(){
+  idx++;
+  if(idx>=deck.length){ showResult(); }
+  else render();
+}
+
+function prev(){
+  if(idx>0){ idx--; render(); }
+}
+
+function showResult(){
+  showOnly('result');
+  const total = deck.length;
+  const correct = scoreCount();
+  $('finalScore').textContent = `${correct} / ${total} もん せいかい`;
+  const rate = correct/total;
+  const nStar = rate===1?3 : rate>=0.7?2 : rate>=0.4?1 : 0;
+  $('stars').textContent = '⭐'.repeat(nStar) + '☆'.repeat(3-nStar);
+  $('comment').textContent =
+    rate===1 ? 'ぜんもん せいかい！すごい！' :
+    rate>=0.7 ? 'よくできました！' :
+    rate>=0.4 ? 'もう少し！もう一回やってみよう' :
+    'だいじょうぶ、くりかえせば できるよ！';
+
+  // セーブ更新（プレイ回数・全問正解フラグ・デイリー連続日数）→ 解放・メダル判定
+  store.plays += 1;
+  if(rate===1){ store.perfect = true; store.perfectCount++; confettiBurst(26); }
+  if(isDaily){ store.dailyTotal++; updateDailyStreak(); }
+  const justUnlocked = checkUnlock();
+  saveStore();
+  const newly = checkMedals();
+  if(justUnlocked) confettiBurst(36);
+
+  // 称号アップ 判定（累計正解数で 育つ）
+  const tcAfter  = store.totalCorrect || 0;   // この回ぶんは choose() で加算ずみ
+  const tcBefore = tcAfter - correct;
+  const rankUp = rankStage(tcAfter) > rankStage(tcBefore);
+  if(rankUp) confettiBurst(30);
+
+  $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
+  const em = $('earned');
+  const newRank = STAGES[rankStage(tcAfter)];
+  const evoMsg = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
+  const banner = (justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '') + evoMsg;
+  if(banner || newly.length){
+    em.style.display = 'block';
+    em.innerHTML = banner + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+  } else {
+    em.style.display = 'none';
+  }
+
+  // まちがえた問題の振り返り
+  wrongQuestions = deck.filter((q,i)=> answers[i] && !answers[i].correct);
+  const rv = $('review');
+  if(wrongQuestions.length){
+    rv.style.display = 'block';
+    rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrongQuestions.length}）</div>` +
+      wrongQuestions.map(q=>{
+        if(q.type==='yomi'){
+          return `<div class="rv-i"><b>${q.kanji}</b> ＝ <b>${q.answer}</b></div>`;
+        }
+        const p = q.sentence.split('@@');
+        return `<div class="rv-i">${p[0]}<b>${q.answer}</b>${p[1]}<span style="color:#9a7b5e;font-size:.8rem">（${q.read}）</span></div>`;
+      }).join('');
+    $('retryWrong').style.display = 'inline-block';
+  } else {
+    rv.style.display = 'none';
+    $('retryWrong').style.display = 'none';
+  }
+}
+
+// 学年セレクター
+document.querySelectorAll('#seg button').forEach(b=>{
+  b.onclick = ()=>{
+    const gv = b.dataset.grade;
+    if(gv!=='all' && Number(gv)>=3 && !gradeUnlocked(Number(gv))){
+      const g = Number(gv);
+      if(!gradeHasContent(g)){
+        alert(`「${g}年生」は ただいま じゅんびちゅう。\nもんだいが できるまで まってね！`);
+      } else {
+        const lower = collectableUpTo(g-1);
+        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+        alert(`「${g}年生」は ロック中。\n${g-1}年までの かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
+      }
+      return;
+    }
+    document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentGrade = b.dataset.grade;
+  };
+});
+// 出題数セレクター
+document.querySelectorAll('#countSeg button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#countSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentCount = b.dataset.count;
+  };
+});
+document.querySelectorAll('.mode-btn').forEach(b=>{
+  b.onclick = ()=> startMode(b.dataset.mode);
+});
+// 図鑑を描く
+function renderDex(){
+  $('dexCnt').textContent = `${dexCount()} / ${COLLECTIBLE.length} 字（★${masterCount()}）`;
+  if(grade3Unlocked()){
+    $('dexUnlock').textContent = '🔓 3年生 かいきん中！';
+  } else {
+    const rem = collectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+    $('dexUnlock').textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`;
+  }
+  const grid = $('dexGrid'); grid.innerHTML = '';
+  COLLECTIBLE.forEach(ch=>{
+    const k = KANJI[ch], c = store.kanji[ch]||0;
+    const div = document.createElement('div');
+    if(c>=1){
+      const master = c>=3;
+      div.className = 'dcard' + (master ? ' master' : '');
+      const on  = k.on.length  ? '音 '+k.on.join('・')  : '';
+      const kun = k.kun.length ? '訓 '+k.kun.join('・') : '';
+      div.innerHTML = `<div class="k">${ch}</div><div class="star">${master?'★':'☆'}</div>`
+        + `<div class="info">${k.s}画<br>${on}${on&&kun?'<br>':''}${kun}</div>`;
+    } else {
+      div.className = 'dcard locked';
+      div.innerHTML = `<div class="k">？</div><div class="info">みつけよう</div>`;
+    }
+    grid.appendChild(div);
+  });
+}
+
+// メダルを描く
+function renderMedals(){
+  const got = MEDALS.filter(m=>store.medals[m.id]).length;
+  $('medalsCnt').textContent = `${got} / ${MEDALS.length}`;
+  const list = $('medalList'); list.innerHTML = '';
+  MEDALS.forEach(m=>{
+    const has = !!store.medals[m.id];
+    const div = document.createElement('div');
+    div.className = 'medal' + (has ? '' : ' locked');
+    div.innerHTML = `<div class="mi">${has?m.icon:'🔒'}</div><div class="mn">${m.name}</div><div class="md">${m.desc}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function showOnly(id){
+  ['home','quiz','result','dex','medals','help'].forEach(s=>{
+    $(s).style.display = (s===id) ? 'block' : 'none';
+  });
+}
+// ホームの デイリー／復習 の表示を最新化
+function refreshHome(){
+  const dy = store.daily, ti = todayIndex();
+  let info = '';
+  if((dy.streak||0)>0 && (dy.lastDay===ti || dy.lastDay===ti-1)) info += `🔥${dy.streak}日れんぞく　`;
+  info += (dy.lastDay===ti) ? 'きょうは クリア✓' : 'まいにち 10もん！';
+  $('dailyInfo').textContent = info;
+  const rc = reviewList().length;
+  $('reviewInfo').textContent = rc ? `のこり ${rc}問` : 'まちがいは ありません';
+  // 3〜6年生ボタンのロック表示
+  for(let g=3; g<=MAXGRADE; g++){
+    const btn = document.querySelector(`#seg button[data-grade="${g}"]`);
+    if(!btn) continue;
+    const un = gradeUnlocked(g);
+    btn.textContent = un ? `${g}年` : `${g}年🔒`;
+    btn.classList.toggle('locked', !un);
+  }
+  // つぎに 解放できる学年の あんない
+  const hint = $('unlockHint');
+  if(hint){
+    let next = 0;
+    for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
+    if(!next){
+      hint.textContent = '✅ ぜんぶの 学年が あそべるよ！';
+    } else if(!gradeHasContent(next)){
+      hint.textContent = `🔒 ${next}年生は ただいま じゅんびちゅう（もうすこし まってね）`;
+    } else {
+      const lower = collectableUpTo(next-1);
+      const total = lower.length;
+      const have  = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
+      hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
+    }
+  }
+  refreshSoundBtn();
+  renderRank();
+}
+function refreshSoundBtn(){
+  const b = $('soundToggle');
+  if(b) b.textContent = store.soundOn ? '🔊 おと ON' : '🔇 おと OFF';
+}
+// 称号（あいぼう）の表示：累計正解数で 育つ
+function renderRank(){
+  const tc = store.totalCorrect || 0;
+  const s = rankStage(tc);
+  const cur = STAGES[s], nxt = STAGES[s+1];
+  $('buddyIcon').textContent = cur.icon;
+  $('buddyName').textContent = cur.title;
+  $('buddyCoin').textContent = `これまで せいかい ${tc}問`;
+  if(nxt){
+    const span = nxt.need - cur.need;
+    const prog = Math.max(0, Math.min(100, Math.floor((tc - cur.need) / span * 100)));
+    $('buddyBar').style.width = prog + '%';
+    $('buddyNext').textContent = `あと ${nxt.need - tc}問 正解で「${nxt.title}」`;
+  } else {
+    $('buddyBar').style.width = '100%';
+    $('buddyNext').textContent = 'さいこうの 称号に なった！🎉';
+  }
+}
+function goHome(){ refreshHome(); showOnly('home'); }
+$('next').onclick = next;
+$('prev').onclick = prev;
+$('retry').onclick = ()=> startMode(currentMode);
+$('retryWrong').onclick = ()=> startWithDeck(wrongQuestions);
+$('back').onclick = goHome;
+$('quizHome').onclick = goHome;
+
+// きろくの 書き出し／読み込み（バックアップ）
+function exportSave(){
+  const blob = new Blob([JSON.stringify(store)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'かん字クイズ-きろく.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function importSave(file){
+  const r = new FileReader();
+  r.onload = ()=>{
+    try {
+      const obj = JSON.parse(r.result);
+      if(!obj || typeof obj !== 'object' || !obj.kanji) throw 0;
+      if(!confirm('いまの きろくを、よみこんだ きろくに 入れかえます。よろしいですか？')) return;
+      localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+      location.reload();
+    } catch(e){ alert('この ファイルは よみこめませんでした。'); }
+  };
+  r.readAsText(file);
+}
+$('exportSave').onclick = exportSave;
+$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) importSave(f); e.target.value=''; };
+
+// 音声 ON/OFF 切りかえ
+$('soundToggle').onclick = ()=>{
+  store.soundOn = !store.soundOn;
+  saveStore();
+  refreshSoundBtn();
+  if(store.soundOn) playSound('correct');   // ONにしたら確認の音
+};
+
+// あそびかた
+$('openHelp').onclick = ()=> showOnly('help');
+$('helpBack').onclick = goHome;
+$('helpStart').onclick = goHome;
+
+// デイリー・復習
+$('openDaily').onclick  = startDaily;
+$('openReview').onclick = startReview;
+
+// コレクション画面
+$('openDex').onclick    = ()=>{ renderDex();    showOnly('dex'); };
+$('openMedals').onclick = ()=>{ renderMedals(); showOnly('medals'); };
+$('dexBack').onclick    = goHome;
+$('medalsBack').onclick = goHome;
+
+// 初期表示
+refreshHome();
+
+// キーボード操作（PC）：1〜4で選択、Enter/→で次へ、←で前へ
+document.addEventListener('keydown', e=>{
+  if($('quiz').style.display === 'none') return;
+  if(e.key>='1' && e.key<='9'){
+    const btns = $('choices').querySelectorAll('button:not(:disabled)');
+    const i = Number(e.key)-1;
+    if(btns[i]) btns[i].click();
+  } else if(e.key==='Enter' || e.key==='ArrowRight'){
+    if($('feedback').classList.contains('show')) next();
+  } else if(e.key==='ArrowLeft'){
+    prev();
+  }
+});
+</script>
+</body>
+</html>

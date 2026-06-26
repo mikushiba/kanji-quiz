@@ -7,7 +7,7 @@
 <meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262058">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262213">
 <style>
   /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -20,7 +20,6 @@
          font-size:1.15rem; font-weight:700; color:#fff; background:var(--accent);
          cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.12);}
   .start:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12);}
-  .applink{display:block; text-align:center; margin-top:18px; font-size:.8rem; color:#9a7b5e;}
 </style>
 </head>
 <body>
@@ -36,7 +35,7 @@
         <div class="seg" id="gsel"></div>
       </div>
       <button class="start" id="startBtn">はじめる（10問）</button>
-      <a class="applink" href="../">← 「同じ読みの かん字クイズ」へ</a>
+      <a class="applink" href="../">← 漢字クイズ トップへ</a>
     </div>
   </div>
 
@@ -74,7 +73,7 @@
 </div>
 
 <!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
-<script src="../shared/kanji-db.js?v=202606262058"></script>
+<script src="../shared/kanji-db.js?v=202606262213"></script>
 <script>
 /* ===== 送りがな問題の生成（共有DBの kun から自動生成） ===== */
 const MAXGRADE = 6;
