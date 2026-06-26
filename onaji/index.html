@@ -6,7 +6,7 @@
 <title>同じ読みのかん字クイズ</title>
 <meta name="description" content="小学1・2年生の漢字の同音異義語・同じ読みの漢字を、例文で意味を理解して使い分ける学習クイズ。">
 <meta name="theme-color" content="#ff8a3d">
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606262359">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606270010">
 </head>
 <body>
 <div class="wrap">
@@ -175,7 +175,9 @@
   </div>
 </div>
 
-<script src="../shared/kanji-db.js?v=202606262359"></script>
+<script src="../shared/kanji-db.js?v=202606270010"></script>
+<!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算。okuriganaと同じ store/定義） -->
+<script src="../shared/quiz-core.js?v=202606270010"></script>
 <script>
 /* 漢字マスタDB（KANJI）と wordGrade は shared/kanji-db.js に分離（全アプリ共通の唯一データ）。
    下の外部<script>で先に読み込まれる グローバル const KANJI / wordGrade をここから参照する。 */
@@ -3641,22 +3643,14 @@ let currentMode = 'all', currentGrade = 'all', currentCount = '10';
 let combo = 0, sessionMaxCombo = 0, sessionComebacks = 0;
 const scoreCount = ()=> answers.filter(a => a && a.correct).length;
 
-/* ===== セーブ（localStorage）と コレクション ===== */
+/* ===== セーブ（localStorage）と コレクション =====
+   図鑑・称号・メダル・累計などの「進捗」は共有モジュール shared/quiz-core.js（QuizCore）に集約。
+   store / saveStore は QuizCore のもの（localStorageキー 'kanjiQuiz.v1' を全アプリで共有＝合算）。
+   ここでは onaji 固有のフィールド（復習リスト・デイリー・解放フラグ・音）だけ初期化する。 */
 const STORE_KEY = 'kanjiQuiz.v1';
-function loadStore(){
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-  catch(e){ return {}; }
-}
-function saveStore(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e){} }
-let store = loadStore();
-store.kanji   = store.kanji   || {};   // { 漢字: 正解した回数 }
-store.medals  = store.medals  || {};   // { メダルID: true }
-store.wrong   = store.wrong   || {};   // { 問題ID: true } まちがえた問題（復習リスト）
-store.bestCombo = store.bestCombo || 0;
-store.plays   = store.plays   || 0;
-store.perfect = store.perfect || false;
-store.totalCorrect = store.totalCorrect || 0;  // 累計 正解数
-store.perfectCount = store.perfectCount || 0;   // 全問正解した回数
+const store = QuizCore.store;          // 共有ストア
+const saveStore = QuizCore.save;
+store.wrong   = store.wrong   || {};   // { 問題ID: true } まちがえた問題（復習リスト）— onaji固有
 store.comebacks    = store.comebacks    || 0;   // まちがいを なおした回数
 store.dailyTotal   = store.dailyTotal   || 0;   // デイリーを やった のべ回数
 store.daily   = store.daily   || { streak:0, bestStreak:0, lastDay:null };
@@ -3669,15 +3663,11 @@ saveStore();
 // 問題に固定ID（BANKの並びは静的なので index をIDにする）
 BANK.forEach((q,i)=>{ q.id = i; });
 
-// 集められる漢字＝配当のぜんぶ（DBにある全字）。
-// 「同じ読み／使い分け」で出ない字も「読みクイズ」(自動生成) で集められるので、図鑑は配当どおり全字。
-const COLLECTIBLE = Object.keys(KANJI)
-  .sort((a,b)=> KANJI[a].g - KANJI[b].g || KANJI[a].s - KANJI[b].s || (a<b?-1:1));
-
-const dexCount    = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 1).length;
-const masterCount = ()=> COLLECTIBLE.filter(ch => (store.kanji[ch]||0) >= 3).length;
-// その学年の図鑑をすべて集めたか
-const dexGradeDone = (g)=> COLLECTIBLE.filter(ch => KANJI[ch].g===g).every(ch => (store.kanji[ch]||0) >= 1);
+// 図鑑（集められる漢字＝DB全字）と集計は 共有モジュール QuizCore に集約
+const COLLECTIBLE  = QuizCore.COLLECTIBLE;
+const dexCount     = QuizCore.dexCount;
+const masterCount  = QuizCore.masterCount;
+const dexGradeDone = QuizCore.dexGradeDone;
 
 // ── 学年の解放（3〜6年）：前の学年までを図鑑コンプリートで解放。問題がまだ無い学年は「じゅんび中」 ──
 const MAXGRADE = 6;
@@ -3711,13 +3701,8 @@ function checkUnlock(){
   return unlockedNow;
 }
 
-// 正解した漢字を記録（2段階：1回で図鑑入り→3回で★）
-function recordCorrect(answer){
-  [...answer].filter(c => KANJI[c]).forEach(ch=>{
-    store.kanji[ch] = (store.kanji[ch]||0) + 1;
-  });
-  saveStore();
-}
+// 正解した漢字を記録（共有 QuizCore に集約。1回で図鑑入り→3回で★）
+const recordCorrect = (answer)=>{ QuizCore.recordCorrect(answer); saveStore(); };
 
 /* ===== 読みクイズ（KANJIデータから自動生成。全学年・全漢字に対応） ===== */
 const kataToHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
@@ -3750,156 +3735,11 @@ function buildYomiPool(){
   return Object.keys(KANJI).filter(c => ans.has(KANJI[c].g)).map(makeYomiQ);
 }
 
-// メダル定義
-const MEDALS = [
-  // ── あそぶ（プレイ回数）──
-  {id:'firstClear', icon:'🎫', name:'はじめの一歩',  desc:'1かい あそんだ',    test:()=> store.plays>=1},
-  {id:'play5',      icon:'🎮', name:'5かい あそんだ', desc:'5かい あそんだ',    test:()=> store.plays>=5},
-  {id:'play10',     icon:'🎯', name:'10かい あそんだ',desc:'10かい あそんだ',   test:()=> store.plays>=10},
-  {id:'play20',     icon:'🕹️', name:'20かい あそんだ',desc:'20かい あそんだ',   test:()=> store.plays>=20},
-  {id:'play30',     icon:'🎲', name:'30かい あそんだ',desc:'30かい あそんだ',   test:()=> store.plays>=30},
-  {id:'play40',     icon:'🎰', name:'40かい あそんだ',desc:'40かい あそんだ',   test:()=> store.plays>=40},
-  {id:'play50',     icon:'🏅', name:'50かい あそんだ',desc:'50かい あそんだ',   test:()=> store.plays>=50},
-  {id:'play75',     icon:'🎖️', name:'75かい あそんだ',desc:'75かい あそんだ',   test:()=> store.plays>=75},
-  {id:'play100',    icon:'💎', name:'100かい あそんだ',desc:'100かい あそんだ', test:()=> store.plays>=100},
-  {id:'play150',    icon:'🏆', name:'150かい あそんだ',desc:'150かい あそんだ', test:()=> store.plays>=150},
-  {id:'play200',    icon:'👑', name:'200かい あそんだ',desc:'200かい あそんだ', test:()=> store.plays>=200},
-  {id:'play300',    icon:'🌌', name:'300かい あそんだ',desc:'300かい あそんだ', test:()=> store.plays>=300},
-  {id:'play500',    icon:'🦄', name:'500かい あそんだ',desc:'500かい あそんだ', test:()=> store.plays>=500},
-  {id:'play1000',   icon:'🌠', name:'1000かい あそんだ',desc:'1000かい あそんだ',test:()=> store.plays>=1000},
-  // ── ぜんもん正かい ──
-  {id:'perfect',    icon:'💯', name:'ぜんもん せいかい', desc:'1かいで ぜんぶ正かい',  test:()=> store.perfect},
-  {id:'perfect3',   icon:'🥉', name:'全問正かい 3かい', desc:'ぜんもん正かいを 3かい', test:()=> store.perfectCount>=3},
-  {id:'perfect5',   icon:'🥈', name:'全問正かい 5かい', desc:'ぜんもん正かいを 5かい', test:()=> store.perfectCount>=5},
-  {id:'perfect10',  icon:'🥇', name:'全問正かい 10かい',desc:'ぜんもん正かいを 10かい',test:()=> store.perfectCount>=10},
-  {id:'perfect15',  icon:'🎗️', name:'全問正かい 15かい',desc:'ぜんもん正かいを 15かい',test:()=> store.perfectCount>=15},
-  {id:'perfect20',  icon:'🏆', name:'全問正かい 20かい',desc:'ぜんもん正かいを 20かい',test:()=> store.perfectCount>=20},
-  {id:'perfect30',  icon:'👑', name:'全問正かい 30かい',desc:'ぜんもん正かいを 30かい',test:()=> store.perfectCount>=30},
-  {id:'perfect50',  icon:'🎉', name:'全問正かい 50かい',desc:'ぜんもん正かいを 50かい',test:()=> store.perfectCount>=50},
-  // ── 累計せいかい数 ──
-  {id:'correct50',  icon:'✏️', name:'50もん 正かい',  desc:'ぜんぶで 50もん正かい',  test:()=> store.totalCorrect>=50},
-  {id:'correct100', icon:'📘', name:'100もん 正かい', desc:'ぜんぶで 100もん正かい', test:()=> store.totalCorrect>=100},
-  {id:'correct200', icon:'📗', name:'200もん 正かい', desc:'ぜんぶで 200もん正かい', test:()=> store.totalCorrect>=200},
-  {id:'correct300', icon:'📙', name:'300もん 正かい', desc:'ぜんぶで 300もん正かい', test:()=> store.totalCorrect>=300},
-  {id:'correct500', icon:'📕', name:'500もん 正かい', desc:'ぜんぶで 500もん正かい', test:()=> store.totalCorrect>=500},
-  {id:'correct750', icon:'📚', name:'750もん 正かい', desc:'ぜんぶで 750もん正かい', test:()=> store.totalCorrect>=750},
-  {id:'correct1000',icon:'📜', name:'1000もん 正かい',desc:'ぜんぶで 1000もん正かい',test:()=> store.totalCorrect>=1000},
-  {id:'correct2000',icon:'🧾', name:'2000もん 正かい',desc:'ぜんぶで 2000もん正かい',test:()=> store.totalCorrect>=2000},
-  {id:'correct3000',icon:'📰', name:'3000もん 正かい',desc:'ぜんぶで 3000もん正かい',test:()=> store.totalCorrect>=3000},
-  {id:'correct5000',icon:'📊', name:'5000もん 正かい',desc:'ぜんぶで 5000もん正かい',test:()=> store.totalCorrect>=5000},
-  // ── コンボ ──
-  {id:'firstCombo', icon:'✌️', name:'はじめての コンボ', desc:'2れんぞく 正かい',  test:()=> store.bestCombo>=2},
-  {id:'combo3',     icon:'🔥', name:'コンボ 3',  desc:'3れんぞく 正かい',  test:()=> store.bestCombo>=3},
-  {id:'combo5',     icon:'🌶️', name:'コンボ 5',  desc:'5れんぞく 正かい',  test:()=> store.bestCombo>=5},
-  {id:'combo7',     icon:'💥', name:'コンボ 7',  desc:'7れんぞく 正かい',  test:()=> store.bestCombo>=7},
-  {id:'combo10',    icon:'⚡', name:'コンボ 10', desc:'10れんぞく 正かい', test:()=> store.bestCombo>=10},
-  {id:'combo15',    icon:'☄️', name:'コンボ 15', desc:'15れんぞく 正かい', test:()=> store.bestCombo>=15},
-  {id:'combo20',    icon:'🌈', name:'コンボ 20', desc:'20れんぞく 正かい', test:()=> store.bestCombo>=20},
-  {id:'combo25',    icon:'🎆', name:'コンボ 25', desc:'25れんぞく 正かい', test:()=> store.bestCombo>=25},
-  {id:'combo30',    icon:'💪', name:'コンボ 30', desc:'30れんぞく 正かい', test:()=> store.bestCombo>=30},
-  {id:'combo40',    icon:'🐉', name:'コンボ 40', desc:'40れんぞく 正かい', test:()=> store.bestCombo>=40},
-  {id:'combo50',    icon:'🦅', name:'コンボ 50', desc:'50れんぞく 正かい', test:()=> store.bestCombo>=50},
-  // ── まちがい なおし ──
-  {id:'comeback5',  icon:'🩹', name:'なおし はじめ', desc:'まちがいを 5もん なおした',  test:()=> store.comebacks>=5},
-  {id:'comeback10', icon:'🔁', name:'まちがい なおし', desc:'まちがいを 10もん なおした', test:()=> store.comebacks>=10},
-  {id:'comeback25', icon:'🔧', name:'なおし名人',     desc:'まちがいを 25もん なおした', test:()=> store.comebacks>=25},
-  {id:'comeback50', icon:'🛠️', name:'なおし達人',     desc:'まちがいを 50もん なおした', test:()=> store.comebacks>=50},
-  {id:'comeback75', icon:'⚙️', name:'なおし職人',     desc:'まちがいを 75もん なおした', test:()=> store.comebacks>=75},
-  {id:'comeback100',icon:'🏗️', name:'なおし王',       desc:'まちがいを 100もん なおした',test:()=> store.comebacks>=100},
-  // ── かん字ずかん ──
-  {id:'firstDex',   icon:'📄', name:'ずかん はじめ', desc:'図かんに 1字',  test:()=> dexCount()>=1},
-  {id:'dex5',       icon:'📃', name:'ずかん 5字',   desc:'図かんに 5字',  test:()=> dexCount()>=5},
-  {id:'dex10',      icon:'📗', name:'ずかん 10字',  desc:'図かんに 10字',  test:()=> dexCount()>=10},
-  {id:'dex25',      icon:'📒', name:'ずかん 25字',  desc:'図かんに 25字',  test:()=> dexCount()>=25},
-  {id:'dex50',      icon:'📚', name:'ずかん 50字',  desc:'図かんに 50字',  test:()=> dexCount()>=50},
-  {id:'dex75',      icon:'📙', name:'ずかん 75字',  desc:'図かんに 75字',  test:()=> dexCount()>=75},
-  {id:'dex100',     icon:'📕', name:'ずかん 100字', desc:'図かんに 100字', test:()=> dexCount()>=100},
-  {id:'dex125',     icon:'📔', name:'ずかん 125字', desc:'図かんに 125字', test:()=> dexCount()>=125},
-  {id:'dex150',     icon:'📓', name:'ずかん 150字', desc:'図かんに 150字', test:()=> dexCount()>=150},
-  {id:'dex175',     icon:'🗞️', name:'ずかん 175字', desc:'図かんに 175字', test:()=> dexCount()>=175},
-  {id:'dex200',     icon:'📖', name:'ずかん 200字', desc:'図かんに 200字', test:()=> dexCount()>=200},
-  {id:'dexAll',     icon:'👑', name:'ずかん コンプリート', desc:'ぜんぶ 図かんに', test:()=> dexCount()>=COLLECTIBLE.length},
-  // ── 学年ずかん コンプ ──
-  {id:'dexG1',      icon:'🟢', name:'1年 ずかん コンプ', desc:'1年の かん字を ぜんぶ', test:()=> dexGradeDone(1)},
-  {id:'dexG2',      icon:'🔵', name:'2年 ずかん コンプ', desc:'2年の かん字を ぜんぶ', test:()=> dexGradeDone(2)},
-  {id:'dexG3',      icon:'🟣', name:'3年 ずかん コンプ', desc:'3年の かん字を ぜんぶ', test:()=> dexGradeDone(3)},
-  // ── マスター（★）──
-  {id:'firstStar',  icon:'⭐', name:'はじめての ★',  desc:'★を 1字',   test:()=> masterCount()>=1},
-  {id:'master5',    icon:'✴️', name:'マスター 5字',  desc:'★を 5字',   test:()=> masterCount()>=5},
-  {id:'master10',   icon:'🌟', name:'マスター 10字', desc:'★を 10字',  test:()=> masterCount()>=10},
-  {id:'master25',   icon:'✨', name:'マスター 25字', desc:'★を 25字',  test:()=> masterCount()>=25},
-  {id:'master50',   icon:'💫', name:'マスター 50字', desc:'★を 50字',  test:()=> masterCount()>=50},
-  {id:'master75',   icon:'🌠', name:'マスター 75字', desc:'★を 75字',  test:()=> masterCount()>=75},
-  {id:'master100',  icon:'🪐', name:'マスター 100字',desc:'★を 100字', test:()=> masterCount()>=100},
-  {id:'master150',  icon:'☀️', name:'マスター 150字',desc:'★を 150字', test:()=> masterCount()>=150},
-  {id:'masterAll',  icon:'🏵️', name:'ぜんぶ マスター', desc:'ぜんぶ ★に', test:()=> masterCount()>=COLLECTIBLE.length},
-  {id:'grandMaster',icon:'🏆', name:'グランドマスター', desc:'図かん＆★を ぜんぶ', test:()=> dexCount()>=COLLECTIBLE.length && masterCount()>=COLLECTIBLE.length},
-  // ── デイリー（連続日数）──
-  {id:'daily2',     icon:'🌱', name:'2日 れんぞく',  desc:'チャレンジ 2日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=2},
-  {id:'daily3',     icon:'📅', name:'3日 れんぞく',  desc:'チャレンジ 3日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=3},
-  {id:'daily5',     icon:'🗓️', name:'5日 れんぞく',  desc:'チャレンジ 5日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=5},
-  {id:'daily7',     icon:'📆', name:'7日 れんぞく',  desc:'チャレンジ 7日れんぞく',  test:()=> (store.daily?.bestStreak||0)>=7},
-  {id:'daily10',    icon:'🎍', name:'10日 れんぞく', desc:'チャレンジ 10日れんぞく', test:()=> (store.daily?.bestStreak||0)>=10},
-  {id:'daily14',    icon:'🎋', name:'14日 れんぞく', desc:'チャレンジ 14日れんぞく', test:()=> (store.daily?.bestStreak||0)>=14},
-  {id:'daily21',    icon:'🎏', name:'21日 れんぞく', desc:'チャレンジ 21日れんぞく', test:()=> (store.daily?.bestStreak||0)>=21},
-  {id:'daily30',    icon:'🏮', name:'30日 れんぞく', desc:'チャレンジ 30日れんぞく', test:()=> (store.daily?.bestStreak||0)>=30},
-  {id:'daily50',    icon:'🎐', name:'50日 れんぞく', desc:'チャレンジ 50日れんぞく', test:()=> (store.daily?.bestStreak||0)>=50},
-  {id:'daily100',   icon:'🎇', name:'100日 れんぞく',desc:'チャレンジ 100日れんぞく',test:()=> (store.daily?.bestStreak||0)>=100},
-  // ── デイリー（のべ回数）──
-  {id:'dailyT1',    icon:'🔔', name:'デイリー はじめ', desc:'デイリーを 1かい',   test:()=> store.dailyTotal>=1},
-  {id:'dailyT5',    icon:'🪧', name:'デイリー 5かい',  desc:'デイリーを 5かい',   test:()=> store.dailyTotal>=5},
-  {id:'dailyT10',   icon:'📌', name:'デイリー 10かい', desc:'デイリーを 10かい',  test:()=> store.dailyTotal>=10},
-  {id:'dailyT30',   icon:'📍', name:'デイリー 30かい', desc:'デイリーを 30かい',  test:()=> store.dailyTotal>=30},
-  {id:'dailyT50',   icon:'🧭', name:'デイリー 50かい', desc:'デイリーを 50かい',  test:()=> store.dailyTotal>=50},
-  {id:'dailyT100',  icon:'🗺️', name:'デイリー 100かい',desc:'デイリーを 100かい', test:()=> store.dailyTotal>=100},
-  // ── さらに 上の チャレンジ ──
-  {id:'play250',    icon:'🛸', name:'250かい あそんだ',desc:'250かい あそんだ', test:()=> store.plays>=250},
-  {id:'perfect40',  icon:'🎀', name:'全問正かい 40かい',desc:'ぜんもん正かいを 40かい',test:()=> store.perfectCount>=40},
-  {id:'correct400', icon:'📑', name:'400もん 正かい', desc:'ぜんぶで 400もん正かい', test:()=> store.totalCorrect>=400},
-  {id:'correct1500',icon:'🗂️', name:'1500もん 正かい',desc:'ぜんぶで 1500もん正かい',test:()=> store.totalCorrect>=1500},
-  {id:'combo35',    icon:'🌪️', name:'コンボ 35', desc:'35れんぞく 正かい', test:()=> store.bestCombo>=35},
-  {id:'dex15',      icon:'🧧', name:'ずかん 15字', desc:'図かんに 15字', test:()=> dexCount()>=15},
-  {id:'master125',  icon:'💠', name:'マスター 125字',desc:'★を 125字', test:()=> masterCount()>=125},
-  {id:'comeback15', icon:'🩺', name:'なおし 15もん', desc:'まちがいを 15もん なおした', test:()=> store.comebacks>=15},
-  {id:'dailyT75',   icon:'🛰️', name:'デイリー 75かい',desc:'デイリーを 75かい', test:()=> store.dailyTotal>=75},
-  // ── 解放・とくべつ ──
-  {id:'unlock3',    icon:'🔓', name:'3年生 かいきん', desc:'1・2年を ぜんぶ 図かんに', test:()=> grade3Unlocked()},
-];
-function checkMedals(){
-  const newly = [];
-  MEDALS.forEach(m=>{
-    if(!store.medals[m.id] && m.test()){ store.medals[m.id]=true; newly.push(m); }
-  });
-  if(newly.length) saveStore();
-  return newly;
-}
-
-/* ===== 累計正解数で 育つ 称号（あいぼうが しんかする） ===== */
-// 累計正解数のしきい値は 1〜6年生まで拡充する前提で 高め・多段に設定（キングの上も用意）
-const STAGES = [
-  {need:0,     icon:'🥚',   title:'漢字みならい'},
-  {need:30,    icon:'🐣',   title:'漢字かけだし'},
-  {need:80,    icon:'🐥',   title:'漢字がんばりや'},
-  {need:150,   icon:'🐦',   title:'漢字じょうず'},
-  {need:300,   icon:'🦜',   title:'漢字もの知り'},
-  {need:500,   icon:'🦉',   title:'漢字はかせ'},
-  {need:800,   icon:'🦅',   title:'漢字せんせい'},
-  {need:1200,  icon:'🐺',   title:'漢字名人'},
-  {need:1800,  icon:'🦁',   title:'漢字達人'},
-  {need:2600,  icon:'🐲',   title:'漢字マスター'},
-  {need:3800,  icon:'🐉',   title:'漢字グランドマスター'},
-  {need:5500,  icon:'👑',   title:'漢字キング'},
-  {need:8000,  icon:'🌟',   title:'漢字チャンピオン'},
-  {need:11500, icon:'☄️',   title:'漢字レジェンド'},
-  {need:16000, icon:'🧙',   title:'漢字仙人'},
-  {need:22000, icon:'🐉✨', title:'漢字の神さま'},
-  {need:30000, icon:'🌌',   title:'漢字うちゅういち'},
-];
-function rankStage(n){
-  let s = 0;
-  STAGES.forEach((e,i)=>{ if(n >= e.need) s = i; });
-  return s;
-}
+// メダル・称号は 共有モジュール QuizCore に集約（onaji・okurigana で同一定義・進捗合算）
+const MEDALS      = QuizCore.MEDALS;
+const checkMedals = QuizCore.checkMedals;
+const STAGES      = QuizCore.STAGES;
+const rankStage   = QuizCore.rankStage;
 
 /* ===== 音（Web Audio：音声ファイル不要・オフラインでも鳴る） ===== */
 let audioCtx = null;
@@ -4419,29 +4259,9 @@ $('back').onclick = goHome;
 $('quizHome').onclick = goHome;
 
 // きろくの 書き出し／読み込み（バックアップ）
-function exportSave(){
-  const blob = new Blob([JSON.stringify(store)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'かん字クイズ-きろく.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
-function importSave(file){
-  const r = new FileReader();
-  r.onload = ()=>{
-    try {
-      const obj = JSON.parse(r.result);
-      if(!obj || typeof obj !== 'object' || !obj.kanji) throw 0;
-      if(!confirm('いまの きろくを、よみこんだ きろくに 入れかえます。よろしいですか？')) return;
-      localStorage.setItem(STORE_KEY, JSON.stringify(obj));
-      location.reload();
-    } catch(e){ alert('この ファイルは よみこめませんでした。'); }
-  };
-  r.readAsText(file);
-}
-$('exportSave').onclick = exportSave;
-$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) importSave(f); e.target.value=''; };
+// セーブ／読み込みは 共有モジュール QuizCore に集約（共有ストア全体＝全アプリの進捗）
+$('exportSave').onclick = ()=> QuizCore.exportSave('かん字クイズ-きろく.json');
+$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) QuizCore.importSave(f); e.target.value=''; };
 
 // 音声 ON/OFF 切りかえ
 $('soundToggle').onclick = ()=>{
