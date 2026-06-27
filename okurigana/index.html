@@ -54,8 +54,9 @@
     <div class="gradeSel">
       <div class="gradeLabel">もんだいの数（かず）</div>
       <div class="seg" id="countSeg">
-        <button data-count="10" class="active">10もん</button>
-        <button data-count="20">20もん</button>
+        <button data-count="10">10もん</button>
+        <button data-count="20" class="active">20もん</button>
+        <button data-count="50">50もん</button>
         <button data-count="all">ぜんぶ</button>
       </div>
     </div>
@@ -210,7 +211,7 @@ function uniqueWords(){ const seen=new Set(), out=[]; for(const w of ALL_WORDS){
 
 /* ===== 状態 ===== */
 let grade = 'all';        // 学年（'all'＝ぜんぶ）
-let count = 10;           // 問題数（'all'＝ぜんぶ）
+let count = 20;           // 問題数（'all'＝ぜんぶ。初期値は20もん）
 let deck = [], answers = [], idx = 0;
 let combo = 0, sessionMaxCombo = 0;
 let wrongWords = [];
