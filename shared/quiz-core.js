@@ -253,6 +253,30 @@
     r.readAsText(file);
   }
 
+  /* ── 出題数セレクタ（全アプリ共通）─ 値は文字列 '10'/'20'/'50'/'all' ── */
+  const COUNT_OPTIONS = [
+    { v: '10',  label: '10もん' },
+    { v: '20',  label: '20もん' },
+    { v: '50',  label: '50もん' },
+    { v: 'all', label: 'ぜんぶ' },
+  ];
+  // segEl に出題数ボタンを描画。current（'10'等）を active 表示にし、押すと onPick(値) を呼ぶ。
+  function renderCountSeg(segEl, current, onPick) {
+    if (!segEl) return;
+    segEl.innerHTML = '';
+    COUNT_OPTIONS.forEach(o => {
+      const b = document.createElement('button');
+      b.dataset.count = o.v; b.textContent = o.label;
+      if (String(current) === o.v) b.classList.add('active');
+      b.onclick = () => {
+        segEl.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        if (onPick) onPick(o.v);
+      };
+      segEl.appendChild(b);
+    });
+  }
+
   global.QuizCore = {
     get store() { return store; }, reload: load, save,
     COLLECTIBLE, dexCount, masterCount, dexGradeDone,
@@ -260,5 +284,6 @@
     MEDALS, checkMedals, STAGES, rankStage,
     renderBuddy, dexHead, dexGridHTML, medalsHead, medalsGridHTML,
     exportSave, importSave,
+    COUNT_OPTIONS, renderCountSeg,
   };
 })(window);

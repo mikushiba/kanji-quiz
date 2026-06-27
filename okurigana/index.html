@@ -7,7 +7,7 @@
 <meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606270010">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271357">
 <style>
   /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -53,12 +53,7 @@
     </div>
     <div class="gradeSel">
       <div class="gradeLabel">もんだいの数（かず）</div>
-      <div class="seg" id="countSeg">
-        <button data-count="10">10もん</button>
-        <button data-count="20" class="active">20もん</button>
-        <button data-count="50">50もん</button>
-        <button data-count="all">ぜんぶ</button>
-      </div>
+      <div class="seg" id="countSeg"><!-- 共通モジュール QuizCore.renderCountSeg で描画 --></div>
     </div>
     <div class="modes">
       <button class="mode-btn m2" id="startBtn">
@@ -146,9 +141,9 @@
 </div>
 
 <!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
-<script src="../shared/kanji-db.js?v=202606270010"></script>
+<script src="../shared/kanji-db.js?v=202606271357"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算） -->
-<script src="../shared/quiz-core.js?v=202606270010"></script>
+<script src="../shared/quiz-core.js?v=202606271357"></script>
 <script>
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -211,7 +206,7 @@ function uniqueWords(){ const seen=new Set(), out=[]; for(const w of ALL_WORDS){
 
 /* ===== 状態 ===== */
 let grade = 'all';        // 学年（'all'＝ぜんぶ）
-let count = 20;           // 問題数（'all'＝ぜんぶ。初期値は20もん）
+let count = 10;           // 問題数（'all'＝ぜんぶ。初期値は10もん）
 let deck = [], answers = [], idx = 0;
 let combo = 0, sessionMaxCombo = 0;
 let wrongWords = [];
@@ -321,14 +316,8 @@ function renderUnlockHint(){
   const total = lower.length, have = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
   hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
 }
-// 問題数セレクタ
-document.querySelectorAll('#countSeg button').forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll('#countSeg button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    const c = b.dataset.count; count = (c==='all') ? 'all' : +c;
-  };
-});
+// 問題数セレクタ（共通モジュール QuizCore.renderCountSeg）
+QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' : +v; });
 
 function wordsForGrade(){
   if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_WORDS.filter(w => w.grade <= mx); }  // 解放ぶんだけ

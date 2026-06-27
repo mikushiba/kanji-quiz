@@ -6,7 +6,7 @@
 <title>同じ読みのかん字クイズ</title>
 <meta name="description" content="小学1・2年生の漢字の同音異義語・同じ読みの漢字を、例文で意味を理解して使い分ける学習クイズ。">
 <meta name="theme-color" content="#ff8a3d">
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606270010">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271357">
 </head>
 <body>
 <div class="wrap">
@@ -45,11 +45,7 @@
     </div>
     <div class="gradeSel">
       <div class="gradeLabel">もんだいの数（かず）</div>
-      <div class="seg" id="countSeg">
-        <button data-count="10" class="active">10もん</button>
-        <button data-count="20">20もん</button>
-        <button data-count="all">ぜんぶ</button>
-      </div>
+      <div class="seg" id="countSeg"><!-- 共通モジュール QuizCore.renderCountSeg で描画 --></div>
     </div>
     <div class="modes">
       <button class="mode-btn m1" data-mode="tsukai">
@@ -175,9 +171,9 @@
   </div>
 </div>
 
-<script src="../shared/kanji-db.js?v=202606270010"></script>
+<script src="../shared/kanji-db.js?v=202606271357"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算。okuriganaと同じ store/定義） -->
-<script src="../shared/quiz-core.js?v=202606270010"></script>
+<script src="../shared/quiz-core.js?v=202606271357"></script>
 <script>
 /* 漢字マスタDB（KANJI）と wordGrade は shared/kanji-db.js に分離（全アプリ共通の唯一データ）。
    下の外部<script>で先に読み込まれる グローバル const KANJI / wordGrade をここから参照する。 */
@@ -4135,13 +4131,8 @@ document.querySelectorAll('#seg button').forEach(b=>{
   };
 });
 // 出題数セレクター
-document.querySelectorAll('#countSeg button').forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll('#countSeg button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    currentCount = b.dataset.count;
-  };
-});
+// 出題数セレクタ（共通モジュール QuizCore.renderCountSeg）
+QuizCore.renderCountSeg($('countSeg'), '10', v => { currentCount = v; });
 document.querySelectorAll('.mode-btn').forEach(b=>{
   b.onclick = ()=> startMode(b.dataset.mode);
 });
