@@ -6,7 +6,7 @@
 <title>画数（かくすう）クイズ</title>
 <meta name="description" content="漢字の画数を当てるクイズ。「この字は何画？」と「ここは何画目？」（筆順）。学年ごとに自動出題、筆順アニメつき。">
 <meta name="theme-color" content="#ff8a3d">
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 <style>
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
   #gsel button{padding:11px 0; font-size:.95rem;}
@@ -143,8 +143,8 @@
 
 </div>
 
-<script src="../shared/kanji-db.js?v=202606271935"></script>
-<script src="../shared/quiz-core.js?v=202606271935"></script>
+<script src="../shared/kanji-db.js?v=202606272011"></script>
+<script src="../shared/quiz-core.js?v=202606272011"></script>
 <!-- 筆順ベクター（KanjiVG, CC BY-SA 3.0）。②何画目モードで使用 -->
 <script src="strokes.js?v=202606271357"></script>
 <script>
@@ -485,6 +485,7 @@ QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' 
 renderGradeSel();
 refreshSoundBtn();
 refreshHome();
+QuizCore.advancedGate();   // 上級クイズのロック（同じ読み・送りがな・音訓を満遍なく学ぶまで）
 </script>
 </body>
 </html>

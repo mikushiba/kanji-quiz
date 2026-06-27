@@ -22,6 +22,7 @@
     store.perfect      = store.perfect      || false;
     store.perfectCount = store.perfectCount || 0;
     store.totalCorrect = store.totalCorrect || 0;
+    store.appCorrect   = store.appCorrect   || {};   // { アプリID: 正解数 } 上級クイズ解放用
     return store;
   }
   load();
@@ -39,6 +40,43 @@
     [...String(word)].filter(c => KANJI[c]).forEach(ch => { store.kanji[ch] = (store.kanji[ch] || 0) + 1; });
   }
   function bumpCorrect(n = 1) { store.totalCorrect = (store.totalCorrect || 0) + n; }
+
+  /* ── 上級クイズ（部首・画数・四字熟語）の解放 ──
+     基礎3種（同じ読み・送りがな・音訓）を それぞれ APP_UNLOCK_NEED 問 正解で あそべる（満遍なく学習）。
+     各基礎アプリは 正解時に QuizCore.bumpApp('<id>') を呼ぶ。閾値はここ1か所。 */
+  const APP_UNLOCK_NEED = 30;
+  const BASE_APPS = [['onaji', '同じ読み'], ['okurigana', '送りがな'], ['onkun', '音訓']];
+  function bumpApp(id, n = 1) { store.appCorrect[id] = (store.appCorrect[id] || 0) + n; }
+  function appCorrect(id) { return store.appCorrect[id] || 0; }
+  function baseProgress() { return BASE_APPS.map(([id, label]) => ({ id, label, n: appCorrect(id), need: APP_UNLOCK_NEED })); }
+  function advancedUnlocked() { return BASE_APPS.every(([id]) => appCorrect(id) >= APP_UNLOCK_NEED); }
+  // 上級アプリの冒頭で呼ぶ。未解放なら ロック画面を出して true を返す（＝あそばせない）。
+  function advancedGate() {
+    if (advancedUnlocked()) return false;
+    const wrap = document.querySelector('.wrap');
+    if (!wrap) return true;
+    wrap.querySelectorAll(':scope > .card').forEach(c => { c.style.display = 'none'; });
+    const prog = baseProgress();
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.textAlign = 'center';
+    div.innerHTML =
+      '<div style="font-size:2.6rem;margin:6px 0;">🔒</div>' +
+      '<h2 style="margin:4px 0 8px;">まだ あそべないよ</h2>' +
+      '<p style="font-size:.92rem;color:#5a4a3a;line-height:1.7;margin-bottom:12px;">' +
+      'このクイズは、つぎの 3つを <b>' + APP_UNLOCK_NEED + '問ずつ</b> 正かいすると あそべるよ！</p>' +
+      '<div style="font-size:1rem;line-height:2;font-weight:700;color:#3a2c1d;margin-bottom:14px;">' +
+      prog.map(p => `${p.label}　<b style="color:#c46a23;">${Math.min(p.n, p.need)} / ${p.need}</b>${p.n >= p.need ? ' ✅' : ''}`).join('<br>') +
+      '</div>' +
+      '<div class="modes">' +
+      `<a class="mode-btn m1" href="../onaji/index.html" style="text-decoration:none;display:block;">📖 同じ読みへ</a>` +
+      `<a class="mode-btn m2" href="../okurigana/index.html" style="text-decoration:none;display:block;">✏️ 送りがなへ</a>` +
+      `<a class="mode-btn m3" href="../onkun/index.html" style="text-decoration:none;display:block;">🗣️ 音読み・訓読みへ</a>` +
+      '</div>' +
+      '<a class="applink" href="../index.html" style="display:block;text-align:center;margin-top:16px;font-size:.85rem;color:#9a7b5e;text-decoration:none;">← 漢字クイズ トップへ</a>';
+    wrap.appendChild(div);
+    return true;
+  }
   function noteCombo(c)       { if (c > (store.bestCombo || 0)) store.bestCombo = c; }
   function notePlay()         { store.plays = (store.plays || 0) + 1; }
   function notePerfect()      { store.perfect = true; store.perfectCount = (store.perfectCount || 0) + 1; }
@@ -285,5 +323,6 @@
     renderBuddy, dexHead, dexGridHTML, medalsHead, medalsGridHTML,
     exportSave, importSave,
     COUNT_OPTIONS, renderCountSeg,
+    bumpApp, appCorrect, baseProgress, advancedUnlocked, advancedGate,
   };
 })(window);

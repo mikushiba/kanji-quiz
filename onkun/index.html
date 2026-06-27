@@ -6,7 +6,7 @@
 <title>音読み・訓読み クイズ</title>
 <meta name="description" content="漢字の音読み・訓読みを正しく理解するクイズ。有名な読みもマイナーな読みも公平に出題。音か訓かの判定と、読みあての2モード。">
 <meta name="theme-color" content="#ff8a3d">
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 <style>
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
   #gsel button{padding:11px 0; font-size:.95rem;}
@@ -136,8 +136,8 @@
   </div>
 </div>
 
-<script src="../shared/kanji-db.js?v=202606271935"></script>
-<script src="../shared/quiz-core.js?v=202606271935"></script>
+<script src="../shared/kanji-db.js?v=202606272011"></script>
+<script src="../shared/quiz-core.js?v=202606272011"></script>
 <script>
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -365,7 +365,7 @@ function choose(picked, btn){
   if(ok){
     combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
     if(store.onkunWrong[key]) delete store.onkunWrong[key];
-    QuizCore.recordCorrect(q.k); QuizCore.bumpCorrect(); QuizCore.noteCombo(combo); QuizCore.save();
+    QuizCore.recordCorrect(q.k); QuizCore.bumpCorrect(); QuizCore.bumpApp('onkun'); QuizCore.noteCombo(combo); QuizCore.save();
   } else {
     combo = 0; store.onkunWrong[key] = true; QuizCore.save();
   }

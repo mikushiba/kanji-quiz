@@ -7,7 +7,7 @@
 <meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 <style>
   /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -141,9 +141,9 @@
 </div>
 
 <!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
-<script src="../shared/kanji-db.js?v=202606271935"></script>
+<script src="../shared/kanji-db.js?v=202606272011"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算） -->
-<script src="../shared/quiz-core.js?v=202606271935"></script>
+<script src="../shared/quiz-core.js?v=202606272011"></script>
 <script>
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -401,7 +401,7 @@ function choose(picked, btn){
     combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
     if(store.okuriWrong[q.answer]) delete store.okuriWrong[q.answer];   // 復習で克服
     // 共有進捗へ：図鑑に漢字を記録＋累計正解＋最高コンボ（onajiと同じ store に合算）
-    QuizCore.recordCorrect(q.answer); QuizCore.bumpCorrect(); QuizCore.noteCombo(combo); QuizCore.save();
+    QuizCore.recordCorrect(q.answer); QuizCore.bumpCorrect(); QuizCore.bumpApp('okurigana'); QuizCore.noteCombo(combo); QuizCore.save();
   } else {
     combo = 0;
     store.okuriWrong[q.answer] = true; QuizCore.save();                 // まちがいを 復習リストへ

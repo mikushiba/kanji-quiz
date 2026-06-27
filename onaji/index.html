@@ -6,7 +6,7 @@
 <title>同じ読みのかん字クイズ</title>
 <meta name="description" content="小学1・2年生の漢字の同音異義語・同じ読みの漢字を、例文で意味を理解して使い分ける学習クイズ。">
 <meta name="theme-color" content="#ff8a3d">
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 </head>
 <body>
 <div class="wrap">
@@ -171,9 +171,9 @@
   </div>
 </div>
 
-<script src="../shared/kanji-db.js?v=202606271935"></script>
+<script src="../shared/kanji-db.js?v=202606272011"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算。okuriganaと同じ store/定義） -->
-<script src="../shared/quiz-core.js?v=202606271935"></script>
+<script src="../shared/quiz-core.js?v=202606272011"></script>
 <script>
 /* 漢字マスタDB（KANJI）と wordGrade は shared/kanji-db.js に分離（全アプリ共通の唯一データ）。
    下の外部<script>で先に読み込まれる グローバル const KANJI / wordGrade をここから参照する。 */
@@ -4013,6 +4013,7 @@ function choose(btn, picked, q){
     sessionMaxCombo = Math.max(sessionMaxCombo, combo);
     if(combo > store.bestCombo) store.bestCombo = combo;
     store.totalCorrect++;
+    QuizCore.bumpApp('onaji');   // 上級クイズ解放の進捗
     if(store.wrong[q.id]){ delete store.wrong[q.id]; store.comebacks++; sessionComebacks++; }  // 復習で克服
     recordCorrect(q.type==='yomi' ? q.kanji : q.answer);   // 図鑑に記録（読みクイズは漢字を集める）
     showCombo(combo);

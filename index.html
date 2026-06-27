@@ -7,12 +7,14 @@
 <meta name="description" content="小学1〜6年生むけの 漢字クイズ集。同じ読み・使い分け、送りがな など、あそびたいクイズをえらんで学べる。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（全アプリ共通の見た目） -->
-<link rel="stylesheet" href="shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="shared/kanji-ui.css?v=202606272011">
 <style>
   /* トップページ固有：mode-btn を リンクとして使う */
   a.mode-btn{display:block; text-decoration:none;}
   .portal-emoji{font-size:1.3rem; margin-right:6px;}
-  .soon{opacity:.55; pointer-events:none;}
+  a.mode-btn.locked{opacity:.5; filter:grayscale(.5);}
+  .adv-head{font-size:.82rem; color:#9a7b5e; text-align:center; margin:16px 0 8px; font-weight:700;}
+  .lockmsg{font-size:.84rem; color:#c46a23; text-align:center; margin:6px 4px 0; font-weight:700; line-height:1.8;}
 </style>
 </head>
 <body>
@@ -25,7 +27,7 @@
     <div class="modes">
       <a class="mode-btn m1" href="onaji/index.html">
         <span class="portal-emoji">📖</span>同じ読みの かん字クイズ
-        <small>同じ読み・使い分けを 例文でえらぶ／読みクイズ・図鑑つき</small>
+        <small>同じ読み・使い分けを 例文でえらぶ</small>
       </a>
       <a class="mode-btn m2" href="okurigana/index.html">
         <span class="portal-emoji">✏️</span>送りがな れんしゅう
@@ -33,23 +35,51 @@
       </a>
       <a class="mode-btn m3" href="onkun/index.html">
         <span class="portal-emoji">🗣️</span>音読み・訓読み クイズ
-        <small>音か訓かを当てる／読みあて・全部の読みを公平に</small>
-      </a>
-      <a class="mode-btn m3" href="bushu/index.html">
-        <span class="portal-emoji">🧩</span>部首（ぶしゅ）クイズ
-        <small>漢字の部首を当てる／なかま分け・部首ずかんつき</small>
-      </a>
-      <a class="mode-btn m1" href="kakusu/index.html">
-        <span class="portal-emoji">🖌️</span>画数（かくすう）クイズ
-        <small>何画？／何画目？（筆順）・筆順アニメつき</small>
-      </a>
-      <a class="mode-btn m2" href="yoji/index.html">
-        <span class="portal-emoji">📜</span>四字熟語（よじじゅくご）クイズ
-        <small>穴うめ／意味あて・1〜6年の漢字順</small>
+        <small>音か訓かを当てる／読みあて</small>
       </a>
     </div>
+
+    <div class="adv-head">― つぎの クイズは、上の 3つを 学ぶと あそべるよ ―</div>
+    <div class="modes">
+      <a class="mode-btn m3 adv" href="bushu/index.html">
+        <span class="lk"></span><span class="portal-emoji">🧩</span>部首（ぶしゅ）クイズ
+        <small>漢字の部首を当てる／なかま分け</small>
+      </a>
+      <a class="mode-btn m1 adv" href="kakusu/index.html">
+        <span class="lk"></span><span class="portal-emoji">🖌️</span>画数（かくすう）クイズ
+        <small>何画？／何画目？（筆順）</small>
+      </a>
+      <a class="mode-btn m2 adv" href="yoji/index.html">
+        <span class="lk"></span><span class="portal-emoji">📜</span>四字熟語（よじじゅくご）クイズ
+        <small>穴うめ／意味あて</small>
+      </a>
+    </div>
+    <div class="lockmsg" id="lockmsg"></div>
   </div>
 
 </div>
+<script>
+/* 部首・画数・四字熟語の解放：基礎3種（同じ読み・送りがな・音訓）を
+   それぞれ NEED 問 正解すると あそべる（満遍なく学習）。閾値はここ1か所。 */
+(function(){
+  const NEED = 30;
+  const BASE = [['onaji','同じ読み'], ['okurigana','送りがな'], ['onkun','音訓']];
+  let store = {};
+  try { store = JSON.parse(localStorage.getItem('kanjiQuiz.v1')) || {}; } catch(e) {}
+  const ac = store.appCorrect || {};
+  const prog = BASE.map(([id,label]) => ({ label, n: ac[id] || 0 }));
+  const unlocked = prog.every(p => p.n >= NEED);
+  const msg = document.getElementById('lockmsg');
+  if (unlocked) { msg.style.display = 'none'; return; }
+  document.querySelectorAll('a.mode-btn.adv').forEach(a => {
+    a.classList.add('locked');
+    const lk = a.querySelector('.lk'); if (lk) lk.textContent = '🔒 ';
+    a.addEventListener('click', e => { e.preventDefault(); msg.scrollIntoView({ behavior:'smooth', block:'center' }); });
+  });
+  msg.innerHTML = '🔒 ロック中：' +
+    prog.map(p => `${p.label} <b>${Math.min(p.n,NEED)}/${NEED}</b>${p.n>=NEED?'✅':''}`).join('　') +
+    '<br>3つとも ' + NEED + '問 正解すると あそべるよ！';
+})();
+</script>
 </body>
 </html>

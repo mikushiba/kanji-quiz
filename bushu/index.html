@@ -7,7 +7,7 @@
 <meta name="description" content="漢字の部首（ぶしゅ）を当てるクイズ。のぎへん・さんずいなど、学年ごとに自動で出題。なかま分けモードつき。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
-<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271935">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 <style>
   /* 部首アプリ固有の追加分だけ（共有部品で足りないもの） */
   #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
@@ -156,9 +156,9 @@
 </div>
 
 <!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
-<script src="../shared/kanji-db.js?v=202606271935"></script>
+<script src="../shared/kanji-db.js?v=202606272011"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算）＋出題数セレクタ -->
-<script src="../shared/quiz-core.js?v=202606271935"></script>
+<script src="../shared/quiz-core.js?v=202606272011"></script>
 <script>
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -825,6 +825,7 @@ QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' 
 renderGradeSel();
 refreshSoundBtn();
 refreshHome();
+QuizCore.advancedGate();   // 上級クイズのロック（同じ読み・送りがな・音訓を満遍なく学ぶまで）
 </script>
 </body>
 </html>
