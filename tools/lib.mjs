@@ -26,3 +26,14 @@ export function loadBANK() {
   vm.runInContext(js + '; this.BANK = BANK;', ctx);
   return ctx.BANK;
 }
+
+// 部首クイズの RADICALS（bushu/index.html の自己完結リテラル）を取り出す
+export function loadRADICALS() {
+  const html = readFileSync(join(ROOT, 'bushu', 'index.html'), 'utf8');
+  const m = html.match(/const RADICALS = (\{[\s\S]*?\n\});/);
+  if (!m) throw new Error('RADICALS が bushu/index.html に見つかりません');
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext('this.R = ' + m[1] + ';', ctx);
+  return ctx.R;
+}

@@ -9,10 +9,11 @@
  *
  * 使い方: node validate.mjs
  */
-import { KANJI, loadBANK } from './tools/lib.mjs';
+import { KANJI, loadBANK, loadRADICALS } from './tools/lib.mjs';
 
 // KANJI は共有モジュール shared/kanji-db.js（唯一の正データ）、BANK は index.html から
 const BANK = loadBANK();
+const RADICALS = loadRADICALS();
 
 const kanjiOf = w => [...w].filter(c => /\p{Script=Han}/u.test(c));
 const problems = [];
@@ -42,9 +43,28 @@ Object.entries(KANJI).forEach(([ch, k]) => {
   if (!Array.isArray(k.on) || !Array.isArray(k.kun)) problems.push(`KANJI「${ch}」: on/kun が配列でない`);
 });
 
+// 部首クイズ RADICALS の検証（bushu/index.html）
+const POS_OK = ['へん', 'つくり', 'かんむり', 'にょう', 'あし', 'かまえ', 'たれ'];
+const radSeen = {};
+let radKanji = 0;
+Object.entries(RADICALS).forEach(([name, r]) => {
+  const where = `部首「${name}」`;
+  if (!r.c) problems.push(`${where}: 部首の字 c が無い`);
+  if (!POS_OK.includes(r.pos)) problems.push(`${where}: pos(位置) が不正: ${r.pos}`);
+  if (!r.mean) problems.push(`${where}: mean(意味) が無い`);
+  if (!Array.isArray(r.ks) || r.ks.length < 3) problems.push(`${where}: ks(例字) が3字未満`);
+  (r.ks || []).forEach(ch => {
+    radKanji++;
+    if (!KANJI[ch]) problems.push(`${where}: 例字「${ch}」が KANJI DB に無い`);
+    if (radSeen[ch]) problems.push(`${where}: 例字「${ch}」が「${radSeen[ch]}」と重複（1字は1部首のみ）`);
+    radSeen[ch] = name;
+  });
+});
+
 const tsukai = BANK.filter(q => q.type === 'tsukai').length;
 const onaji = BANK.filter(q => q.type === 'onaji').length;
 console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み ${onaji}）　KANJI: ${Object.keys(KANJI).length}字`);
+console.log(`部首: ${Object.keys(RADICALS).length}種 / 例字 ${radKanji}字`);
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length}件の問題:\n` + problems.join('\n'));

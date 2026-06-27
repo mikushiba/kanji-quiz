@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>部首（ぶしゅ）クイズ</title>
+<meta name="description" content="漢字の部首（ぶしゅ）を当てるクイズ。のぎへん・さんずいなど、学年ごとに自動で出題。なかま分けモードつき。">
+<meta name="theme-color" content="#ff8a3d">
+<!-- 共有スタイル（クイズと同じ見た目） -->
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271357">
+<style>
+  /* 部首アプリ固有の追加分だけ（共有部品で足りないもの） */
+  #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  #gsel button{padding:11px 0; font-size:.95rem;}
+  .choices.bushu{grid-template-columns:1fr 1fr;}
+  .choices.bushu .choice{font-size:1.2rem; font-weight:700;}
+  .choices.nakama{grid-template-columns:1fr 1fr;}
+  .choices.nakama .choice{font-size:1.9rem; font-weight:700;}
+  .prompt{font-size:.98rem; color:#9a7b5e; text-align:center; margin:6px 0 14px;}
+  .posTag{display:inline-block; font-size:.72rem; background:#eef3ff; color:#3a5bbf;
+          border-radius:999px; padding:2px 9px; margin-left:6px; font-weight:700;}
+  .fb-rad{font-size:1.05rem; color:#5a4a3a; margin:4px 0;}
+  .fb-rad b{font-size:1.35rem; color:#c46a23;}
+  .help-list{font-size:.92rem; line-height:1.9; color:#5a4a3a; padding-left:1.2em; margin:6px 0;}
+  .help-list b{color:var(--accent);}
+  .legend{font-size:.78rem; color:#9a7b5e; text-align:center; margin-top:8px; line-height:1.7;}
+  #bdexGrid .dcard .k{font-size:1.9rem;}
+  #bdexGrid .dcard .info{line-height:1.35;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="toplink" href="../index.html">← 漢字クイズ トップへ</a>
+  <h1>部首（ぶしゅ）クイズ</h1>
+  <div class="sub">― かん字の ぶしゅを 当てよう ―</div>
+
+  <!-- ホーム -->
+  <div id="home" class="card">
+    <div class="topRow">
+      <button class="topBtn" id="openHelp" type="button">❓ あそびかた</button>
+      <button class="topBtn" id="soundToggle" type="button">🔊 おと ON</button>
+    </div>
+    <div class="buddy" id="buddy">
+      <div class="bi" id="buddyIcon">🥚</div>
+      <div class="bb">
+        <div class="bn" id="buddyName">漢字みならい</div>
+        <div class="bc" id="buddyCoin">これまで せいかい 0問</div>
+        <div class="bbar"><i id="buddyBar"></i></div>
+        <div class="bnext" id="buddyNext"></div>
+      </div>
+    </div>
+    <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
+    <div class="gradeSel">
+      <div class="gradeLabel">学年（がくねん）をえらぶ</div>
+      <div class="seg" id="gsel"></div>
+      <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
+    </div>
+    <div class="gradeSel">
+      <div class="gradeLabel">もんだいの数（かず）</div>
+      <div class="seg" id="countSeg"><!-- 共通モジュール QuizCore.renderCountSeg で描画 --></div>
+    </div>
+    <div class="modes">
+      <button class="mode-btn m1" id="startBushu">
+        ① 部首あて（漢字→ぶしゅ名）
+        <small>大きな かん字を見て、その ぶしゅを 4つから えらぶ</small>
+      </button>
+      <button class="mode-btn m2" id="startNakama">
+        ② なかま分け（なかまはずれ さがし）
+        <small>4つの かん字から、ぶしゅが ちがう1字を 見つける</small>
+      </button>
+    </div>
+    <button class="dailyBtn" id="openReview" type="button" style="background:linear-gradient(135deg,#7bc47b,#3da35a);margin-top:14px;">🔁 まちがい ふくしゅう<span id="reviewInfo"></span></button>
+    <div class="collbar">
+      <button id="openDex" type="button">📖 かん字ずかん</button>
+      <button id="openBdex" type="button">🧩 部首ずかん</button>
+      <button id="openMedals" type="button">🏅 メダル</button>
+    </div>
+    <div class="saveBar">
+      <button id="exportSave" type="button">💾 きろくを ほぞん</button>
+      <label class="impBtn" for="importFile">📂 きろくを よみこむ</label>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <a class="applink" href="../index.html">← 漢字クイズ トップへ</a>
+  </div>
+
+  <!-- あそびかた -->
+  <div id="help" class="card" style="display:none;">
+    <button class="backBtn" id="helpBack">← もどる</button>
+    <h2 style="margin-top:4px;">あそびかた</h2>
+    <ul class="help-list">
+      <li><b>部首（ぶしゅ）</b>＝かん字の なかまわけの しるし。れい：「秋」は <b>のぎへん</b>。</li>
+      <li><b>①部首あて</b>：大きな かん字の ぶしゅを 4つから えらぶ。</li>
+      <li><b>②なかま分け</b>：4つの かん字から、ぶしゅが <b>ちがう1字</b>を さがす。</li>
+      <li>答えのあと、ぶしゅの <b>いみ</b>と <b>いちば（へん・つくり…）</b>が 出るよ。</li>
+      <li>おぼえた ぶしゅは <b>🧩部首ずかん</b>に たまる（3かいで ★）。</li>
+      <li><b>3年生いじょう</b>は はじめ ロック🔒。下の学年の かん字を <b>かん字ずかん</b>に あつめると かいきん！</li>
+    </ul>
+    <button class="again" id="helpStart" style="margin-top:8px;">とじる</button>
+  </div>
+
+  <!-- 出題 -->
+  <div id="quiz" class="card" style="display:none;">
+    <button class="navBtn" id="prev">← 前へ</button>
+    <button class="homeBtn" id="quizHome">🏠 HOME</button>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
+    <span class="tag" id="tag"></span>
+    <div class="prompt" id="prompt"></div>
+    <div class="bigkanji" id="qkanji"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback">
+      <div class="fb-head" id="fbHead"></div>
+      <div class="fb-rad" id="fbRad"></div>
+      <div class="fb-kanji" id="fbKanji"></div>
+      <button class="next" id="next">つぎへ →</button>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="result" class="card result" style="display:none;">
+    <div class="stars" id="stars"></div>
+    <div class="score" id="finalScore"></div>
+    <div class="comboBest" id="comboBest"></div>
+    <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="earned" id="earned" style="display:none;"></div>
+    <div class="review" id="review"></div>
+    <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
+    <button class="again" id="retry">もう一回</button>
+    <button class="again home" id="back">さいしょの画面</button>
+  </div>
+
+  <!-- 漢字ずかん（共有：onaji・送りがなと同じ図鑑にたまる） -->
+  <div id="dex" class="card" style="display:none;">
+    <button class="backBtn" id="dexBack">← もどる</button>
+    <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">どのクイズでも 正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div class="dexGrid" id="dexGrid"></div>
+  </div>
+
+  <!-- 部首ずかん（このアプリ専用） -->
+  <div id="bdex" class="card" style="display:none;">
+    <button class="backBtn" id="bdexBack">← もどる</button>
+    <div class="collHead"><h2>🧩 部首ずかん</h2><span class="cnt" id="bdexCnt"></span></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">部首あてで 正かいすると ぶしゅが ふえるよ。3かい 正かいで ★マスター！</div>
+    <div class="dexGrid" id="bdexGrid"></div>
+  </div>
+
+  <!-- メダル（共有） -->
+  <div id="medals" class="card" style="display:none;">
+    <button class="backBtn" id="medalsBack">← もどる</button>
+    <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
+    <div class="medalList" id="medalList"></div>
+  </div>
+
+</div>
+
+<!-- 共有 漢字DB（唯一の正データ：KANJI / wordGrade / parseOkurigana） -->
+<script src="../shared/kanji-db.js?v=202606271357"></script>
+<!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算）＋出題数セレクタ -->
+<script src="../shared/quiz-core.js?v=202606271357"></script>
+<script>
+const $ = id => document.getElementById(id);
+const MAXGRADE = 6;
+
+/* ===== 部首データ（このアプリ専用。onajiのBANKと同じ位置づけ）=====
+   c=部首の字, pos=位置(へん/つくり/かんむり/にょう/あし), mean=意味, ks=例字（共有DBに実在） */
+const RADICALS = {
+  'のぎへん':{c:'禾',pos:'へん',mean:'イネ・穀物に関係',ks:['秋','科','秒','種','積','税','移','程','私','秘','穀']},
+  'さんずい':{c:'氵',pos:'へん',mean:'水に関係',ks:['海','池','注','泳','法','流','消','深','港','温','湯','漢','活','洋','浅','油','波','決','治','泣','演','漁','清','満','湖','測','液']},
+  'きへん':{c:'木',pos:'へん',mean:'木に関係',ks:['林','校','村','板','横','様','橋','機','松','札','枝','柱','植','検','標','棒','桜']},
+  'にんべん':{c:'亻',pos:'へん',mean:'人に関係',ks:['休','体','作','使','住','信','便','借','億','候','健','仕','何','位','係','例','倍','停','側','値','個','修','俳','代','仮','件','任','伝']},
+  'ごんべん':{c:'言',pos:'へん',mean:'ことば・言うに関係',ks:['話','語','読','記','計','訓','詩','調','談','議','説','課','試','識','護','訳','詞','評','認','誤','講','謝','警','許','訪']},
+  'いとへん':{c:'糸',pos:'へん',mean:'糸・布に関係',ks:['紙','線','細','組','終','結','練','絵','給','続','緑','約','級','紀','純','経','統','績','編','縄','織','綿','縮','紅','素']},
+  'てへん':{c:'扌',pos:'へん',mean:'手の動作に関係',ks:['持','指','投','打','拾','折','招','担','探','採','接','提','操','技','拝','捨','授','推']},
+  'つちへん':{c:'土',pos:'へん',mean:'土・場所に関係',ks:['地','場','坂','城','均','境','増','塩']},
+  'くちへん':{c:'口',pos:'へん',mean:'口・声に関係',ks:['味','呼','唱','吸','鳴']},
+  'くさかんむり':{c:'艹',pos:'かんむり',mean:'草・植物に関係',ks:['花','草','茶','葉','苦','薬','菜','落','荷','英','芽','若','蒸','著','蔵']},
+  'うかんむり':{c:'宀',pos:'かんむり',mean:'家・屋根に関係',ks:['家','室','守','安','客','宿','寒','実','富','官','定','宝','宗','宇','宙','容','宣','密']},
+  'たけかんむり':{c:'竹',pos:'かんむり',mean:'竹に関係',ks:['笑','答','第','筆','算','節','等','管','築','簡','箱','笛','策']},
+  'あめかんむり':{c:'雨',pos:'かんむり',mean:'天気・雨に関係',ks:['雪','雲','電']},
+  'しんにょう':{c:'辶',pos:'にょう',mean:'道・進むに関係',ks:['道','通','週','運','進','送','返','速','遊','達','過','連','遠','近','追','逆','適','選','退','述']},
+  'こころ':{c:'心',pos:'あし',mean:'心・気持ちに関係',ks:['思','想','感','急','悲','念','息','恩','態','意','愛','志','忘','忠']},
+  'おおがい':{c:'頁',pos:'つくり',mean:'頭・顔に関係',ks:['顔','頭','願','題','類','順','額','預','領','頂']},
+};
+const RAD_NAMES = Object.keys(RADICALS);
+
+/* 例字フラット化：{k, rad, grade}（DBに無い字は念のため除外） */
+function buildItems(){
+  const out = [], seen = new Set();
+  for(const [rad, info] of Object.entries(RADICALS)){
+    for(const k of info.ks){
+      if(!KANJI[k] || seen.has(k)) continue;
+      seen.add(k);
+      out.push({ k, rad, grade: KANJI[k].g });
+    }
+  }
+  return out;
+}
+const ALL_ITEMS = buildItems();
+
+/* ===== 学年の解放（3〜6年）＝onaji・送りがなと同じ「開放式」ロック =====
+   1・2年は最初から開放。3年生いじょうは、下の学年までの「部首クイズで集められる漢字」を
+   ぜんぶ かん字ずかん（store.kanji＝全アプリ共有）にあつめると かいきん。解放フラグも共有。 */
+const BK_COLLECTABLE = [...new Set(ALL_ITEMS.map(i => i.k))];
+const bushuCollectableUpTo = (g)=> BK_COLLECTABLE.filter(ch => KANJI[ch].g <= g);
+function gradeUnlocked(g){
+  if(g <= 2) return true;
+  if(store['unlocked'+g]) return true;
+  const lower = bushuCollectableUpTo(g-1);
+  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
+}
+function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
+function checkUnlock(){
+  let now = 0;
+  for(let g=3; g<=MAXGRADE; g++){
+    if(!store['unlocked'+g] && gradeUnlocked(g)){ store['unlocked'+g] = true; now = g; }
+  }
+  if(now) QuizCore.save();
+  return now;
+}
+
+/* ===== ユーティリティ ===== */
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function todayIndex(){ const d=new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset()*60000)/86400000); }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function seededShuffle(arr, seed){ const r=mulberry32(seed), a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== 出題づくり ===== */
+// 部首あて：漢字→部首名（4択）
+function makeBushuQ(it){
+  const others = shuffle(RAD_NAMES.filter(r => r !== it.rad)).slice(0, 3);
+  const choices = shuffle([it.rad, ...others]);
+  return { mode:'bushu', kanji:it.k, rad:it.rad, grade:it.grade, answer:it.rad, choices };
+}
+// なかま分け：同じ部首3字＋ちがう部首1字 → はずれを当てる
+function makeNakamaQ(pool){
+  // 部首ごとにまとめる（poolは学年で絞り済み）
+  const byRad = {};
+  for(const it of pool){ (byRad[it.rad] = byRad[it.rad] || []).push(it); }
+  const mainCands = Object.keys(byRad).filter(r => byRad[r].length >= 3);
+  if(mainCands.length === 0 || Object.keys(byRad).length < 2) return null;
+  const mainRad = mainCands[Math.floor(Math.random()*mainCands.length)];
+  const three = shuffle(byRad[mainRad]).slice(0, 3);
+  const otherRads = Object.keys(byRad).filter(r => r !== mainRad);
+  const oddRad = otherRads[Math.floor(Math.random()*otherRads.length)];
+  const odd = shuffle(byRad[oddRad])[0];
+  const items = shuffle([...three, odd]);
+  return { mode:'nakama', mainRad, oddRad, answer:odd.k, grade:odd.grade,
+           items, choices:items.map(x=>x.k), three:three.map(x=>x.k) };
+}
+
+/* ===== 状態 ===== */
+let grade = 'all';
+let count = 10;                 // 初期10もん（共通モジュールの選択肢 10/20/50/ぜんぶ）
+let mode = 'bushu';
+let deck = [], answers = [], idx = 0;
+let combo = 0, sessionMaxCombo = 0;
+let wrongKanji = [];           // 結果の「まちがえた問題だけ もう一回」用（部首あて化）
+let isDaily = false;
+
+const store = QuizCore.store;
+store.bushuWrong = store.bushuWrong || {};                                  // { 漢字: true } まちがえた字
+store.bushuDaily = store.bushuDaily || { streak:0, bestStreak:0, lastDay:null };
+store.bushuDex   = store.bushuDex   || {};                                  // { 部首名: 正解回数 } 部首ずかん
+for(let g=3; g<=MAXGRADE; g++){ if(store['unlocked'+g] === undefined) store['unlocked'+g] = false; }
+
+/* ===== 音（Web Audio：ファイル不要） ===== */
+let soundOn = (localStorage.getItem('bushuSoundOff') !== '1');
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } }
+  if(audioCtx && audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }
+  return audioCtx;
+}
+function tone(freq, startAt, dur, type='sine', vol=0.2){
+  const ctx = getCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + startAt;
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type=type; osc.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playSound(name){
+  if(!soundOn) return; const ctx=getCtx(); if(!ctx) return;
+  if(name==='correct'){
+    tone(1318,0,0.55,'sine',0.26); tone(2637,0,0.30,'sine',0.08);
+    tone(1047,0.18,0.70,'sine',0.26); tone(2093,0.18,0.35,'sine',0.08);
+  } else if(name==='wrong'){
+    tone(233,0,0.20,'sawtooth',0.11); tone(220,0,0.20,'sawtooth',0.11);
+    tone(220,0.26,0.55,'sawtooth',0.11); tone(207,0.26,0.55,'sawtooth',0.11);
+  }
+}
+function refreshSoundBtn(){ $('soundToggle').textContent = soundOn ? '🔊 おと ON' : '🔇 おと OFF'; }
+
+/* ===== 画面きりかえ ===== */
+function showOnly(id){ for(const s of ['home','help','quiz','result','dex','bdex','medals']) $(s).style.display = (s===id)?'block':'none'; }
+
+/* ===== 育成系（共有 QuizCore：かん字図鑑・称号・メダル＝全アプリ合算） ===== */
+function refreshBuddy(){
+  QuizCore.renderBuddy({ icon:$('buddyIcon'), name:$('buddyName'), coin:$('buddyCoin'), bar:$('buddyBar'), next:$('buddyNext') });
+}
+function refreshHome(){
+  refreshBuddy();
+  const dy = store.bushuDaily, ti = todayIndex();
+  let info = '';
+  if((dy.streak||0)>0 && (dy.lastDay===ti || dy.lastDay===ti-1)) info += `🔥${dy.streak}日れんぞく　`;
+  info += (dy.lastDay===ti) ? 'きょうは クリア✓' : 'まいにち 10もん！';
+  $('dailyInfo').textContent = ' ' + info;
+  const rc = reviewItems().length;
+  $('reviewInfo').textContent = rc ? ` のこり ${rc}問` : ' まちがいは ありません';
+  renderGradeSel();
+}
+function goHome(){ refreshHome(); showOnly('home'); }
+function openDex(){
+  $('dexCnt').textContent = QuizCore.dexHead();
+  const du = $('dexUnlock');
+  if(du){
+    if(gradeUnlocked(3)){ du.textContent = '🔓 3年生 かいきん中！'; }
+    else { const rem = bushuCollectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length; du.textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`; }
+  }
+  $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex');
+}
+function openMedals(){ $('medalsCnt').textContent = QuizCore.medalsHead(); $('medalList').innerHTML = QuizCore.medalsGridHTML(); showOnly('medals'); }
+
+// 部首ずかん（このアプリ専用）
+function openBdex(){
+  const have = RAD_NAMES.filter(r => (store.bushuDex[r]||0) >= 1).length;
+  const master = RAD_NAMES.filter(r => (store.bushuDex[r]||0) >= 3).length;
+  $('bdexCnt').textContent = `${have} / ${RAD_NAMES.length} 種（★${master}）`;
+  const grid = $('bdexGrid'); grid.innerHTML = '';
+  for(const r of RAD_NAMES){
+    const info = RADICALS[r], c = store.bushuDex[r]||0;
+    const div = document.createElement('div');
+    if(c >= 1){
+      const m = c >= 3;
+      div.className = 'dcard' + (m ? ' master' : '');
+      div.innerHTML = `<div class="k">${info.c}</div><div class="star">${m?'★':'☆'}</div>`
+        + `<div class="info"><b>${r}</b><br>${info.pos}<br>${info.mean}</div>`;
+    } else {
+      div.className = 'dcard locked';
+      div.innerHTML = `<div class="k">？</div><div class="info">みつけよう</div>`;
+    }
+    grid.appendChild(div);
+  }
+  showOnly('bdex');
+}
+
+/* ===== ホーム：学年セレクタ（ロック表示つき） ===== */
+function renderGradeSel(){
+  const seg = $('gsel'); seg.innerHTML = '';
+  const items = [];
+  for(let g=1; g<=MAXGRADE; g++) items.push([g, g+'年']);
+  items.push(['all','ぜんぶ']);
+  for(const [val,label] of items){
+    const isGrade = (val !== 'all');
+    const locked = isGrade && !gradeUnlocked(val);
+    const b = document.createElement('button');
+    b.textContent = locked ? (val+'年🔒') : label;
+    if(locked) b.classList.add('locked');
+    if((val==='all'?'all':val) === grade) b.classList.add('active');
+    b.onclick = ()=>{
+      if(locked){
+        const lower = bushuCollectableUpTo(val-1);
+        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+        alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を かん字ずかんに あと ${rem}字 あつめると かいきん！`);
+        return;
+      }
+      grade = (val==='all')?'all':val; renderGradeSel();
+    };
+    seg.appendChild(b);
+  }
+  renderUnlockHint();
+}
+function renderUnlockHint(){
+  const hint = $('unlockHint'); if(!hint) return;
+  let next = 0;
+  for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
+  if(!next){ hint.textContent = '✅ ぜんぶの 学年が あそべるよ！'; return; }
+  const lower = bushuCollectableUpTo(next-1);
+  const total = lower.length, have = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
+  hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを かん字ずかんに あつめよう`;
+}
+
+function itemsForGrade(){
+  if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_ITEMS.filter(i => i.grade <= mx); }
+  return ALL_ITEMS.filter(i => i.grade === grade);
+}
+
+/* ===== 出題ループ ===== */
+function start(m){
+  mode = m;
+  const pool = itemsForGrade();
+  const limit = (count==='all') ? pool.length : count;
+  let qs = [];
+  if(m === 'bushu'){
+    const picked = shuffle(pool).slice(0, limit);
+    qs = picked.map(makeBushuQ);
+  } else {
+    for(let i=0; i<limit; i++){ const q = makeNakamaQ(pool); if(q) qs.push(q); }
+    if(qs.length === 0){ alert('この学年では なかま分けが 作れません。\n「ぜんぶ」や ほかの学年で ためしてね。'); return; }
+  }
+  startWithDeck(qs);
+}
+function startDaily(){
+  mode = 'bushu';
+  const mx = maxUnlockedGrade();
+  const pool = ALL_ITEMS.filter(i => i.grade <= mx);
+  const deckI = seededShuffle(pool, todayIndex()).slice(0, 10);
+  startWithDeck(deckI.map(makeBushuQ), true);
+}
+function updateDailyStreak(){
+  const dy = store.bushuDaily, ti = todayIndex();
+  if(dy.lastDay !== ti){
+    dy.streak = (dy.lastDay === ti-1) ? (dy.streak||0)+1 : 1;
+    dy.lastDay = ti;
+    dy.bestStreak = Math.max(dy.bestStreak||0, dy.streak);
+    QuizCore.save();
+  }
+}
+// まちがい ふくしゅう（部首あてで出し直す）
+const reviewItems = ()=> Object.keys(store.bushuWrong).map(k => ALL_ITEMS.find(i=>i.k===k)).filter(Boolean);
+function startReview(){
+  let pool = reviewItems();
+  if(pool.length === 0){ alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。'); return; }
+  mode = 'bushu';
+  pool = shuffle(pool); if(pool.length>20) pool = pool.slice(0,20);
+  startWithDeck(pool.map(makeBushuQ));
+}
+function startWithDeck(qs, daily){
+  isDaily = !!daily;
+  deck = qs; answers = new Array(deck.length); idx = 0;
+  combo = 0; sessionMaxCombo = 0;
+  showOnly('quiz'); renderQ();
+}
+
+function renderQ(){
+  const q = deck[idx];
+  $('prog').style.width = (idx/deck.length*100)+'%';
+  $('count').textContent = `問題 ${idx+1} / ${deck.length}`;
+  $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
+  $('score').textContent = `正かい ${scoreCount()}`;
+  $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
+
+  if(q.mode === 'bushu'){
+    $('tag').textContent = q.grade+'年の かん字';
+    $('prompt').textContent = 'この かん字の 部首（ぶしゅ）は？';
+    $('qkanji').textContent = q.kanji;
+    $('qkanji').style.display = 'block';
+  } else {
+    $('tag').textContent = 'なかま分け';
+    $('prompt').textContent = 'なかまはずれ（ぶしゅが ちがう字）は どれ？';
+    $('qkanji').style.display = 'none';
+  }
+
+  const wrap = $('choices');
+  wrap.className = 'choices ' + (q.mode==='bushu' ? 'bushu' : 'nakama');
+  wrap.innerHTML = '';
+  const ans = answers[idx];
+  for(const c of q.choices){
+    const b = document.createElement('button');
+    b.className = 'choice'; b.textContent = c;
+    if(ans){
+      b.disabled = true;
+      if(c === q.answer) b.classList.add('ok');
+      else if(c === ans.picked) b.classList.add('ng');
+    } else {
+      b.onclick = ()=> choose(c, b);
+    }
+    wrap.appendChild(b);
+  }
+  if(ans) showFeedback(ans.correct); else $('feedback').classList.remove('show','good','bad');
+}
+
+function choose(picked, btn){
+  if(answers[idx]) return;
+  const q = deck[idx];
+  const ok = picked === q.answer;
+  answers[idx] = { picked, correct: ok };
+  // まちがい復習のキー（部首あて＝その漢字／なかま分け＝はずれの漢字）
+  const key = (q.mode==='bushu') ? q.kanji : q.answer;
+  if(ok){
+    combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
+    if(store.bushuWrong[key]) delete store.bushuWrong[key];
+    // 共有図鑑へ：出した漢字を記録（他アプリと合算）
+    QuizCore.recordCorrect(q.mode==='bushu' ? q.kanji : q.answer);
+    // 部首ずかん：学べた部首をカウント
+    const learned = (q.mode==='bushu') ? q.rad : q.mainRad;
+    store.bushuDex[learned] = (store.bushuDex[learned]||0) + 1;
+    QuizCore.bumpCorrect(); QuizCore.noteCombo(combo); QuizCore.save();
+  } else {
+    combo = 0;
+    store.bushuWrong[key] = true; QuizCore.save();
+  }
+  document.querySelectorAll('#choices .choice').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === q.answer) b.classList.add('ok');
+    else if(b===btn) b.classList.add('ng');
+  });
+  $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
+  $('score').textContent = `正かい ${scoreCount()}`;
+  playSound(ok ? 'correct' : 'wrong');
+  showFeedback(ok);
+}
+
+function kanjiInfoLine(k){
+  const info = KANJI[k]; if(!info) return '';
+  const on = (info.on||[]).join('・'), kun = (info.kun||[]).join('・');
+  return `<b>${k}</b>（${info.s}画）` + [on?'音 '+on:'', kun?'訓 '+kun:''].filter(Boolean).join(' ／ ');
+}
+function showFeedback(ok){
+  const q = deck[idx];
+  const fb = $('feedback');
+  fb.classList.add('show'); fb.classList.toggle('good', ok); fb.classList.toggle('bad', !ok);
+
+  if(q.mode === 'bushu'){
+    const r = RADICALS[q.rad];
+    $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.rad+'」';
+    $('fbRad').innerHTML = `<b>${r.c}</b> ${q.rad}<span class="posTag">${r.pos}</span><br>${r.mean}`;
+    $('fbKanji').innerHTML = kanjiInfoLine(q.kanji);
+  } else {
+    const r = RADICALS[q.mainRad], o = RADICALS[q.oddRad];
+    $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　はずれは「'+q.answer+'」';
+    $('fbRad').innerHTML = `なかま＝<b>${r.c}</b> ${q.mainRad}（${q.three.join('・')}）<span class="posTag">${r.pos}</span>`
+      + `<br>はずれ＝<b>${q.answer}</b> は <b>${o.c}</b> ${q.oddRad}`;
+    $('fbKanji').innerHTML = kanjiInfoLine(q.answer);
+  }
+  $('next').textContent = (idx >= deck.length-1) ? 'けっかを見る →' : 'つぎへ →';
+}
+
+const scoreCount = ()=> answers.filter(a => a && a.correct).length;
+
+function next(){
+  if(!answers[idx]) return;
+  if(idx >= deck.length-1) return showResult();
+  idx++; renderQ();
+}
+function prev(){ if(idx>0){ idx--; renderQ(); } }
+
+function showResult(){
+  showOnly('result');
+  $('prog').style.width = '100%';
+  const total = deck.length, correct = scoreCount();
+  $('finalScore').textContent = `${correct} / ${total} もん せいかい`;
+  const rate = correct/total;
+  const nStar = rate===1?3 : rate>=0.7?2 : rate>=0.4?1 : 0;
+  $('stars').textContent = '⭐'.repeat(nStar) + '☆'.repeat(3-nStar);
+  $('comment').textContent =
+    rate===1 ? 'ぜんもん せいかい！すごい！' :
+    rate>=0.7 ? 'よくできました！' :
+    rate>=0.4 ? 'もう少し！もう一回やってみよう' :
+    'だいじょうぶ、くりかえせば できるよ！';
+  $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
+
+  QuizCore.notePlay();
+  if(rate===1) QuizCore.notePerfect();
+  QuizCore.noteCombo(sessionMaxCombo);
+  if(isDaily) updateDailyStreak();
+  const justUnlocked = checkUnlock();
+  QuizCore.save();
+  const tcAfter = QuizCore.store.totalCorrect||0, tcBefore = tcAfter - correct;
+  const rankUp = QuizCore.rankStage(tcAfter) > QuizCore.rankStage(tcBefore);
+  const newly = QuizCore.checkMedals();
+  const em = $('earned');
+  const newRank = QuizCore.STAGES[QuizCore.rankStage(tcAfter)];
+  const evo = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
+  const unlockMsg = justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '';
+  if(unlockMsg || evo || newly.length){
+    em.style.display = 'block';
+    em.innerHTML = unlockMsg + evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+  } else { em.style.display = 'none'; }
+
+  // まちがえた問題の振り返り
+  const wrong = deck.filter((q,i)=> answers[i] && !answers[i].correct);
+  wrongKanji = wrong.map(q => (q.mode==='bushu') ? q.kanji : q.answer);
+  const rv = $('review');
+  if(wrong.length){
+    rv.style.display = 'block';
+    rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrong.length}）</div>` +
+      wrong.map(q => {
+        if(q.mode==='bushu') return `<div class="rv-i"><b>${q.kanji}</b> ＝ <b>${q.rad}</b></div>`;
+        return `<div class="rv-i">はずれ <b>${q.answer}</b>（${q.oddRad}）― なかまは ${q.mainRad}</div>`;
+      }).join('');
+    $('retryWrong').style.display = 'inline-block';
+  } else {
+    rv.style.display = 'none';
+    $('retryWrong').style.display = 'none';
+  }
+}
+
+/* ===== 初期化・イベント ===== */
+$('startBushu').onclick = ()=> start('bushu');
+$('startNakama').onclick = ()=> start('nakama');
+$('next').onclick = next;
+$('prev').onclick = prev;
+$('quizHome').onclick = goHome;
+$('retry').onclick = ()=> start(mode);
+$('retryWrong').onclick = ()=> startWithDeck(wrongKanji.map(k => makeBushuQ(ALL_ITEMS.find(i=>i.k===k))).filter(Boolean));
+$('back').onclick = goHome;
+$('openHelp').onclick = ()=> showOnly('help');
+$('helpBack').onclick = goHome;
+$('helpStart').onclick = goHome;
+$('openDex').onclick = openDex;
+$('openBdex').onclick = openBdex;
+$('openMedals').onclick = openMedals;
+$('dexBack').onclick = goHome;
+$('bdexBack').onclick = goHome;
+$('medalsBack').onclick = goHome;
+$('openDaily').onclick = startDaily;
+$('openReview').onclick = startReview;
+$('exportSave').onclick = ()=> QuizCore.exportSave('かん字クイズ-きろく.json');
+$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) QuizCore.importSave(f); e.target.value=''; };
+$('soundToggle').onclick = ()=>{
+  soundOn = !soundOn;
+  localStorage.setItem('bushuSoundOff', soundOn ? '0' : '1');
+  refreshSoundBtn();
+  if(soundOn) playSound('correct');
+};
+// 出題数セレクタ（共通モジュール）
+QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' : +v; });
+renderGradeSel();
+refreshSoundBtn();
+refreshHome();
+</script>
+</body>
+</html>
