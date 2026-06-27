@@ -194,6 +194,8 @@ function svgFor(k, hi){
   return `<svg class="ksvg" viewBox="0 0 109 109" width="180" height="180" aria-label="${k}">${paths}</svg>`;
 }
 // 書き順アニメ（1画ずつ描く）
+const STROKE_DRAW = 0.6;   // 1画を描く秒数（大きいほど ゆっくり）
+const STROKE_GAP  = 0.5;   // 次の画にうつるまでの間かく（秒）
 function animateStrokes(container){
   const svg = container.querySelector('svg'); if(!svg) return;
   const paths = [...svg.querySelectorAll('path')];
@@ -201,7 +203,7 @@ function animateStrokes(container){
     p.style.transition='none'; p.style.strokeDasharray=len; p.style.strokeDashoffset=len; p.classList.remove('hi'); });
   void svg.getBoundingClientRect();
   paths.forEach((p,i)=>{ const len=p.dataset.len;
-    p.style.transition=`stroke-dashoffset .32s ease ${i*0.22}s`; p.style.strokeDashoffset='0'; });
+    p.style.transition=`stroke-dashoffset ${STROKE_DRAW}s ease ${i*STROKE_GAP}s`; p.style.strokeDashoffset='0'; });
 }
 
 /* ===== 出題づくり ===== */
