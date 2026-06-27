@@ -19,6 +19,8 @@
   .choices.kanji .choice{font-size:1.7rem; font-weight:700; padding:14px 0;}
   .choices.imi{grid-template-columns:1fr; gap:8px;}
   .choices.imi .choice{font-size:.96rem; text-align:left; padding:13px 14px; line-height:1.5;}
+  .choices.yomi{grid-template-columns:1fr 1fr; gap:8px;}
+  .choices.yomi .choice{font-size:1.05rem; font-weight:700; padding:13px 6px;}
   .help-list{font-size:.92rem; line-height:1.9; color:#5a4a3a; padding-left:1.2em; margin:6px 0;}
   .help-list b{color:var(--accent);}
   .fb-yoji{font-size:1.6rem; font-weight:800; text-align:center; letter-spacing:.1em; color:#3a2c1d; margin:4px 0;}
@@ -57,10 +59,14 @@
     <div class="modes">
       <button class="mode-btn m1" id="startAna">
         ① 穴うめ（あなうめ）
-        <small>四字熟語の □ に入る かん字を 4つから えらぶ</small>
+        <small>えらんだ学年の かん字を □ にして、4つから えらぶ</small>
       </button>
-      <button class="mode-btn m2" id="startImi">
-        ② 意味（いみ）あて
+      <button class="mode-btn m2" id="startYomi">
+        ② 読み方（よみかた）あて
+        <small>四字熟語の 読みを 4つから えらぶ</small>
+      </button>
+      <button class="mode-btn m3" id="startImi">
+        ③ 意味（いみ）あて
         <small>四字熟語の 意味を 4つから えらぶ</small>
       </button>
     </div>
@@ -82,8 +88,9 @@
     <h2 style="margin-top:4px;">あそびかた</h2>
     <ul class="help-list">
       <li><b>四字熟語</b>＝漢字4つでできた ことば。れい：<b>一石二鳥</b>。</li>
-      <li><b>①穴うめ</b>：□に入る かん字を 4つから えらぶ（いみが ヒント）。</li>
-      <li><b>②意味あて</b>：四字熟語の いみを 4つから えらぶ。</li>
+      <li><b>①穴うめ</b>：えらんだ学年の かん字を □ にするよ。□に入る字を 4つから えらぶ（いみが ヒント）。</li>
+      <li><b>②読み方あて</b>：四字熟語の 読みを 4つから えらぶ。</li>
+      <li><b>③意味あて</b>：四字熟語の いみを 4つから えらぶ。</li>
       <li>正かいすると かん字が <b>📖かん字ずかん</b>に たまる。</li>
       <li><b>3年生いじょう</b>は はじめ ロック🔒。下の学年の かん字を ずかんに あつめると かいきん！</li>
     </ul>
@@ -199,6 +206,64 @@ const YOJI = [
   {y:'天変地異',r:'てんぺんちい',m:'自然界に起こる異変や災害。'},
   {y:'臨機応変',r:'りんきおうへん',m:'その場に応じてうまく対応すること。'},
   {y:'老若男女',r:'ろうにゃくなんにょ',m:'年や性別にかかわらず すべての人。'},
+  {y:'三三五五',r:'さんさんごご',m:'あちこちに ちらばっているようす。'},
+  {y:'三日天下',r:'みっかてんか',m:'ごく短い間だけ 権力をにぎること。'},
+  {y:'十中八九',r:'じっちゅうはっく',m:'ほとんど。たいてい。'},
+  {y:'山川草木',r:'さんせんそうもく',m:'山や川や草木。自然のすべて。'},
+  {y:'四六時中',r:'しろくじちゅう',m:'一日中。いつも。'},
+  {y:'明明白白',r:'めいめいはくはく',m:'きわめて はっきりしていること。'},
+  {y:'一朝一夕',r:'いっちょういっせき',m:'わずかな時間。'},
+  {y:'四方八方',r:'しほうはっぽう',m:'あらゆる方向。'},
+  {y:'五分五分',r:'ごぶごぶ',m:'たがいに 差がないこと。'},
+  {y:'南船北馬',r:'なんせんほくば',m:'あちこち いそがしく 旅すること。'},
+  {y:'千客万来',r:'せんきゃくばんらい',m:'お客が 次々と たくさん来ること。'},
+  {y:'三者三様',r:'さんしゃさんよう',m:'人それぞれ やり方が ちがうこと。'},
+  {y:'一世一代',r:'いっせいちだい',m:'一生に一度の はなやかなこと。'},
+  {y:'一字一句',r:'いちじいっく',m:'ひとつひとつの 文字や言葉。'},
+  {y:'一問一答',r:'いちもんいっとう',m:'ひとつの問いに ひとつ答えること。'},
+  {y:'自問自答',r:'じもんじとう',m:'自分で問いかけ 自分で答えること。'},
+  {y:'有言実行',r:'ゆうげんじっこう',m:'言ったことを かならず やりとげること。'},
+  {y:'一念発起',r:'いちねんほっき',m:'あることを やろうと かたく決心すること。'},
+  {y:'全力投球',r:'ぜんりょくとうきゅう',m:'すべての力を 出すこと。'},
+  {y:'無我夢中',r:'むがむちゅう',m:'われを忘れて 夢中になること。'},
+  {y:'自由自在',r:'じゆうじざい',m:'思いのままに できること。'},
+  {y:'適材適所',r:'てきざいてきしょ',m:'その人に合った 仕事や場所に つけること。'},
+  {y:'安全第一',r:'あんぜんだいいち',m:'安全を 何よりも 大切にすること。'},
+  {y:'多種多様',r:'たしゅたよう',m:'いろいろな 種類があること。'},
+  {y:'右往左往',r:'うおうさおう',m:'あわてて うろうろすること。'},
+  {y:'前後不覚',r:'ぜんごふかく',m:'正体を失うほど 意識がなくなること。'},
+  {y:'大同団結',r:'だいどうだんけつ',m:'多くがまとまって 一つになること。'},
+  {y:'共存共栄',r:'きょうぞんきょうえい',m:'ともに生き ともに栄えること。'},
+  {y:'完全燃焼',r:'かんぜんねんしょう',m:'力を出しきること。'},
+  {y:'明朗快活',r:'めいろうかいかつ',m:'明るく 元気で ほがらかなようす。'},
+  {y:'一刻千金',r:'いっこくせんきん',m:'わずかな時間が とても貴重なこと。'},
+  {y:'絶体絶命',r:'ぜったいぜつめい',m:'どうにも のがれられない 苦しい立場。'},
+  {y:'単純明快',r:'たんじゅんめいかい',m:'わかりやすく はっきりしていること。'},
+  {y:'不老不死',r:'ふろうふし',m:'年をとらず 死なないこと。'},
+  {y:'不平不満',r:'ふへいふまん',m:'うまくいかず 文句があること。'},
+  {y:'不要不急',r:'ふようふきゅう',m:'いそぎでなく 必要でもないこと。'},
+  {y:'利害関係',r:'りがいかんけい',m:'損得が からむ つながり。'},
+  {y:'独立独歩',r:'どくりつどっぽ',m:'人にたよらず 自分の力で進むこと。'},
+  {y:'独断専行',r:'どくだんせんこう',m:'ひとりで 勝手に決めて 行うこと。'},
+  {y:'七難八苦',r:'しちなんはっく',m:'いろいろな 苦しみや 災難。'},
+  {y:'百戦百勝',r:'ひゃくせんひゃくしょう',m:'戦うたびに かならず 勝つこと。'},
+  {y:'万国共通',r:'ばんこくきょうつう',m:'どの国でも 同じであること。'},
+  {y:'博学多才',r:'はくがくたさい',m:'学問に広く通じ 才能が ゆたかなこと。'},
+  {y:'文武両道',r:'ぶんぶりょうどう',m:'勉強も運動も 両方すぐれていること。'},
+  {y:'朝令暮改',r:'ちょうれいぼかい',m:'命令が ころころ変わって あてにならないこと。'},
+  {y:'半官半民',r:'はんかんはんみん',m:'なかば 政府、なかば 民間で 行うこと。'},
+  {y:'大義名分',r:'たいぎめいぶん',m:'行動の よりどころとなる 道理や理由。'},
+  {y:'一国一城',r:'いっこくいちじょう',m:'独立して 自分の領分を 持つこと。'},
+  {y:'私利私欲',r:'しりしよく',m:'自分の利益や 欲だけを 考えること。'},
+  {y:'公私混同',r:'こうしこんどう',m:'おおやけのことと 自分のことを ごちゃまぜにすること。'},
+  {y:'半死半生',r:'はんしはんしょう',m:'今にも 死にそうなようす。'},
+  {y:'起死回生',r:'きしかいせい',m:'だめになりかけた ものを 立て直すこと。'},
+  {y:'一日一善',r:'いちにちいちぜん',m:'一日に 一つ よい行いを すること。'},
+  {y:'一意専心',r:'いちいせんしん',m:'心を 一つのことに 集中すること。'},
+  {y:'適者生存',r:'てきしゃせいぞん',m:'環境に合うものが 生き残ること。'},
+  {y:'平和共存',r:'へいわきょうぞん',m:'あらそわず ともに 存在すること。'},
+  {y:'自由平等',r:'じゆうびょうどう',m:'だれもが 自由で 平等であること。'},
+  {y:'人海戦術',r:'じんかいせんじゅつ',m:'大ぜいの人を 使って やりとげること。'},
 ];
 const $ = id => document.getElementById(id);
 const MAXGRADE = 6;
@@ -234,15 +299,22 @@ function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.im
 function seededShuffle(arr, seed){ const r=mulberry32(seed), a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 /* ===== 出題づくり ===== */
-function makeAnaQ(o){   // ①穴うめ：□に入る漢字
+let anaTargetGrade = null;   // ①穴うめで かくす漢字の学年（学年を選ぶと その学年の字を □ にする）
+function makeAnaQ(o){   // ①穴うめ：□に入る漢字（選んだ学年の漢字をかくす）
   const distinct = [...new Set(o.chars)];
-  const target = distinct[Math.floor(Math.random()*distinct.length)];
+  const byGrade = (anaTargetGrade==null) ? [] : distinct.filter(c => KANJI[c].g === anaTargetGrade);
+  const pickFrom = byGrade.length ? byGrade : distinct;   // 該当が無ければ どれか
+  const target = pickFrom[Math.floor(Math.random()*pickFrom.length)];
   const shown = o.chars.map(c => c === target ? '＿' : c);   // 同じ字は全部かくす（答えがバレない）
   const pool = YOJI_KANJI.filter(c => c !== target && !o.chars.includes(c));
   const distract = shuffle(pool).slice(0, 3);
   return { mode:'ana', y:o.y, read:o.r, mean:o.m, grade:o.g, shown, answer:target, choices:shuffle([target, ...distract]) };
 }
-function makeImiQ(o){   // ②意味あて
+function makeYomiQ(o){   // ②読み方あて
+  const others = shuffle(ALL_Y.filter(x => x.r !== o.r)).slice(0, 3).map(x => x.r);
+  return { mode:'yomi', y:o.y, read:o.r, mean:o.m, grade:o.g, answer:o.r, choices:shuffle([o.r, ...others]) };
+}
+function makeImiQ(o){   // ③意味あて
   const others = shuffle(ALL_Y.filter(x => x.y !== o.y)).slice(0, 3).map(x => x.m);
   return { mode:'imi', y:o.y, read:o.r, mean:o.m, grade:o.g, answer:o.m, choices:shuffle([o.m, ...others]) };
 }
@@ -323,27 +395,34 @@ function renderUnlockHint(){
   hint.textContent = `🔒 ${next}年生まで あと ${unlockRemain(next)}字（${unlockHave(next)}/${unlockNeed(next)}）― ${next-1}年までを かん字ずかんに あつめよう`;
 }
 
-// 累積：その学年までに習う漢字でできる四字熟語（1→6年で増える）
-function itemsForGrade(){
-  if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_Y.filter(o => o.g <= mx); }
+const makerFor = m => m==='ana' ? makeAnaQ : m==='yomi' ? makeYomiQ : makeImiQ;
+// 出題プール。穴うめ＝選んだ学年の漢字を含む熟語（その学年の字をかくす）。読み/意味＝累積（その学年までに習う漢字でできる熟語）。
+function poolFor(m){
+  const mx = maxUnlockedGrade();
+  if(m==='ana' && grade!=='all'){
+    return ALL_Y.filter(o => o.g <= mx && o.chars.some(c => KANJI[c].g === grade));
+  }
+  if(grade==='all') return ALL_Y.filter(o => o.g <= mx);
   return ALL_Y.filter(o => o.g <= grade);
 }
 
 /* ===== 出題ループ ===== */
 function start(m){
   mode = m;
-  const pool = shuffle(itemsForGrade());
+  anaTargetGrade = (m==='ana' && grade!=='all') ? grade : null;
+  const pool = shuffle(poolFor(m));
   const limit = (count==='all') ? pool.length : count;
   const picked = pool.slice(0, limit);
-  if(picked.length === 0){ alert('この学年では まだ 四字熟語が ありません。\n上の学年や「ぜんぶ」で ためしてね。'); return; }
-  startWithDeck(picked.map(m==='ana' ? makeAnaQ : makeImiQ));
+  if(picked.length === 0){ alert('この学年では まだ 出せる 四字熟語が ありません。\n上の学年や「ぜんぶ」で ためしてね。'); return; }
+  startWithDeck(picked.map(makerFor(m)));
 }
 function startDaily(){
   const mx = maxUnlockedGrade();
-  mode = (todayIndex() % 2 === 0) ? 'ana' : 'imi';
+  mode = ['ana','yomi','imi'][todayIndex() % 3];
+  anaTargetGrade = null;
   const pool = ALL_Y.filter(o => o.g <= mx);
   const deckO = seededShuffle(pool, todayIndex()).slice(0, 10);
-  startWithDeck(deckO.map(mode==='ana' ? makeAnaQ : makeImiQ), true);
+  startWithDeck(deckO.map(makerFor(mode)), true);
 }
 function updateDailyStreak(){
   const dy = store.yojiDaily, ti = todayIndex();
@@ -353,7 +432,7 @@ const reviewItems = ()=> Object.keys(store.yojiWrong).map(y => ALL_Y.find(o=>o.y
 function startReview(){
   let pool = reviewItems();
   if(pool.length === 0){ alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。'); return; }
-  mode = 'ana';
+  mode = 'ana'; anaTargetGrade = null;
   pool = shuffle(pool); if(pool.length>20) pool = pool.slice(0,20);
   startWithDeck(pool.map(makeAnaQ));
 }
@@ -370,7 +449,7 @@ function renderQ(){
   $('count').textContent = `問題 ${idx+1} / ${deck.length}`;
   $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
   $('score').textContent = `正かい ${scoreCount()}`;
-  $('tag').textContent = q.grade+'年までの 漢字';
+  $('tag').textContent = (q.mode==='ana' && anaTargetGrade) ? (anaTargetGrade+'年の かん字') : (q.grade+'年までの 漢字');
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
 
   if(q.mode === 'ana'){
@@ -378,6 +457,11 @@ function renderQ(){
     $('qyoji').innerHTML = q.shown.map(c => c==='＿' ? '<span class="yblank">　</span>' : c).join('');
     $('qread').textContent = '';
     $('qhint').textContent = 'いみ：' + q.mean;
+  } else if(q.mode === 'yomi'){
+    $('prompt').textContent = 'この 四字熟語の 読み方は どれ？';
+    $('qyoji').textContent = q.y;
+    $('qread').textContent = '';
+    $('qhint').textContent = '';
   } else {
     $('prompt').textContent = 'この 四字熟語の 意味は どれ？';
     $('qyoji').textContent = q.y;
@@ -386,7 +470,7 @@ function renderQ(){
   }
 
   const wrap = $('choices');
-  wrap.className = 'choices ' + (q.mode==='ana' ? 'kanji' : 'imi');
+  wrap.className = 'choices ' + (q.mode==='ana' ? 'kanji' : q.mode==='yomi' ? 'yomi' : 'imi');
   wrap.innerHTML = '';
   const ans = answers[idx];
   for(const c of q.choices){
@@ -429,6 +513,8 @@ function showFeedback(ok){
   fb.classList.add('show'); fb.classList.toggle('good', ok); fb.classList.toggle('bad', !ok);
   if(q.mode === 'ana'){
     $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
+  } else if(q.mode === 'yomi'){
+    $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.read+'」';
   } else {
     $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！';
   }
@@ -483,6 +569,7 @@ function showResult(){
 
 /* ===== 初期化・イベント ===== */
 $('startAna').onclick = ()=> start('ana');
+$('startYomi').onclick = ()=> start('yomi');
 $('startImi').onclick = ()=> start('imi');
 $('next').onclick = next;
 $('prev').onclick = prev;
