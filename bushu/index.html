@@ -395,17 +395,21 @@ const ALL_ITEMS = buildItems();
    ぜんぶ かん字ずかん（store.kanji＝全アプリ共有）にあつめると かいきん。解放フラグも共有。 */
 const BK_COLLECTABLE = [...new Set(ALL_ITEMS.map(i => i.k))];
 const bushuCollectableUpTo = (g)=> BK_COLLECTABLE.filter(ch => KANJI[ch].g <= g);
+// ゆるい解放条件：下の学年(≤g-1)の かん字を (g-2)×20字 あつめれば かいきん（上限は実在数）
+const unlockNeed = (g)=> Math.min((g-2)*20, bushuCollectableUpTo(g-1).length);
+const unlockHave = (g)=> bushuCollectableUpTo(g-1).filter(ch => (store.kanji[ch]||0) >= 1).length;
+const unlockRemain = (g)=> Math.max(0, unlockNeed(g) - unlockHave(g));
 function gradeUnlocked(g){
   if(g <= 2) return true;
-  if(store['unlocked'+g]) return true;
-  const lower = bushuCollectableUpTo(g-1);
-  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
+  if(store['unlocked'+g] || store['bushuUnlocked'+g]) return true;   // 他アプリで解放済み or 部首で解放済み
+  return unlockHave(g) >= unlockNeed(g);
 }
 function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
 function checkUnlock(){
   let now = 0;
   for(let g=3; g<=MAXGRADE; g++){
-    if(!store['unlocked'+g] && gradeUnlocked(g)){ store['unlocked'+g] = true; now = g; }
+    // 部首クイズの解放は専用フラグに記録（onaji等の解放ペースは変えない）
+    if(!store['unlocked'+g] && !store['bushuUnlocked'+g] && gradeUnlocked(g)){ store['bushuUnlocked'+g] = true; now = g; }
   }
   if(now) QuizCore.save();
   return now;
@@ -461,6 +465,7 @@ store.bushuWrong = store.bushuWrong || {};                                  // {
 store.bushuDaily = store.bushuDaily || { streak:0, bestStreak:0, lastDay:null };
 store.bushuDex   = store.bushuDex   || {};                                  // { 部首名: 正解回数 } 部首ずかん
 for(let g=3; g<=MAXGRADE; g++){ if(store['unlocked'+g] === undefined) store['unlocked'+g] = false; }
+for(let g=3; g<=MAXGRADE; g++){ if(store['bushuUnlocked'+g] === undefined) store['bushuUnlocked'+g] = false; }  // 部首クイズ専用の解放フラグ
 
 /* ===== 音（Web Audio：ファイル不要） ===== */
 let soundOn = (localStorage.getItem('bushuSoundOff') !== '1');
@@ -517,7 +522,7 @@ function openDex(){
   const du = $('dexUnlock');
   if(du){
     if(gradeUnlocked(3)){ du.textContent = '🔓 3年生 かいきん中！'; }
-    else { const rem = bushuCollectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length; du.textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`; }
+    else { du.textContent = `あと ${unlockRemain(3)}字（1・2年）で 3年生 かいきん！`; }
   }
   $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex');
 }
@@ -561,9 +566,7 @@ function renderGradeSel(){
     if((val==='all'?'all':val) === grade) b.classList.add('active');
     b.onclick = ()=>{
       if(locked){
-        const lower = bushuCollectableUpTo(val-1);
-        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
-        alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を かん字ずかんに あと ${rem}字 あつめると かいきん！`);
+        alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を かん字ずかんに あと ${unlockRemain(val)}字 あつめると かいきん！`);
         return;
       }
       grade = (val==='all')?'all':val; renderGradeSel();
@@ -577,9 +580,7 @@ function renderUnlockHint(){
   let next = 0;
   for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
   if(!next){ hint.textContent = '✅ ぜんぶの 学年が あそべるよ！'; return; }
-  const lower = bushuCollectableUpTo(next-1);
-  const total = lower.length, have = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
-  hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを かん字ずかんに あつめよう`;
+  hint.textContent = `🔒 ${next}年生まで あと ${unlockRemain(next)}字（${unlockHave(next)}/${unlockNeed(next)}）― ${next-1}年までを かん字ずかんに あつめよう`;
 }
 
 function itemsForGrade(){
