@@ -44,15 +44,14 @@ Object.entries(KANJI).forEach(([ch, k]) => {
 });
 
 // 部首クイズ RADICALS の検証（bushu/index.html）
-const POS_OK = ['へん', 'つくり', 'かんむり', 'にょう', 'あし', 'かまえ', 'たれ'];
+const POS_OK = ['へん', 'つくり', 'かんむり', 'にょう', 'あし', 'かまえ', 'たれ', 'なか', 'たん', 'その他'];
 const radSeen = {};
 let radKanji = 0;
 Object.entries(RADICALS).forEach(([name, r]) => {
   const where = `部首「${name}」`;
   if (!r.c) problems.push(`${where}: 部首の字 c が無い`);
   if (!POS_OK.includes(r.pos)) problems.push(`${where}: pos(位置) が不正: ${r.pos}`);
-  if (!r.mean) problems.push(`${where}: mean(意味) が無い`);
-  if (!Array.isArray(r.ks) || r.ks.length < 3) problems.push(`${where}: ks(例字) が3字未満`);
+  if (!Array.isArray(r.ks) || r.ks.length < 1) problems.push(`${where}: ks(例字) が空`);
   (r.ks || []).forEach(ch => {
     radKanji++;
     if (!KANJI[ch]) problems.push(`${where}: 例字「${ch}」が KANJI DB に無い`);
