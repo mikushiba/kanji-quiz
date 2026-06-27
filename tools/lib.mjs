@@ -27,6 +27,12 @@ export function loadBANK() {
   return ctx.BANK;
 }
 
+// 画数クイズの筆順データ STROKES（kakusu/strokes.js）を読む
+export function loadSTROKES() {
+  try { return require(join(ROOT, 'kakusu', 'strokes.js')).STROKES; }
+  catch (e) { return null; }
+}
+
 // 部首クイズの RADICALS（bushu/index.html の自己完結リテラル）を取り出す
 export function loadRADICALS() {
   const html = readFileSync(join(ROOT, 'bushu', 'index.html'), 'utf8');

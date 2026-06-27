@@ -9,11 +9,12 @@
  *
  * 使い方: node validate.mjs
  */
-import { KANJI, loadBANK, loadRADICALS } from './tools/lib.mjs';
+import { KANJI, loadBANK, loadRADICALS, loadSTROKES } from './tools/lib.mjs';
 
 // KANJI は共有モジュール shared/kanji-db.js（唯一の正データ）、BANK は index.html から
 const BANK = loadBANK();
 const RADICALS = loadRADICALS();
+const STROKES = loadSTROKES();
 
 const kanjiOf = w => [...w].filter(c => /\p{Script=Han}/u.test(c));
 const problems = [];
@@ -60,10 +61,23 @@ Object.entries(RADICALS).forEach(([name, r]) => {
   });
 });
 
+// 画数クイズ：筆順データ STROKES の画数が KANJI の s と一致するか（あるぶんだけ・ズレ検知）
+let strokeChecked = 0, strokeMiss = 0;
+if (STROKES) {
+  Object.entries(STROKES).forEach(([ch, arr]) => {
+    if (!KANJI[ch]) return;   // DBに無い字は無視
+    strokeChecked++;
+    if (!Array.isArray(arr) || arr.length !== KANJI[ch].s) problems.push(`筆順「${ch}」: KanjiVG ${arr?.length}画 ≠ DB ${KANJI[ch].s}画`);
+  });
+  // DBにあって筆順が無い字（②何画目に出せない）は警告のみ
+  strokeMiss = Object.keys(KANJI).filter(ch => !STROKES[ch]).length;
+}
+
 const tsukai = BANK.filter(q => q.type === 'tsukai').length;
 const onaji = BANK.filter(q => q.type === 'onaji').length;
 console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み ${onaji}）　KANJI: ${Object.keys(KANJI).length}字`);
 console.log(`部首: ${Object.keys(RADICALS).length}種 / 例字 ${radKanji}字`);
+if (STROKES) console.log(`筆順: ${strokeChecked}字を画数照合${strokeMiss ? `（筆順データ無し ${strokeMiss}字＝②に出ません）` : '（全字あり）'}`);
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length}件の問題:\n` + problems.join('\n'));
