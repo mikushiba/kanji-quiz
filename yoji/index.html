@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>四字熟語（よじじゅくご）クイズ</title>
+<meta name="description" content="四字熟語のクイズ。穴うめ（漢字を選ぶ）と、意味あて。1〜6年で習う漢字の順に自動出題。">
+<meta name="theme-color" content="#ff8a3d">
+<link rel="stylesheet" href="../shared/kanji-ui.css?v=202606271357">
+<style>
+  #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  #gsel button{padding:11px 0; font-size:.95rem;}
+  .prompt{font-size:.98rem; color:#9a7b5e; text-align:center; margin:6px 0 10px;}
+  .yoji-big{font-size:2.7rem; font-weight:800; text-align:center; letter-spacing:.12em; color:#3a2c1d; margin:8px 0;}
+  .yoji-big .yblank{display:inline-block; min-width:1em; color:#e8483d; border-bottom:5px solid #e8483d;}
+  .yoji-read{text-align:center; color:#c46a23; font-size:1.05rem; font-weight:700; margin-bottom:6px;}
+  .yoji-hint{text-align:center; color:#7a6757; font-size:.9rem; margin-bottom:12px;}
+  .choices.kanji{grid-template-columns:repeat(4,1fr);}
+  .choices.kanji .choice{font-size:1.7rem; font-weight:700; padding:14px 0;}
+  .choices.imi{grid-template-columns:1fr; gap:8px;}
+  .choices.imi .choice{font-size:.96rem; text-align:left; padding:13px 14px; line-height:1.5;}
+  .help-list{font-size:.92rem; line-height:1.9; color:#5a4a3a; padding-left:1.2em; margin:6px 0;}
+  .help-list b{color:var(--accent);}
+  .fb-yoji{font-size:1.6rem; font-weight:800; text-align:center; letter-spacing:.1em; color:#3a2c1d; margin:4px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="toplink" href="../index.html">← 漢字クイズ トップへ</a>
+  <h1>四字熟語（よじじゅくご）クイズ</h1>
+  <div class="sub">― 穴うめ ／ 意味あて ―</div>
+
+  <div id="home" class="card">
+    <div class="topRow">
+      <button class="topBtn" id="openHelp" type="button">❓ あそびかた</button>
+      <button class="topBtn" id="soundToggle" type="button">🔊 おと ON</button>
+    </div>
+    <div class="buddy" id="buddy">
+      <div class="bi" id="buddyIcon">🥚</div>
+      <div class="bb">
+        <div class="bn" id="buddyName">漢字みならい</div>
+        <div class="bc" id="buddyCoin">これまで せいかい 0問</div>
+        <div class="bbar"><i id="buddyBar"></i></div>
+        <div class="bnext" id="buddyNext"></div>
+      </div>
+    </div>
+    <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
+    <div class="gradeSel">
+      <div class="gradeLabel">学年（がくねん）をえらぶ</div>
+      <div class="seg" id="gsel"></div>
+      <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
+    </div>
+    <div class="gradeSel">
+      <div class="gradeLabel">もんだいの数（かず）</div>
+      <div class="seg" id="countSeg"></div>
+    </div>
+    <div class="modes">
+      <button class="mode-btn m1" id="startAna">
+        ① 穴うめ（あなうめ）
+        <small>四字熟語の □ に入る かん字を 4つから えらぶ</small>
+      </button>
+      <button class="mode-btn m2" id="startImi">
+        ② 意味（いみ）あて
+        <small>四字熟語の 意味を 4つから えらぶ</small>
+      </button>
+    </div>
+    <button class="dailyBtn" id="openReview" type="button" style="background:linear-gradient(135deg,#7bc47b,#3da35a);margin-top:14px;">🔁 まちがい ふくしゅう<span id="reviewInfo"></span></button>
+    <div class="collbar">
+      <button id="openDex" type="button">📖 かん字ずかん</button>
+      <button id="openMedals" type="button">🏅 メダル</button>
+    </div>
+    <div class="saveBar">
+      <button id="exportSave" type="button">💾 きろくを ほぞん</button>
+      <label class="impBtn" for="importFile">📂 きろくを よみこむ</label>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <a class="applink" href="../index.html">← 漢字クイズ トップへ</a>
+  </div>
+
+  <div id="help" class="card" style="display:none;">
+    <button class="backBtn" id="helpBack">← もどる</button>
+    <h2 style="margin-top:4px;">あそびかた</h2>
+    <ul class="help-list">
+      <li><b>四字熟語</b>＝漢字4つでできた ことば。れい：<b>一石二鳥</b>。</li>
+      <li><b>①穴うめ</b>：□に入る かん字を 4つから えらぶ（いみが ヒント）。</li>
+      <li><b>②意味あて</b>：四字熟語の いみを 4つから えらぶ。</li>
+      <li>正かいすると かん字が <b>📖かん字ずかん</b>に たまる。</li>
+      <li><b>3年生いじょう</b>は はじめ ロック🔒。下の学年の かん字を ずかんに あつめると かいきん！</li>
+    </ul>
+    <button class="again" id="helpStart" style="margin-top:8px;">とじる</button>
+  </div>
+
+  <div id="quiz" class="card" style="display:none;">
+    <button class="navBtn" id="prev">← 前へ</button>
+    <button class="homeBtn" id="quizHome">🏠 HOME</button>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
+    <span class="tag" id="tag"></span>
+    <div class="prompt" id="prompt"></div>
+    <div class="yoji-big" id="qyoji"></div>
+    <div class="yoji-read" id="qread"></div>
+    <div class="yoji-hint" id="qhint"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback">
+      <div class="fb-head" id="fbHead"></div>
+      <div class="fb-yoji" id="fbYoji"></div>
+      <div class="fb-line" id="fbBody"></div>
+      <button class="next" id="next">つぎへ →</button>
+    </div>
+  </div>
+
+  <div id="result" class="card result" style="display:none;">
+    <div class="stars" id="stars"></div>
+    <div class="score" id="finalScore"></div>
+    <div class="comboBest" id="comboBest"></div>
+    <div id="comment" style="margin-bottom:12px;"></div>
+    <div class="earned" id="earned" style="display:none;"></div>
+    <div class="review" id="review"></div>
+    <button class="again retryWrong" id="retryWrong" style="display:none;">まちがえた問題だけ もう一回</button>
+    <button class="again" id="retry">もう一回</button>
+    <button class="again home" id="back">さいしょの画面</button>
+  </div>
+
+  <div id="dex" class="card" style="display:none;">
+    <button class="backBtn" id="dexBack">← もどる</button>
+    <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
+    <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">どのクイズでも 正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
+    <div class="dexGrid" id="dexGrid"></div>
+  </div>
+
+  <div id="medals" class="card" style="display:none;">
+    <button class="backBtn" id="medalsBack">← もどる</button>
+    <div class="collHead"><h2>🏅 メダル</h2><span class="cnt" id="medalsCnt"></span></div>
+    <div class="medalList" id="medalList"></div>
+  </div>
+</div>
+
+<script src="../shared/kanji-db.js?v=202606271357"></script>
+<script src="../shared/quiz-core.js?v=202606271357"></script>
+<script>
+const YOJI = [
+  {y:'上下左右',r:'じょうげさゆう',m:'上と下、左と右。あらゆる方向。'},
+  {y:'春夏秋冬',r:'しゅんかしゅうとう',m:'春・夏・秋・冬。四つの季節。'},
+  {y:'東西南北',r:'とうざいなんぼく',m:'東・西・南・北。すべての方角。'},
+  {y:'一石二鳥',r:'いっせきにちょう',m:'一つのことで二つの得をすること。'},
+  {y:'十人十色',r:'じゅうにんといろ',m:'人によって好みや考えがちがうこと。'},
+  {y:'花鳥風月',r:'かちょうふうげつ',m:'自然の美しいけしき。'},
+  {y:'弱肉強食',r:'じゃくにくきょうしょく',m:'強い者が弱い者を負かすこと。'},
+  {y:'公明正大',r:'こうめいせいだい',m:'公平で正しく、堂々としていること。'},
+  {y:'古今東西',r:'ここんとうざい',m:'昔から今まで、どこでも。'},
+  {y:'一心同体',r:'いっしんどうたい',m:'心を一つにして力を合わせること。'},
+  {y:'一長一短',r:'いっちょういったん',m:'よい点もわるい点もあること。'},
+  {y:'七転八起',r:'しちてんはっき',m:'何度失敗しても立ち直ること。'},
+  {y:'三寒四温',r:'さんかんしおん',m:'寒い日と暖かい日がくり返されること。'},
+  {y:'四苦八苦',r:'しくはっく',m:'とても苦労すること。'},
+  {y:'意気投合',r:'いきとうごう',m:'気持ちがぴったり合うこと。'},
+  {y:'一部始終',r:'いちぶしじゅう',m:'始めから終わりまで全部。'},
+  {y:'急転直下',r:'きゅうてんちょっか',m:'ようすが急に変わって解決に向かうこと。'},
+  {y:'以心伝心',r:'いしんでんしん',m:'言葉にしなくても心が通じ合うこと。'},
+  {y:'不言実行',r:'ふげんじっこう',m:'あれこれ言わず だまって行うこと。'},
+  {y:'完全無欠',r:'かんぜんむけつ',m:'欠点がまったくないこと。'},
+  {y:'千差万別',r:'せんさばんべつ',m:'さまざまに ちがいがあること。'},
+  {y:'自給自足',r:'じきゅうじそく',m:'必要なものを自分でまかなうこと。'},
+  {y:'自業自得',r:'じごうじとく',m:'自分の行いのむくいを自分が受けること。'},
+  {y:'心機一転',r:'しんきいってん',m:'気持ちをすっかり入れかえること。'},
+  {y:'単刀直入',r:'たんとうちょくにゅう',m:'前おきなく すぐ本題に入ること。'},
+  {y:'平身低頭',r:'へいしんていとう',m:'ひたすら あやまること。'},
+  {y:'千変万化',r:'せんぺんばんか',m:'さまざまに変化すること。'},
+  {y:'二束三文',r:'にそくさんもん',m:'数が多くても とても安いこと。'},
+  {y:'一進一退',r:'いっしんいったい',m:'進んだり もどったりすること。'},
+  {y:'自画自賛',r:'じがじさん',m:'自分で自分をほめること。'},
+  {y:'油断大敵',r:'ゆだんたいてき',m:'油断は大きな失敗のもと。'},
+  {y:'一刀両断',r:'いっとうりょうだん',m:'ものごとを思い切って決めること。'},
+  {y:'温故知新',r:'おんこちしん',m:'昔のことを学んで新しい知識を得ること。'},
+  {y:'言語道断',r:'ごんごどうだん',m:'とんでもないこと。もってのほか。'},
+  {y:'半信半疑',r:'はんしんはんぎ',m:'半分信じ、半分うたがうこと。'},
+  {y:'異口同音',r:'いくどうおん',m:'多くの人が口をそろえて同じことを言うこと。'},
+  {y:'一心不乱',r:'いっしんふらん',m:'一つのことに集中すること。'},
+  {y:'起承転結',r:'きしょうてんけつ',m:'話や文章の組み立て。'},
+  {y:'我田引水',r:'がでんいんすい',m:'自分につごうよく取りはからうこと。'},
+  {y:'質疑応答',r:'しつぎおうとう',m:'質問と その答え。'},
+  {y:'創意工夫',r:'そういくふう',m:'新しい考えややり方を生み出すこと。'},
+  {y:'大器晩成',r:'たいきばんせい',m:'大人物は おくれて 大成すること。'},
+  {y:'四捨五入',r:'ししゃごにゅう',m:'はんぱな数を切りすて・切り上げする計算。'},
+  {y:'大同小異',r:'だいどうしょうい',m:'細かいちがいはあるが だいたい同じ。'},
+  {y:'前後左右',r:'ぜんごさゆう',m:'前と後ろ、左と右。まわり全部。'},
+  {y:'一日千秋',r:'いちじつせんしゅう',m:'とても待ち遠しいこと。'},
+  {y:'因果応報',r:'いんがおうほう',m:'よい行いにはよい報い、悪い行いには悪い報いがあること。'},
+  {y:'電光石火',r:'でんこうせっか',m:'動きが とても すばやいこと。'},
+  {y:'日進月歩',r:'にっしんげっぽ',m:'日ごと月ごとに たえず進歩すること。'},
+  {y:'百発百中',r:'ひゃっぱつひゃくちゅう',m:'ねらいが すべて当たること。'},
+  {y:'一望千里',r:'いちぼうせんり',m:'見わたすかぎり広々としていること。'},
+  {y:'有名無実',r:'ゆうめいむじつ',m:'名ばかりで中身がないこと。'},
+  {y:'利害得失',r:'りがいとくしつ',m:'利益と損失。'},
+  {y:'公平無私',r:'こうへいむし',m:'かたよりがなく 自分の得を考えないこと。'},
+  {y:'晴耕雨読',r:'せいこううどく',m:'のんびりと心ゆたかに暮らすこと。'},
+  {y:'八方美人',r:'はっぽうびじん',m:'だれにでも よく思われようとする人。'},
+  {y:'天変地異',r:'てんぺんちい',m:'自然界に起こる異変や災害。'},
+  {y:'臨機応変',r:'りんきおうへん',m:'その場に応じてうまく対応すること。'},
+  {y:'老若男女',r:'ろうにゃくなんにょ',m:'年や性別にかかわらず すべての人。'},
+];
+const $ = id => document.getElementById(id);
+const MAXGRADE = 6;
+
+/* 各四字熟語に 学年（使う漢字の最高学年）と chars を付与 */
+const ALL_Y = YOJI.map(o => ({ ...o, chars:[...o.y], g: Math.max(...[...o.y].map(c => KANJI[c].g)) }));
+const YOJI_KANJI = [...new Set(ALL_Y.flatMap(o => o.chars))];   // 穴うめの だみー候補プール
+
+/* ===== 学年の解放（ゆるめ式・専用フラグ。kakusu/bushuと同じ） ===== */
+const COLLECTABLE = Object.keys(KANJI);
+const collectableUpTo = (g)=> COLLECTABLE.filter(ch => KANJI[ch].g <= g);
+const unlockNeed = (g)=> Math.min((g-2)*20, collectableUpTo(g-1).length);
+const unlockHave = (g)=> collectableUpTo(g-1).filter(ch => (store.kanji[ch]||0) >= 1).length;
+const unlockRemain = (g)=> Math.max(0, unlockNeed(g) - unlockHave(g));
+function gradeUnlocked(g){
+  if(g <= 2) return true;
+  if(store['unlocked'+g] || store['yojiUnlocked'+g]) return true;
+  return unlockHave(g) >= unlockNeed(g);
+}
+function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
+function checkUnlock(){
+  let now = 0;
+  for(let g=3; g<=MAXGRADE; g++){
+    if(!store['unlocked'+g] && !store['yojiUnlocked'+g] && gradeUnlocked(g)){ store['yojiUnlocked'+g] = true; now = g; }
+  }
+  if(now) QuizCore.save();
+  return now;
+}
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function todayIndex(){ const d=new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset()*60000)/86400000); }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function seededShuffle(arr, seed){ const r=mulberry32(seed), a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== 出題づくり ===== */
+function makeAnaQ(o){   // ①穴うめ：□に入る漢字
+  const distinct = [...new Set(o.chars)];
+  const target = distinct[Math.floor(Math.random()*distinct.length)];
+  const shown = o.chars.map(c => c === target ? '＿' : c);   // 同じ字は全部かくす（答えがバレない）
+  const pool = YOJI_KANJI.filter(c => c !== target && !o.chars.includes(c));
+  const distract = shuffle(pool).slice(0, 3);
+  return { mode:'ana', y:o.y, read:o.r, mean:o.m, grade:o.g, shown, answer:target, choices:shuffle([target, ...distract]) };
+}
+function makeImiQ(o){   // ②意味あて
+  const others = shuffle(ALL_Y.filter(x => x.y !== o.y)).slice(0, 3).map(x => x.m);
+  return { mode:'imi', y:o.y, read:o.r, mean:o.m, grade:o.g, answer:o.m, choices:shuffle([o.m, ...others]) };
+}
+
+/* ===== 状態 ===== */
+let grade = 'all';
+let count = 10;
+let mode = 'ana';
+let deck = [], answers = [], idx = 0;
+let combo = 0, sessionMaxCombo = 0;
+let wrongYoji = [];
+let isDaily = false;
+
+const store = QuizCore.store;
+store.yojiWrong = store.yojiWrong || {};
+store.yojiDaily = store.yojiDaily || { streak:0, bestStreak:0, lastDay:null };
+for(let g=3; g<=MAXGRADE; g++){ if(store['unlocked'+g] === undefined) store['unlocked'+g] = false; }
+for(let g=3; g<=MAXGRADE; g++){ if(store['yojiUnlocked'+g] === undefined) store['yojiUnlocked'+g] = false; }
+
+/* ===== 音 ===== */
+let soundOn = (localStorage.getItem('yojiSoundOff') !== '1');
+let audioCtx = null;
+function getCtx(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } } if(audioCtx && audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} } return audioCtx; }
+function tone(freq, startAt, dur, type='sine', vol=0.2){ const ctx=getCtx(); if(!ctx) return; const t0=ctx.currentTime+startAt; const osc=ctx.createOscillator(), g=ctx.createGain(); osc.type=type; osc.frequency.value=freq; g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(vol,t0+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur); osc.connect(g).connect(ctx.destination); osc.start(t0); osc.stop(t0+dur+0.03); }
+function playSound(name){ if(!soundOn) return; const ctx=getCtx(); if(!ctx) return;
+  if(name==='correct'){ tone(1318,0,0.55,'sine',0.26); tone(2637,0,0.30,'sine',0.08); tone(1047,0.18,0.70,'sine',0.26); tone(2093,0.18,0.35,'sine',0.08); }
+  else if(name==='wrong'){ tone(233,0,0.20,'sawtooth',0.11); tone(220,0,0.20,'sawtooth',0.11); tone(220,0.26,0.55,'sawtooth',0.11); tone(207,0.26,0.55,'sawtooth',0.11); } }
+function refreshSoundBtn(){ $('soundToggle').textContent = soundOn ? '🔊 おと ON' : '🔇 おと OFF'; }
+
+/* ===== 画面 ===== */
+function showOnly(id){ for(const s of ['home','help','quiz','result','dex','medals']) $(s).style.display = (s===id)?'block':'none'; }
+function refreshBuddy(){ QuizCore.renderBuddy({ icon:$('buddyIcon'), name:$('buddyName'), coin:$('buddyCoin'), bar:$('buddyBar'), next:$('buddyNext') }); }
+function refreshHome(){
+  refreshBuddy();
+  const dy = store.yojiDaily, ti = todayIndex();
+  let info = '';
+  if((dy.streak||0)>0 && (dy.lastDay===ti || dy.lastDay===ti-1)) info += `🔥${dy.streak}日れんぞく　`;
+  info += (dy.lastDay===ti) ? 'きょうは クリア✓' : 'まいにち 10もん！';
+  $('dailyInfo').textContent = ' ' + info;
+  const rc = reviewItems().length;
+  $('reviewInfo').textContent = rc ? ` のこり ${rc}問` : ' まちがいは ありません';
+  renderGradeSel();
+}
+function goHome(){ refreshHome(); showOnly('home'); }
+function openDex(){
+  $('dexCnt').textContent = QuizCore.dexHead();
+  const du = $('dexUnlock');
+  if(du){ if(gradeUnlocked(3)){ du.textContent = '🔓 3年生 かいきん中！'; } else { du.textContent = `あと ${unlockRemain(3)}字（1・2年）で 3年生 かいきん！`; } }
+  $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex');
+}
+function openMedals(){ $('medalsCnt').textContent = QuizCore.medalsHead(); $('medalList').innerHTML = QuizCore.medalsGridHTML(); showOnly('medals'); }
+
+function renderGradeSel(){
+  const seg = $('gsel'); seg.innerHTML = '';
+  const items = [];
+  for(let g=1; g<=MAXGRADE; g++) items.push([g, g+'年']);
+  items.push(['all','ぜんぶ']);
+  for(const [val,label] of items){
+    const isGrade = (val !== 'all');
+    const locked = isGrade && !gradeUnlocked(val);
+    const b = document.createElement('button');
+    b.textContent = locked ? (val+'年🔒') : label;
+    if(locked) b.classList.add('locked');
+    if((val==='all'?'all':val) === grade) b.classList.add('active');
+    b.onclick = ()=>{
+      if(locked){ alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を かん字ずかんに あと ${unlockRemain(val)}字 あつめると かいきん！`); return; }
+      grade = (val==='all')?'all':val; renderGradeSel();
+    };
+    seg.appendChild(b);
+  }
+  renderUnlockHint();
+}
+function renderUnlockHint(){
+  const hint = $('unlockHint'); if(!hint) return;
+  let next = 0;
+  for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
+  if(!next){ hint.textContent = '✅ ぜんぶの 学年が あそべるよ！'; return; }
+  hint.textContent = `🔒 ${next}年生まで あと ${unlockRemain(next)}字（${unlockHave(next)}/${unlockNeed(next)}）― ${next-1}年までを かん字ずかんに あつめよう`;
+}
+
+// 累積：その学年までに習う漢字でできる四字熟語（1→6年で増える）
+function itemsForGrade(){
+  if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_Y.filter(o => o.g <= mx); }
+  return ALL_Y.filter(o => o.g <= grade);
+}
+
+/* ===== 出題ループ ===== */
+function start(m){
+  mode = m;
+  const pool = shuffle(itemsForGrade());
+  const limit = (count==='all') ? pool.length : count;
+  const picked = pool.slice(0, limit);
+  if(picked.length === 0){ alert('この学年では まだ 四字熟語が ありません。\n上の学年や「ぜんぶ」で ためしてね。'); return; }
+  startWithDeck(picked.map(m==='ana' ? makeAnaQ : makeImiQ));
+}
+function startDaily(){
+  const mx = maxUnlockedGrade();
+  mode = (todayIndex() % 2 === 0) ? 'ana' : 'imi';
+  const pool = ALL_Y.filter(o => o.g <= mx);
+  const deckO = seededShuffle(pool, todayIndex()).slice(0, 10);
+  startWithDeck(deckO.map(mode==='ana' ? makeAnaQ : makeImiQ), true);
+}
+function updateDailyStreak(){
+  const dy = store.yojiDaily, ti = todayIndex();
+  if(dy.lastDay !== ti){ dy.streak = (dy.lastDay === ti-1) ? (dy.streak||0)+1 : 1; dy.lastDay = ti; dy.bestStreak = Math.max(dy.bestStreak||0, dy.streak); QuizCore.save(); }
+}
+const reviewItems = ()=> Object.keys(store.yojiWrong).map(y => ALL_Y.find(o=>o.y===y)).filter(Boolean);
+function startReview(){
+  let pool = reviewItems();
+  if(pool.length === 0){ alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。'); return; }
+  mode = 'ana';
+  pool = shuffle(pool); if(pool.length>20) pool = pool.slice(0,20);
+  startWithDeck(pool.map(makeAnaQ));
+}
+function startWithDeck(qs, daily){
+  isDaily = !!daily;
+  deck = qs; answers = new Array(deck.length); idx = 0;
+  combo = 0; sessionMaxCombo = 0;
+  showOnly('quiz'); renderQ();
+}
+
+function renderQ(){
+  const q = deck[idx];
+  $('prog').style.width = (idx/deck.length*100)+'%';
+  $('count').textContent = `問題 ${idx+1} / ${deck.length}`;
+  $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
+  $('score').textContent = `正かい ${scoreCount()}`;
+  $('tag').textContent = q.grade+'年までの 漢字';
+  $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
+
+  if(q.mode === 'ana'){
+    $('prompt').innerHTML = '<b style="color:#e8483d;">□</b> に入る かん字は どれ？';
+    $('qyoji').innerHTML = q.shown.map(c => c==='＿' ? '<span class="yblank">　</span>' : c).join('');
+    $('qread').textContent = '';
+    $('qhint').textContent = 'いみ：' + q.mean;
+  } else {
+    $('prompt').textContent = 'この 四字熟語の 意味は どれ？';
+    $('qyoji').textContent = q.y;
+    $('qread').textContent = '（' + q.read + '）';
+    $('qhint').textContent = '';
+  }
+
+  const wrap = $('choices');
+  wrap.className = 'choices ' + (q.mode==='ana' ? 'kanji' : 'imi');
+  wrap.innerHTML = '';
+  const ans = answers[idx];
+  for(const c of q.choices){
+    const b = document.createElement('button');
+    b.className = 'choice'; b.textContent = c;
+    if(ans){ b.disabled = true; if(c === q.answer) b.classList.add('ok'); else if(c === ans.picked) b.classList.add('ng'); }
+    else { b.onclick = ()=> choose(c, b); }
+    wrap.appendChild(b);
+  }
+  if(ans) showFeedback(ans.correct); else $('feedback').classList.remove('show','good','bad');
+}
+
+function choose(picked, btn){
+  if(answers[idx]) return;
+  const q = deck[idx];
+  const ok = picked === q.answer;
+  answers[idx] = { picked, correct: ok };
+  if(ok){
+    combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
+    if(store.yojiWrong[q.y]) delete store.yojiWrong[q.y];
+    QuizCore.recordCorrect(q.y);   // 四字熟語の漢字を図鑑に
+    QuizCore.bumpCorrect(); QuizCore.noteCombo(combo); QuizCore.save();
+  } else {
+    combo = 0; store.yojiWrong[q.y] = true; QuizCore.save();
+  }
+  document.querySelectorAll('#choices .choice').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === q.answer) b.classList.add('ok');
+    else if(b===btn) b.classList.add('ng');
+  });
+  $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
+  $('score').textContent = `正かい ${scoreCount()}`;
+  playSound(ok ? 'correct' : 'wrong');
+  showFeedback(ok);
+}
+
+function showFeedback(ok){
+  const q = deck[idx];
+  const fb = $('feedback');
+  fb.classList.add('show'); fb.classList.toggle('good', ok); fb.classList.toggle('bad', !ok);
+  if(q.mode === 'ana'){
+    $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
+  } else {
+    $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！';
+  }
+  $('fbYoji').textContent = q.y;
+  $('fbBody').innerHTML = `<b>${q.y}</b>（${q.read}）<br>${q.mean}`;
+  $('next').textContent = (idx >= deck.length-1) ? 'けっかを見る →' : 'つぎへ →';
+}
+
+const scoreCount = ()=> answers.filter(a => a && a.correct).length;
+function next(){ if(!answers[idx]) return; if(idx >= deck.length-1) return showResult(); idx++; renderQ(); }
+function prev(){ if(idx>0){ idx--; renderQ(); } }
+
+function showResult(){
+  showOnly('result');
+  $('prog').style.width = '100%';
+  const total = deck.length, correct = scoreCount();
+  $('finalScore').textContent = `${correct} / ${total} もん せいかい`;
+  const rate = correct/total;
+  const nStar = rate===1?3 : rate>=0.7?2 : rate>=0.4?1 : 0;
+  $('stars').textContent = '⭐'.repeat(nStar) + '☆'.repeat(3-nStar);
+  $('comment').textContent = rate===1 ? 'ぜんもん せいかい！すごい！' : rate>=0.7 ? 'よくできました！' : rate>=0.4 ? 'もう少し！もう一回やってみよう' : 'だいじょうぶ、くりかえせば できるよ！';
+  $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
+
+  QuizCore.notePlay();
+  if(rate===1) QuizCore.notePerfect();
+  QuizCore.noteCombo(sessionMaxCombo);
+  if(isDaily) updateDailyStreak();
+  const justUnlocked = checkUnlock();
+  QuizCore.save();
+  const tcAfter = QuizCore.store.totalCorrect||0, tcBefore = tcAfter - correct;
+  const rankUp = QuizCore.rankStage(tcAfter) > QuizCore.rankStage(tcBefore);
+  const newly = QuizCore.checkMedals();
+  const em = $('earned');
+  const newRank = QuizCore.STAGES[QuizCore.rankStage(tcAfter)];
+  const evo = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
+  const unlockMsg = justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '';
+  if(unlockMsg || evo || newly.length){
+    em.style.display = 'block';
+    em.innerHTML = unlockMsg + evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+  } else { em.style.display = 'none'; }
+
+  const wrong = deck.filter((q,i)=> answers[i] && !answers[i].correct);
+  wrongYoji = wrong.map(q => q.y);
+  const rv = $('review');
+  if(wrong.length){
+    rv.style.display = 'block';
+    rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrong.length}）</div>` +
+      wrong.map(q => `<div class="rv-i"><b>${q.y}</b>（${q.read}）― ${q.mean}</div>`).join('');
+    $('retryWrong').style.display = 'inline-block';
+  } else { rv.style.display = 'none'; $('retryWrong').style.display = 'none'; }
+}
+
+/* ===== 初期化・イベント ===== */
+$('startAna').onclick = ()=> start('ana');
+$('startImi').onclick = ()=> start('imi');
+$('next').onclick = next;
+$('prev').onclick = prev;
+$('quizHome').onclick = goHome;
+$('retry').onclick = ()=> start(mode);
+$('retryWrong').onclick = ()=> startWithDeck(wrongYoji.map(y => makeAnaQ(ALL_Y.find(o=>o.y===y))).filter(Boolean));
+$('back').onclick = goHome;
+$('openHelp').onclick = ()=> showOnly('help');
+$('helpBack').onclick = goHome;
+$('helpStart').onclick = goHome;
+$('openDex').onclick = openDex;
+$('openMedals').onclick = openMedals;
+$('dexBack').onclick = goHome;
+$('medalsBack').onclick = goHome;
+$('openDaily').onclick = startDaily;
+$('openReview').onclick = startReview;
+$('exportSave').onclick = ()=> QuizCore.exportSave('かん字クイズ-きろく.json');
+$('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) QuizCore.importSave(f); e.target.value=''; };
+$('soundToggle').onclick = ()=>{ soundOn = !soundOn; localStorage.setItem('yojiSoundOff', soundOn ? '0' : '1'); refreshSoundBtn(); if(soundOn) playSound('correct'); };
+QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' : +v; });
+renderGradeSel();
+refreshSoundBtn();
+refreshHome();
+</script>
+</body>
+</html>

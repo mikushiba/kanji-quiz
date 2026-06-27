@@ -9,12 +9,13 @@
  *
  * 使い方: node validate.mjs
  */
-import { KANJI, loadBANK, loadRADICALS, loadSTROKES } from './tools/lib.mjs';
+import { KANJI, loadBANK, loadRADICALS, loadSTROKES, loadYOJI } from './tools/lib.mjs';
 
 // KANJI は共有モジュール shared/kanji-db.js（唯一の正データ）、BANK は index.html から
 const BANK = loadBANK();
 const RADICALS = loadRADICALS();
 const STROKES = loadSTROKES();
+const YOJI = loadYOJI();
 
 const kanjiOf = w => [...w].filter(c => /\p{Script=Han}/u.test(c));
 const problems = [];
@@ -73,11 +74,25 @@ if (STROKES) {
   strokeMiss = Object.keys(KANJI).filter(ch => !STROKES[ch]).length;
 }
 
+// 四字熟語クイズ YOJI の検証（yoji/index.html）
+const yojiSeen = new Set();
+YOJI.forEach((o, i) => {
+  const where = `四字熟語#${i}「${o.y || '?'}」`;
+  const chars = [...(o.y || '')];
+  if (chars.length !== 4) problems.push(`${where}: 4文字ではない`);
+  chars.forEach(ch => { if (!KANJI[ch]) problems.push(`${where}: 漢字「${ch}」が KANJI DB に無い`); });
+  if (!o.r) problems.push(`${where}: 読み r が無い`);
+  if (!o.m) problems.push(`${where}: 意味 m が無い`);
+  if (yojiSeen.has(o.y)) problems.push(`${where}: 重複`);
+  yojiSeen.add(o.y);
+});
+
 const tsukai = BANK.filter(q => q.type === 'tsukai').length;
 const onaji = BANK.filter(q => q.type === 'onaji').length;
 console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み ${onaji}）　KANJI: ${Object.keys(KANJI).length}字`);
 console.log(`部首: ${Object.keys(RADICALS).length}種 / 例字 ${radKanji}字`);
 if (STROKES) console.log(`筆順: ${strokeChecked}字を画数照合${strokeMiss ? `（筆順データ無し ${strokeMiss}字＝②に出ません）` : '（全字あり）'}`);
+console.log(`四字熟語: ${YOJI.length}語`);
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length}件の問題:\n` + problems.join('\n'));

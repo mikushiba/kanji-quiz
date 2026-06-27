@@ -33,6 +33,17 @@ export function loadSTROKES() {
   catch (e) { return null; }
 }
 
+// 四字熟語クイズの YOJI（yoji/index.html の自己完結リテラル）を取り出す
+export function loadYOJI() {
+  const html = readFileSync(join(ROOT, 'yoji', 'index.html'), 'utf8');
+  const m = html.match(/const YOJI = (\[[\s\S]*?\n\]);/);
+  if (!m) throw new Error('YOJI が yoji/index.html に見つかりません');
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext('this.Y = ' + m[1] + ';', ctx);
+  return ctx.Y;
+}
+
 // 部首クイズの RADICALS（bushu/index.html の自己完結リテラル）を取り出す
 export function loadRADICALS() {
   const html = readFileSync(join(ROOT, 'bushu', 'index.html'), 'utf8');
