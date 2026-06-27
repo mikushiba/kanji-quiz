@@ -49,6 +49,7 @@
     <div class="gradeSel">
       <div class="gradeLabel">学年（がくねん）をえらぶ</div>
       <div class="seg" id="gsel"></div>
+      <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
     </div>
     <div class="gradeSel">
       <div class="gradeLabel">もんだいの数（かず）</div>
@@ -88,6 +89,7 @@
       <li>つづけて 正かいすると <b>🔥コンボ</b>！</li>
       <li>ぜんぶ おわると <b>てんすう</b>と ⭐が 出るよ。</li>
       <li>まちがえたら、最後に「<b>まちがえた問題だけ もう一回</b>」で ふくしゅうできる。</li>
+      <li><b>3年生いじょう</b>は はじめ ロック🔒。下の学年の かん字を <b>ずかん</b>に あつめると <b>かいきん</b>するよ！</li>
     </ul>
     <button class="again" id="helpStart" style="margin-top:8px;">とじる</button>
   </div>
@@ -128,6 +130,7 @@
   <div id="dex" class="card" style="display:none;">
     <button class="backBtn" id="dexBack">← もどる</button>
     <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
+    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
     <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">どのクイズでも 正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
     <div class="dexGrid" id="dexGrid"></div>
   </div>
@@ -164,6 +167,28 @@ function buildWords(){
 }
 const ALL_WORDS = buildWords();
 
+/* ===== 学年の解放（3〜6年）＝onajiと同じ「開放式」ロック =====
+   1・2年は最初から開放。3年生いじょうは、下の学年までの「送りがなで集められる漢字」を
+   ぜんぶ図鑑（store.kanji＝全アプリ共有）にあつめると かいきん。解放フラグも onaji と共有。 */
+const OKURI_COLLECTABLE = [...new Set(ALL_WORDS.map(w => w.kanji))];   // この app で集められる字
+const okuriCollectableUpTo = (g)=> OKURI_COLLECTABLE.filter(ch => KANJI[ch].g <= g);
+function gradeUnlocked(g){
+  if(g <= 2) return true;
+  if(store['unlocked'+g]) return true;                 // どこかで一度かいきんずみ
+  const lower = okuriCollectableUpTo(g-1);
+  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
+}
+function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
+// 新たに解放した学年があれば その最上位を返す（無ければ 0）
+function checkUnlock(){
+  let now = 0;
+  for(let g=3; g<=MAXGRADE; g++){
+    if(!store['unlocked'+g] && gradeUnlocked(g)){ store['unlocked'+g] = true; now = g; }
+  }
+  if(now) QuizCore.save();
+  return now;
+}
+
 // 1語から「送りがなの長さ違い」の選択肢を作る
 function makeQuestion(w){
   const R = w.reading, K = w.kanji, correctLen = w.okuri.length;
@@ -195,6 +220,7 @@ let isDaily = false;
 const store = QuizCore.store;
 store.okuriWrong = store.okuriWrong || {};                               // { 語: true } まちがえた送りがな問題
 store.okuriDaily = store.okuriDaily || { streak:0, bestStreak:0, lastDay:null };
+for(let g=3; g<=MAXGRADE; g++){ if(store['unlocked'+g] === undefined) store['unlocked'+g] = false; }  // 学年解放フラグ（onaji共有）
 
 /* ===== 音（Web Audio：ファイル不要・オフラインでも鳴る） ===== */
 let soundOn = (localStorage.getItem('okuriganaSoundOff') !== '1');
@@ -245,24 +271,54 @@ function refreshHome(){
   // 復習ののこり
   const rc = reviewWords().length;
   $('reviewInfo').textContent = rc ? ` のこり ${rc}問` : ' まちがいは ありません';
+  renderGradeSel();   // 図鑑が増えたら ロック表示・かいきん案内を最新化
 }
 function goHome(){ refreshHome(); showOnly('home'); }
-function openDex(){ $('dexCnt').textContent = QuizCore.dexHead(); $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex'); }
+function openDex(){
+  $('dexCnt').textContent = QuizCore.dexHead();
+  const du = $('dexUnlock');
+  if(du){
+    if(gradeUnlocked(3)){ du.textContent = '🔓 3年生 かいきん中！'; }
+    else { const rem = okuriCollectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length; du.textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`; }
+  }
+  $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex');
+}
 function openMedals(){ $('medalsCnt').textContent = QuizCore.medalsHead(); $('medalList').innerHTML = QuizCore.medalsGridHTML(); showOnly('medals'); }
 
 /* ===== ホーム：学年セレクタ ===== */
 function renderGradeSel(){
   const seg = $('gsel'); seg.innerHTML = '';
   const items = [];
-  for(let g=1; g<=MAXGRADE; g++) items.push([String(g), g+'年']);
+  for(let g=1; g<=MAXGRADE; g++) items.push([g, g+'年']);
   items.push(['all','ぜんぶ']);
   for(const [val,label] of items){
+    const isGrade = (val !== 'all');
+    const locked = isGrade && !gradeUnlocked(val);
     const b = document.createElement('button');
-    b.textContent = label;
-    if((val==='all'?'all':+val) === grade) b.classList.add('active');
-    b.onclick = ()=>{ grade = (val==='all')?'all':+val; renderGradeSel(); };
+    b.textContent = locked ? (val+'年🔒') : label;
+    if(locked) b.classList.add('locked');
+    if((val==='all'?'all':val) === grade) b.classList.add('active');
+    b.onclick = ()=>{
+      if(locked){
+        const lower = okuriCollectableUpTo(val-1);
+        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
+        alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
+        return;
+      }
+      grade = (val==='all')?'all':val; renderGradeSel();
+    };
     seg.appendChild(b);
   }
+  renderUnlockHint();
+}
+function renderUnlockHint(){
+  const hint = $('unlockHint'); if(!hint) return;
+  let next = 0;
+  for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
+  if(!next){ hint.textContent = '✅ ぜんぶの 学年が あそべるよ！'; return; }
+  const lower = okuriCollectableUpTo(next-1);
+  const total = lower.length, have = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
+  hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
 }
 // 問題数セレクタ
 document.querySelectorAll('#countSeg button').forEach(b=>{
@@ -274,7 +330,8 @@ document.querySelectorAll('#countSeg button').forEach(b=>{
 });
 
 function wordsForGrade(){
-  return (grade==='all') ? ALL_WORDS : ALL_WORDS.filter(w => w.grade === grade);
+  if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_WORDS.filter(w => w.grade <= mx); }  // 解放ぶんだけ
+  return ALL_WORDS.filter(w => w.grade === grade);
 }
 
 /* ===== 出題ループ ===== */
@@ -288,7 +345,9 @@ function start(){
 }
 // きょうの チャレンジ（日付シードで全員同じ10問）
 function startDaily(){
-  const deckW = seededShuffle(uniqueWords(), todayIndex()).slice(0, 10);
+  const mx = maxUnlockedGrade();
+  const pool = uniqueWords().filter(w => w.grade <= mx);   // 解放ぶんだけ
+  const deckW = seededShuffle(pool, todayIndex()).slice(0, 10);
   startWithDeck(deckW.map(makeQuestion), true);
 }
 function updateDailyStreak(){
@@ -409,6 +468,7 @@ function showResult(){
   if(rate===1) QuizCore.notePerfect();
   QuizCore.noteCombo(sessionMaxCombo);
   if(isDaily) updateDailyStreak();   // きょうの チャレンジ クリアで 連続日数
+  const justUnlocked = checkUnlock();   // 図鑑がそろえば 学年かいきん（正解は choose() で記録ずみ）
   QuizCore.save();
   const tcAfter = QuizCore.store.totalCorrect||0, tcBefore = tcAfter - correct;
   const rankUp = QuizCore.rankStage(tcAfter) > QuizCore.rankStage(tcBefore);
@@ -416,9 +476,10 @@ function showResult(){
   const em = $('earned');
   const newRank = QuizCore.STAGES[QuizCore.rankStage(tcAfter)];
   const evo = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
-  if(evo || newly.length){
+  const unlockMsg = justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '';
+  if(unlockMsg || evo || newly.length){
     em.style.display = 'block';
-    em.innerHTML = evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+    em.innerHTML = unlockMsg + evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
   } else { em.style.display = 'none'; }
 
   // まちがえた問題の振り返り
