@@ -9,13 +9,15 @@
  *
  * 使い方: node validate.mjs
  */
-import { KANJI, loadBANK, loadRADICALS, loadSTROKES, loadYOJI } from './tools/lib.mjs';
+import { KANJI, loadBANK, loadRADICALS, loadSTROKES, loadYOJI, loadKAKISENTENCES, kakiPoolWords } from './tools/lib.mjs';
 
 // KANJI は共有モジュール shared/kanji-db.js（唯一の正データ）、BANK は index.html から
 const BANK = loadBANK();
 const RADICALS = loadRADICALS();
 const STROKES = loadSTROKES();
 const YOJI = loadYOJI();
+const KAKI_SENTENCES = loadKAKISENTENCES();
+const KAKI_POOL = kakiPoolWords();
 
 const kanjiOf = w => [...w].filter(c => /\p{Script=Han}/u.test(c));
 const problems = [];
@@ -37,6 +39,28 @@ BANK.forEach((q, i) => {
     if (!q.meaning?.[c]) problems.push(`${where}: 「${c}」の meaning が無い`);
   });
 });
+
+// かきとりクイズ 例文 KAKI_SENTENCES の検証（kaki/index.html は word→例文 で出題）
+//  - 出題プールの全語に例文がある（網羅）／空らん @@ がある／答えの漢字が例文に出ていない
+let kakiChecked = 0;
+if (KAKI_SENTENCES) {
+  KAKI_POOL.forEach(w => {
+    const s = KAKI_SENTENCES[w.word];
+    const where = `かきとり「${w.word}」(${w.reading})`;
+    if (!s) { problems.push(`${where}: 例文が無い`); return; }
+    kakiChecked++;
+    if (!s.includes('@@')) problems.push(`${where}: 例文に空らん @@ が無い`);
+    const rest = s.split('@@').join('');
+    kanjiOf(w.word).forEach(ch => {
+      if (rest.includes(ch)) problems.push(`${where}: 答えの漢字「${ch}」が例文に出ている（答えがバレる）`);
+    });
+  });
+  // プールに無い語の例文（消し忘れ）も知らせる
+  const poolWords = new Set(KAKI_POOL.map(w => w.word));
+  Object.keys(KAKI_SENTENCES).forEach(w => {
+    if (!poolWords.has(w)) problems.push(`かきとり例文「${w}」: 出題プールに無い語（消し忘れ？）`);
+  });
+}
 
 // KANJI DB 自体の形をチェック
 Object.entries(KANJI).forEach(([ch, k]) => {
@@ -93,6 +117,7 @@ console.log(`問題数: ${BANK.length}（使い分け ${tsukai} / 同じ読み $
 console.log(`部首: ${Object.keys(RADICALS).length}種 / 例字 ${radKanji}字`);
 if (STROKES) console.log(`筆順: ${strokeChecked}字を画数照合${strokeMiss ? `（筆順データ無し ${strokeMiss}字＝②に出ません）` : '（全字あり）'}`);
 console.log(`四字熟語: ${YOJI.length}語`);
+if (KAKI_SENTENCES) console.log(`かきとり例文: ${kakiChecked}/${KAKI_POOL.length}語に例文${kakiChecked === KAKI_POOL.length ? '（全語あり）' : ''}`);
 
 if (problems.length) {
   console.error(`\n✗ ${problems.length}件の問題:\n` + problems.join('\n'));

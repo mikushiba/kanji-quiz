@@ -27,6 +27,30 @@ export function loadBANK() {
   return ctx.BANK;
 }
 
+// かきとりクイズの例文データ KAKI_SENTENCES（kaki/sentences.js）を読む
+export function loadKAKISENTENCES() {
+  try { return require(join(ROOT, 'kaki', 'sentences.js')).KAKI_SENTENCES; }
+  catch (e) { return null; }
+}
+
+// かきとりクイズの出題語プール（shared DB の kun から自動生成・いまは2年生のみ）を再現する
+// ＝ kaki/index.html の buildWords() と同じロジック。validate が例文の網羅を照合するため。
+export function kakiPoolWords() {
+  const { parseOkurigana } = db;
+  const seen = new Set(), out = [];
+  for (const [k, info] of Object.entries(KANJI)) {
+    if (info.g !== 2) continue;                 // KAKI_POOL は 2年生のみ（kaki/index.html と一致）
+    for (const kun of (info.kun || [])) {
+      const p = parseOkurigana(k, kun);
+      if (p.okuri && p.reading.length >= 2 && !seen.has(p.word)) {
+        seen.add(p.word);
+        out.push({ kanji: k, reading: p.reading, okuri: p.okuri, word: p.word });
+      }
+    }
+  }
+  return out;
+}
+
 // 画数クイズの筆順データ STROKES（kakusu/strokes.js）を読む
 export function loadSTROKES() {
   try { return require(join(ROOT, 'kakusu', 'strokes.js')).STROKES; }

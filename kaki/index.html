@@ -11,6 +11,11 @@
 <style>
   /* かきとりアプリ固有の追加分だけ（共有部品で足りないもの） */
   .reading-big{text-align:center; color:#c46a23; font-size:1.4rem; font-weight:700; margin:2px 0 16px;}
+  /* 例文（文脈で漢字を一つに決めるヒント） */
+  .sentence{text-align:center; font-size:1.12rem; line-height:1.9; color:#4a3a2a; background:#fff6ec; border:2px solid #ffd9b0; border-radius:14px; padding:12px 14px; margin:6px 0 10px;}
+  .sentence .blank{display:inline-block; color:#e08e3c; font-weight:800; border-bottom:3px solid #e08e3c; padding:0 2px; margin:0 1px;}
+  .sentence .blank .box{font-size:1.15em; letter-spacing:1px;}
+  .sentence .filled{display:inline-block; color:#c0392b; font-weight:800; padding:0 2px; margin:0 1px;}
   .prompt{font-size:.95rem; color:#9a7b5e; text-align:center; margin-bottom:4px;}
   .help-list{font-size:.92rem; line-height:1.9; color:#5a4a3a; padding-left:1.2em; margin:6px 0;}
   .help-list b{color:var(--accent);}
@@ -83,11 +88,11 @@
     <button class="backBtn" id="helpBack">← もどる</button>
     <h2 style="margin-top:4px;">あそびかた</h2>
     <ul class="help-list">
-      <li>「あかるい」のように <b>読み</b>と <b>送りがな</b>が 出るよ。</li>
+      <li><b>文（ぶん）</b>と <b>読み</b>と <b>送りがな</b>が 出るよ。文の いみを ヒントに かん字を きめよう。</li>
       <li>□の マスに、入る かん字を <b>ゆびや マウスで 書こう</b>。</li>
-      <li>れい：「あかるい」＝ □るい → <b>明</b>と 書く。</li>
+      <li>れい：「まどの そとは とても □るい。」／読み「あかるい」→ <b>明</b>と 書く。</li>
+      <li>おなじ 読みでも 文で かわるよ。れい：「タイムを □る」＝<b>計</b>／「あんぜんを □る」＝<b>図</b>。</li>
       <li>書けたら「<b>👀 こたえ合わせ</b>」。じぶんの字と くらべて、<b>⭕かけた／❌まちがえた</b>を えらぼう。</li>
-      <li>べつの かん字でも 正かいのときは「※〜と書いても⭕だよ」と 出るよ。</li>
       <li>つづけて 正かいすると <b>🔥コンボ</b>！</li>
       <li>まちがえた問題は「<b>まちがい ふくしゅう</b>」に たまるよ。</li>
       <li>いまは <b>2年生</b>の かん字だけ（そのうち ふえるよ）。</li>
@@ -102,7 +107,8 @@
     <div class="bar"><i id="prog"></i></div>
     <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
     <span class="tag" id="tag"></span>
-    <div class="prompt" id="prompt">□に 入る かん字を 書こう！</div>
+    <div class="prompt" id="prompt">文（ぶん）の □に 入る かん字を 書こう！</div>
+    <div class="sentence" id="qsentence"></div>
     <div class="reading-big" id="qreading"></div>
     <div class="bigkanji kaki" id="qkanji" style="display:none;"></div>
     <div id="kakiArea">
@@ -159,6 +165,8 @@
 <script src="../shared/kanji-db.js?v=202606272011"></script>
 <!-- 共有 進捗エンジン（図鑑・称号・メダル＝全アプリ合算） -->
 <script src="../shared/quiz-core.js?v=202606272011"></script>
+<!-- かきとり専用 例文データ（word→例文。同じ読みを文脈で一つに決める） -->
+<script src="sentences.js?v=202607111500"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -179,9 +187,9 @@ const ALL_WORDS = buildWords();
 const KAKI_POOL = ALL_WORDS.filter(w => w.grade === 2);   // 学年を広げるときはここ
 
 function makeQuestion(w){
-  // 同じ読み・同じ送りがなで成立する別解（例：あう＝会う/合う）は こたえ合わせで併記する
-  const alts = [...new Set(ALL_WORDS.filter(x => x.reading===w.reading && x.okuri===w.okuri && x.kanji!==w.kanji).map(x => x.word))];
-  return { src:w, kanji:w.kanji, reading:w.reading, okuri:w.okuri, word:w.word, grade:w.grade, alts };
+  // 例文で文脈が決まるので、同じ読みの別漢字（例 はかる＝計る/図る）は正解にしない（併記しない）
+  const sentence = (typeof KAKI_SENTENCES !== 'undefined' && KAKI_SENTENCES[w.word]) || '';
+  return { src:w, kanji:w.kanji, reading:w.reading, okuri:w.okuri, word:w.word, grade:w.grade, alts:[], sentence };
 }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // 日付シードの決定的シャッフル（同じ日は 全員・何回でも 同じ10問）
@@ -328,6 +336,19 @@ function startWithDeck(qs, daily){
   showOnly('quiz'); renderQ();
 }
 
+/* 例文を描く。空らん @@ を、未回答＝□送りがな／回答後＝漢字＋送りがな にさしかえる。
+ * 例文データは かな中心（答えの漢字は入っていない）ので HTML特殊文字は来ない前提。 */
+function renderSentence(q, answered){
+  const el = $('qsentence');
+  if(!q.sentence){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='';
+  const slot = answered
+    ? `<span class="filled">${q.kanji}${q.okuri}</span>`
+    : `<span class="blank"><span class="box">□</span>${q.okuri}</span>`;
+  const parts = q.sentence.split('@@');
+  el.innerHTML = (parts[0]||'') + slot + (parts[1]||'');
+}
+
 function renderQ(){
   const q = deck[idx];
   $('prog').style.width = (idx/deck.length*100)+'%';
@@ -339,6 +360,7 @@ function renderQ(){
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
 
   const ans = answers[idx];   // 既に答えていれば その状態を再現
+  renderSentence(q, !!ans);   // 例文（未回答は □送りがな、回答後は 漢字を うめて見せる）
   $('qkanji').style.display = ans ? '' : 'none';                 // 書く前は □＝キャンバス
   $('qkanji').innerHTML = '<span class="box">'+q.kanji+'</span>'+q.okuri;   // 答えたあとの見返り用
   $('kakiArea').style.display = ans ? 'none' : 'block';
