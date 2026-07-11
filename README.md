@@ -7,7 +7,7 @@
 - **構成（ポータル＋共有モジュール）**:
   - `index.html` … トップ（メニュー）
   - `onaji/index.html` … 同じ読み/使い分けクイズ本体（問題 `BANK` はここ）
-  - `okurigana/index.html` … 送りがな練習（`KANJI` から自動生成）
+  - `okurigana/index.html` … 送りがな練習＋かきとり（□に入る漢字を手書き→自己採点。いまは2年生のみ。どちらも `KANJI` から自動生成）
   - `shared/kanji-db.js` … 漢字マスタ `KANJI`（**唯一の正データ・全アプリ共通**）＋`wordGrade`/`parseOkurigana`
   - `shared/kanji-ui.css` … 全アプリ共通のデザイン
 - **ローカルで開く**: `open ~/kanji-quiz/index.html`（file:// でも共有DB/CSSを読める）
