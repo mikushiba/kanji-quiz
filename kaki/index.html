@@ -3,32 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>送りがな れんしゅう</title>
-<meta name="description" content="漢字の送りがなを正しくつける練習。学年ごとに、読みに合う送りがなをえらぶ自動生成クイズ。">
+<title>かきとり クイズ</title>
+<meta name="description" content="漢字の書き取り練習。送りがなをヒントに□に入る漢字を手書きして、こたえ合わせ→自己採点する自動生成クイズ。いまは2年生。">
 <meta name="theme-color" content="#ff8a3d">
 <!-- 共有スタイル（クイズと同じ見た目） -->
 <link rel="stylesheet" href="../shared/kanji-ui.css?v=202606272011">
 <style>
-  /* 送りがなアプリ固有の追加分だけ（共有部品で足りないもの） */
-  #gsel{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
-  #gsel button{padding:11px 0; font-size:.95rem;}
-  .choices.okuri{grid-template-columns:1fr 1fr;}
-  .choices.okuri .choice{font-size:1.5rem;}
+  /* かきとりアプリ固有の追加分だけ（共有部品で足りないもの） */
   .reading-big{text-align:center; color:#c46a23; font-size:1.4rem; font-weight:700; margin:2px 0 16px;}
   .prompt{font-size:.95rem; color:#9a7b5e; text-align:center; margin-bottom:4px;}
-  .start{margin-top:18px; width:100%; border:none; border-radius:16px; padding:16px;
-         font-size:1.15rem; font-weight:700; color:#fff; background:var(--accent);
-         cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.12);}
-  .start:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12);}
   .help-list{font-size:.92rem; line-height:1.9; color:#5a4a3a; padding-left:1.2em; margin:6px 0;}
   .help-list b{color:var(--accent);}
+  .bigkanji.kaki{font-size:3.2rem;}
+  .bigkanji.kaki .box{color:#e08e3c;}
+  .grade-note{text-align:center; font-size:.85rem; font-weight:700; color:#c46a23; margin:10px 0 2px;}
+  /* 手書きエリア */
+  .kaki-line{display:flex; align-items:center; justify-content:center; gap:6px; margin:10px 0 4px;}
+  #kakiCanvas{width:180px; height:180px; background:#fff; border:3px dashed #e08e3c; border-radius:14px; touch-action:none; cursor:crosshair;}
+  .kaki-okuri{font-size:2.6rem; font-weight:800; color:#5a3e28;}
+  .kaki-btns{display:flex; gap:10px; justify-content:center; margin:10px 0 4px;}
+  .kaki-btns button{border:none; border-radius:12px; padding:12px 16px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.12);}
+  #kakiClear{background:#f2e3d5; color:#7a5c40;}
+  #kakiReveal{background:var(--accent2); color:#fff;}
+  .kaki-btns button:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.12);}
+  .selfgrade{display:flex; gap:10px; justify-content:center; margin-top:10px;}
+  .selfgrade button{flex:1; border:none; border-radius:12px; padding:14px 0; font-size:1.05rem; font-weight:700; color:#fff; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.12);}
+  #sgOk{background:#3da35a;} #sgNg{background:#e2574c;}
+  .fb-alt{font-size:.85rem; color:#9a7b5e; margin-top:4px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <a class="toplink" href="../index.html">← 漢字クイズ トップへ</a>
-  <h1>送りがな れんしゅう</h1>
-  <div class="sub">― 読みに合う 送りがなを えらぼう ―</div>
+  <h1>かきとり クイズ</h1>
+  <div class="sub">― □に 入る かん字を 手で 書こう ―</div>
 
   <!-- ホーム -->
   <div id="home" class="card">
@@ -46,19 +54,15 @@
       </div>
     </div>
     <button class="dailyBtn" id="openDaily" type="button">📅 きょうの チャレンジ<span id="dailyInfo"></span></button>
-    <div class="gradeSel">
-      <div class="gradeLabel">学年（がくねん）をえらぶ</div>
-      <div class="seg" id="gsel"></div>
-      <div id="unlockHint" style="text-align:center;font-size:.78rem;font-weight:700;color:#c46a23;margin-top:8px;line-height:1.5;"></div>
-    </div>
+    <div class="grade-note">いまは <b>2年生</b>の かん字だよ</div>
     <div class="gradeSel">
       <div class="gradeLabel">もんだいの数（かず）</div>
       <div class="seg" id="countSeg"><!-- 共通モジュール QuizCore.renderCountSeg で描画 --></div>
     </div>
     <div class="modes">
-      <button class="mode-btn m2" id="startBtn">
-        ✏️ はじめる（送りがな）
-        <small>読みに合う 正しい 送りがなを えらぶ</small>
+      <button class="mode-btn m3" id="startBtn">
+        ✍️ はじめる（かきとり）
+        <small>□に 入る かん字を 手書きして こたえ合わせ</small>
       </button>
     </div>
     <button class="dailyBtn" id="openReview" type="button" style="background:linear-gradient(135deg,#7bc47b,#3da35a);margin-top:14px;">🔁 まちがい ふくしゅう<span id="reviewInfo"></span></button>
@@ -79,13 +83,14 @@
     <button class="backBtn" id="helpBack">← もどる</button>
     <h2 style="margin-top:4px;">あそびかた</h2>
     <ul class="help-list">
-      <li>大きな かん字と <b>読み</b>が 出るよ。</li>
-      <li>読みに合う <b>正しい 送りがな</b>を えらぼう。</li>
-      <li>れい：「うつる」→ <b>移る</b>（×移つる ×移）</li>
+      <li>「あかるい」のように <b>読み</b>と <b>送りがな</b>が 出るよ。</li>
+      <li>□の マスに、入る かん字を <b>ゆびや マウスで 書こう</b>。</li>
+      <li>れい：「あかるい」＝ □るい → <b>明</b>と 書く。</li>
+      <li>書けたら「<b>👀 こたえ合わせ</b>」。じぶんの字と くらべて、<b>⭕かけた／❌まちがえた</b>を えらぼう。</li>
+      <li>べつの かん字でも 正かいのときは「※〜と書いても⭕だよ」と 出るよ。</li>
       <li>つづけて 正かいすると <b>🔥コンボ</b>！</li>
-      <li>ぜんぶ おわると <b>てんすう</b>と ⭐が 出るよ。</li>
-      <li>まちがえたら、最後に「<b>まちがえた問題だけ もう一回</b>」で ふくしゅうできる。</li>
-      <li><b>3年生いじょう</b>は はじめ ロック🔒。下の学年の かん字を <b>ずかん</b>に あつめると <b>かいきん</b>するよ！</li>
+      <li>まちがえた問題は「<b>まちがい ふくしゅう</b>」に たまるよ。</li>
+      <li>いまは <b>2年生</b>の かん字だけ（そのうち ふえるよ）。</li>
     </ul>
     <button class="again" id="helpStart" style="margin-top:8px;">とじる</button>
   </div>
@@ -97,14 +102,25 @@
     <div class="bar"><i id="prog"></i></div>
     <div class="meta"><span id="count"></span><span id="combo"></span><span id="score"></span></div>
     <span class="tag" id="tag"></span>
-    <div class="prompt">この かん字の 送りがなは？</div>
-    <div class="bigkanji" id="qkanji"></div>
+    <div class="prompt" id="prompt">□に 入る かん字を 書こう！</div>
     <div class="reading-big" id="qreading"></div>
-    <div class="choices okuri" id="choices"></div>
+    <div class="bigkanji kaki" id="qkanji" style="display:none;"></div>
+    <div id="kakiArea">
+      <div class="kaki-line"><canvas id="kakiCanvas"></canvas><span class="kaki-okuri" id="kakiOkuri"></span></div>
+      <div class="kaki-btns">
+        <button id="kakiClear" type="button">🧽 かきなおす</button>
+        <button id="kakiReveal" type="button">👀 こたえ合わせ</button>
+      </div>
+    </div>
     <div class="feedback" id="feedback">
       <div class="fb-head" id="fbHead"></div>
       <div class="fb-line" id="fbBody"></div>
       <div class="fb-kanji" id="fbKanji"></div>
+      <div class="fb-alt" id="fbAlt"></div>
+      <div class="selfgrade" id="selfgrade" style="display:none;">
+        <button id="sgOk" type="button">⭕ かけた！</button>
+        <button id="sgNg" type="button">❌ まちがえた</button>
+      </div>
       <button class="next" id="next">つぎへ →</button>
     </div>
   </div>
@@ -122,11 +138,10 @@
     <button class="again home" id="back">さいしょの画面</button>
   </div>
 
-  <!-- 漢字ずかん（共有：onajiと同じ図鑑にたまる） -->
+  <!-- 漢字ずかん（共有：ほかのクイズと同じ図鑑にたまる） -->
   <div id="dex" class="card" style="display:none;">
     <button class="backBtn" id="dexBack">← もどる</button>
     <div class="collHead"><h2>📖 かん字ずかん</h2><span class="cnt" id="dexCnt"></span></div>
-    <div id="dexUnlock" style="font-size:.85rem;font-weight:700;color:#c46a23;margin-bottom:10px;"></div>
     <div style="font-size:.8rem;color:#9a7b5e;margin-bottom:10px;">どのクイズでも 正かいすると 図かんに ふえるよ。3かい 正かいで ★マスター！</div>
     <div class="dexGrid" id="dexGrid"></div>
   </div>
@@ -146,9 +161,8 @@
 <script src="../shared/quiz-core.js?v=202606272011"></script>
 <script>
 const $ = id => document.getElementById(id);
-const MAXGRADE = 6;
 
-/* ===== 送りがな語の収集（共有DBの kun から自動生成） ===== */
+/* ===== 出題語の収集（共有DBの kun から自動生成・いまは2年生のみ） ===== */
 function buildWords(){
   const list = [];
   for(const [k, info] of Object.entries(KANJI)){
@@ -162,39 +176,12 @@ function buildWords(){
   return list;
 }
 const ALL_WORDS = buildWords();
+const KAKI_POOL = ALL_WORDS.filter(w => w.grade === 2);   // 学年を広げるときはここ
 
-/* ===== 学年の解放（3〜6年）＝onajiと同じ「開放式」ロック =====
-   1・2年は最初から開放。3年生いじょうは、下の学年までの「送りがなで集められる漢字」を
-   ぜんぶ図鑑（store.kanji＝全アプリ共有）にあつめると かいきん。解放フラグも onaji と共有。 */
-const OKURI_COLLECTABLE = [...new Set(ALL_WORDS.map(w => w.kanji))];   // この app で集められる字
-const okuriCollectableUpTo = (g)=> OKURI_COLLECTABLE.filter(ch => KANJI[ch].g <= g);
-function gradeUnlocked(g){
-  if(g <= 2) return true;
-  if(store['unlocked'+g]) return true;                 // どこかで一度かいきんずみ
-  const lower = okuriCollectableUpTo(g-1);
-  return lower.length > 0 && lower.every(ch => (store.kanji[ch]||0) >= 1);
-}
-function maxUnlockedGrade(){ let m=2; for(let g=3; g<=MAXGRADE; g++){ if(gradeUnlocked(g)) m=g; } return m; }
-// 新たに解放した学年があれば その最上位を返す（無ければ 0）
-function checkUnlock(){
-  let now = 0;
-  for(let g=3; g<=MAXGRADE; g++){
-    if(!store['unlocked'+g] && gradeUnlocked(g)){ store['unlocked'+g] = true; now = g; }
-  }
-  if(now) QuizCore.save();
-  return now;
-}
-
-// 1語から「送りがなの長さ違い」の選択肢を作る
 function makeQuestion(w){
-  const R = w.reading, K = w.kanji, correctLen = w.okuri.length;
-  const cand = (len)=> K + R.slice(R.length - len);    // 末尾 len 文字を送りがなに
-  const lens = [];
-  const push = (l)=>{ if(l>=0 && l<R.length && !lens.includes(l)) lens.push(l); };
-  push(correctLen);
-  [correctLen-1, correctLen+1, correctLen+2, correctLen-2, 1, 0].forEach(push);
-  const choices = shuffle(lens.slice(0, Math.min(4, lens.length)).map(cand));
-  return { src:w, kanji:K, reading:R, grade:w.grade, answer:w.word, choices };
+  // 同じ読み・同じ送りがなで成立する別解（例：あう＝会う/合う）は こたえ合わせで併記する
+  const alts = [...new Set(ALL_WORDS.filter(x => x.reading===w.reading && x.okuri===w.okuri && x.kanji!==w.kanji).map(x => x.word))];
+  return { src:w, kanji:w.kanji, reading:w.reading, okuri:w.okuri, word:w.word, grade:w.grade, alts };
 }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // 日付シードの決定的シャッフル（同じ日は 全員・何回でも 同じ10問）
@@ -202,24 +189,52 @@ function todayIndex(){ const d=new Date(); return Math.floor((d.getTime() - d.ge
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function seededShuffle(arr, seed){ const r=mulberry32(seed), a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // 重複のない語リスト（デイリーの母集団）
-function uniqueWords(){ const seen=new Set(), out=[]; for(const w of ALL_WORDS){ if(!seen.has(w.word)){ seen.add(w.word); out.push(w); } } return out; }
+function uniqueWords(){ const seen=new Set(), out=[]; for(const w of KAKI_POOL){ if(!seen.has(w.word)){ seen.add(w.word); out.push(w); } } return out; }
+
+/* ===== 手書きキャンバス ===== */
+const KAKI_SIZE = 180;
+const kakiCanvas = document.getElementById('kakiCanvas');
+const kakiCtx = kakiCanvas.getContext('2d');
+function kakiResetCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  kakiCanvas.width = KAKI_SIZE*dpr; kakiCanvas.height = KAKI_SIZE*dpr;
+  kakiCtx.setTransform(dpr,0,0,dpr,0,0);
+  kakiCtx.clearRect(0,0,KAKI_SIZE,KAKI_SIZE);
+  // ドリルのマスと同じ うすい十字ガイド
+  kakiCtx.save();
+  kakiCtx.strokeStyle='#f0ddc8'; kakiCtx.lineWidth=2; kakiCtx.setLineDash([6,6]);
+  kakiCtx.beginPath();
+  kakiCtx.moveTo(KAKI_SIZE/2,8); kakiCtx.lineTo(KAKI_SIZE/2,KAKI_SIZE-8);
+  kakiCtx.moveTo(8,KAKI_SIZE/2); kakiCtx.lineTo(KAKI_SIZE-8,KAKI_SIZE/2);
+  kakiCtx.stroke();
+  kakiCtx.restore();
+  kakiCtx.lineWidth=7; kakiCtx.lineCap='round'; kakiCtx.lineJoin='round'; kakiCtx.strokeStyle='#3a2a1a';
+}
+let kakiDrawing = false;
+function kakiPos(e){ const r=kakiCanvas.getBoundingClientRect(); return [(e.clientX-r.left)*KAKI_SIZE/r.width, (e.clientY-r.top)*KAKI_SIZE/r.height]; }
+kakiCanvas.addEventListener('pointerdown', e=>{
+  e.preventDefault(); kakiDrawing = true;
+  try{ kakiCanvas.setPointerCapture(e.pointerId); }catch(_){}
+  const [x,y]=kakiPos(e); kakiCtx.beginPath(); kakiCtx.moveTo(x,y); kakiCtx.lineTo(x+0.1,y+0.1); kakiCtx.stroke();
+});
+kakiCanvas.addEventListener('pointermove', e=>{ if(!kakiDrawing) return; e.preventDefault(); const [x,y]=kakiPos(e); kakiCtx.lineTo(x,y); kakiCtx.stroke(); });
+kakiCanvas.addEventListener('pointerup',    ()=>{ kakiDrawing=false; });
+kakiCanvas.addEventListener('pointercancel',()=>{ kakiDrawing=false; });
 
 /* ===== 状態 ===== */
-let grade = 'all';        // 学年（'all'＝ぜんぶ）
 let count = 10;           // 問題数（'all'＝ぜんぶ。初期値は10もん）
 let deck = [], answers = [], idx = 0;
 let combo = 0, sessionMaxCombo = 0;
-let wrongWords = [];
+let wrongItems = [];
 let isDaily = false;
 
-// 共有 store に 送りがな用の領域（復習リスト・デイリー連続日数）を用意（他アプリのフィールドは保持）
+// 共有 store に かきとり用の領域（復習リスト・デイリー連続日数）を用意（他アプリのフィールドは保持）
 const store = QuizCore.store;
-store.okuriWrong = store.okuriWrong || {};                               // { 語: true } まちがえた送りがな問題
-store.okuriDaily = store.okuriDaily || { streak:0, bestStreak:0, lastDay:null };
-for(let g=3; g<=MAXGRADE; g++){ if(store['unlocked'+g] === undefined) store['unlocked'+g] = false; }  // 学年解放フラグ（onaji共有）
+store.kakiWrong = store.kakiWrong || {};                                 // { 語: true } まちがえた かきとり問題
+store.kakiDaily = store.kakiDaily || { streak:0, bestStreak:0, lastDay:null };
 
 /* ===== 音（Web Audio：ファイル不要・オフラインでも鳴る） ===== */
-let soundOn = (localStorage.getItem('okuriganaSoundOff') !== '1');
+let soundOn = (localStorage.getItem('kakiSoundOff') !== '1');
 let audioCtx = null;
 function getCtx(){
   if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } }
@@ -252,14 +267,14 @@ function refreshSoundBtn(){ $('soundToggle').textContent = soundOn ? '🔊 お�
 /* ===== 画面きりかえ ===== */
 function showOnly(id){ for(const s of ['home','help','quiz','result','dex','medals']) $(s).style.display = (s===id)?'block':'none'; }
 
-/* ===== 育成系（共有 QuizCore：図鑑・称号・メダル＝onajiと同じ進捗にたまる） ===== */
+/* ===== 育成系（共有 QuizCore：図鑑・称号・メダル＝全アプリ合算） ===== */
 function refreshBuddy(){
   QuizCore.renderBuddy({ icon:$('buddyIcon'), name:$('buddyName'), coin:$('buddyCoin'), bar:$('buddyBar'), next:$('buddyNext') });
 }
 function refreshHome(){
   refreshBuddy();
   // デイリーの状態
-  const dy = store.okuriDaily, ti = todayIndex();
+  const dy = store.kakiDaily, ti = todayIndex();
   let info = '';
   if((dy.streak||0)>0 && (dy.lastDay===ti || dy.lastDay===ti-1)) info += `🔥${dy.streak}日れんぞく　`;
   info += (dy.lastDay===ti) ? 'きょうは クリア✓' : 'まいにち 10もん！';
@@ -267,66 +282,17 @@ function refreshHome(){
   // 復習ののこり
   const rc = reviewWords().length;
   $('reviewInfo').textContent = rc ? ` のこり ${rc}問` : ' まちがいは ありません';
-  renderGradeSel();   // 図鑑が増えたら ロック表示・かいきん案内を最新化
 }
 function goHome(){ refreshHome(); showOnly('home'); }
-function openDex(){
-  $('dexCnt').textContent = QuizCore.dexHead();
-  const du = $('dexUnlock');
-  if(du){
-    if(gradeUnlocked(3)){ du.textContent = '🔓 3年生 かいきん中！'; }
-    else { const rem = okuriCollectableUpTo(2).filter(ch => !((store.kanji[ch]||0) >= 1)).length; du.textContent = `あと ${rem}字（1・2年）で 3年生 かいきん！`; }
-  }
-  $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex');
-}
+function openDex(){ $('dexCnt').textContent = QuizCore.dexHead(); $('dexGrid').innerHTML = QuizCore.dexGridHTML(); showOnly('dex'); }
 function openMedals(){ $('medalsCnt').textContent = QuizCore.medalsHead(); $('medalList').innerHTML = QuizCore.medalsGridHTML(); showOnly('medals'); }
 
-/* ===== ホーム：学年セレクタ ===== */
-function renderGradeSel(){
-  const seg = $('gsel'); seg.innerHTML = '';
-  const items = [];
-  for(let g=1; g<=MAXGRADE; g++) items.push([g, g+'年']);
-  items.push(['all','ぜんぶ']);
-  for(const [val,label] of items){
-    const isGrade = (val !== 'all');
-    const locked = isGrade && !gradeUnlocked(val);
-    const b = document.createElement('button');
-    b.textContent = locked ? (val+'年🔒') : label;
-    if(locked) b.classList.add('locked');
-    if((val==='all'?'all':val) === grade) b.classList.add('active');
-    b.onclick = ()=>{
-      if(locked){
-        const lower = okuriCollectableUpTo(val-1);
-        const rem = lower.filter(ch => !((store.kanji[ch]||0) >= 1)).length;
-        alert(`「${val}年生」は ロック中。\n${val-1}年までの かん字を ずかんに あと ${rem}字 あつめると かいきん！`);
-        return;
-      }
-      grade = (val==='all')?'all':val; renderGradeSel();
-    };
-    seg.appendChild(b);
-  }
-  renderUnlockHint();
-}
-function renderUnlockHint(){
-  const hint = $('unlockHint'); if(!hint) return;
-  let next = 0;
-  for(let g=3; g<=MAXGRADE; g++){ if(!gradeUnlocked(g)){ next = g; break; } }
-  if(!next){ hint.textContent = '✅ ぜんぶの 学年が あそべるよ！'; return; }
-  const lower = okuriCollectableUpTo(next-1);
-  const total = lower.length, have = lower.filter(ch => (store.kanji[ch]||0) >= 1).length;
-  hint.textContent = `🔒 ${next}年生まで あと ${total-have}字（${have}/${total}）― ${next-1}年までを ずかんに あつめよう`;
-}
 // 問題数セレクタ（共通モジュール QuizCore.renderCountSeg）
 QuizCore.renderCountSeg($('countSeg'), '10', v => { count = (v==='all') ? 'all' : +v; });
 
-function wordsForGrade(){
-  if(grade==='all'){ const mx = maxUnlockedGrade(); return ALL_WORDS.filter(w => w.grade <= mx); }  // 解放ぶんだけ
-  return ALL_WORDS.filter(w => w.grade === grade);
-}
-
 /* ===== 出題ループ ===== */
 function start(){
-  const pool = shuffle(wordsForGrade());
+  const pool = shuffle(KAKI_POOL);
   // 同じ語の重複をへらして上限まで
   const seen = new Set(), picked = [];
   const limit = (count==='all') ? pool.length : count;
@@ -335,13 +301,11 @@ function start(){
 }
 // きょうの チャレンジ（日付シードで全員同じ10問）
 function startDaily(){
-  const mx = maxUnlockedGrade();
-  const pool = uniqueWords().filter(w => w.grade <= mx);   // 解放ぶんだけ
-  const deckW = seededShuffle(pool, todayIndex()).slice(0, 10);
+  const deckW = seededShuffle(uniqueWords(), todayIndex()).slice(0, 10);
   startWithDeck(deckW.map(makeQuestion), true);
 }
 function updateDailyStreak(){
-  const dy = store.okuriDaily, ti = todayIndex();
+  const dy = store.kakiDaily, ti = todayIndex();
   if(dy.lastDay !== ti){
     dy.streak = (dy.lastDay === ti-1) ? (dy.streak||0)+1 : 1;
     dy.lastDay = ti;
@@ -350,7 +314,7 @@ function updateDailyStreak(){
   }
 }
 // まちがい ふくしゅう
-const reviewWords = ()=> Object.keys(store.okuriWrong).map(w => ALL_WORDS.find(x=>x.word===w)).filter(Boolean);
+const reviewWords = ()=> Object.keys(store.kakiWrong).map(w => ALL_WORDS.find(x=>x.word===w)).filter(Boolean);
 function startReview(){
   let pool = reviewWords();
   if(pool.length === 0){ alert('ふくしゅうする問題は ありません。\nまちがえた問題が ここに たまります。'); return; }
@@ -371,61 +335,64 @@ function renderQ(){
   $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
   $('score').textContent = `正かい ${scoreCount()}`;
   $('tag').textContent = q.grade+'年の かん字';
-  $('qkanji').textContent = q.kanji;
   $('qreading').textContent = '「'+q.reading+'」';
   $('prev').style.visibility = idx>0 ? 'visible' : 'hidden';
 
-  const wrap = $('choices'); wrap.innerHTML = '';
   const ans = answers[idx];   // 既に答えていれば その状態を再現
-  for(const c of q.choices){
-    const b = document.createElement('button');
-    b.className = 'choice'; b.textContent = c;
-    if(ans){
-      b.disabled = true;
-      if(c === q.answer) b.classList.add('ok');
-      else if(c === ans.picked) b.classList.add('ng');
-    } else {
-      b.onclick = ()=> choose(c, b);
-    }
-    wrap.appendChild(b);
-  }
-  if(ans) showFeedback(ans.correct); else $('feedback').classList.remove('show','good','bad');
+  $('qkanji').style.display = ans ? '' : 'none';                 // 書く前は □＝キャンバス
+  $('qkanji').innerHTML = '<span class="box">'+q.kanji+'</span>'+q.okuri;   // 答えたあとの見返り用
+  $('kakiArea').style.display = ans ? 'none' : 'block';
+  if(!ans){ $('kakiOkuri').textContent = q.okuri; kakiResetCanvas(); }
+
+  if(ans) showFeedback(ans.correct);
+  else { $('feedback').classList.remove('show','good','bad'); $('selfgrade').style.display='none'; }
 }
 
-function choose(picked, btn){
-  if(answers[idx]) return;
+/* こたえ合わせ（正解を見せて 自己採点にうつる） */
+function kakiReveal(){
   const q = deck[idx];
-  const ok = picked === q.answer;
-  answers[idx] = { picked, correct: ok };
+  if(answers[idx]) return;
+  const fb = $('feedback');
+  fb.classList.add('show'); fb.classList.remove('good','bad');
+  $('fbHead').textContent = 'こたえは「'+q.word+'」';
+  fbCommon(q);
+  $('selfgrade').style.display = 'flex';
+  $('next').style.display = 'none';
+}
+/* 自己採点（⭕/❌）。図鑑・コンボ・復習の記録はここで */
+function kakiGrade(ok){
+  const q = deck[idx];
+  if(answers[idx]) return;
+  answers[idx] = { picked: ok?'⭕':'❌', correct: ok };
   if(ok){
     combo++; sessionMaxCombo = Math.max(sessionMaxCombo, combo);
-    if(store.okuriWrong[q.answer]) delete store.okuriWrong[q.answer];   // 復習で克服
-    // 共有進捗へ：図鑑に漢字を記録＋累計正解＋最高コンボ（onajiと同じ store に合算）
-    QuizCore.recordCorrect(q.answer); QuizCore.bumpCorrect(); QuizCore.bumpApp('okurigana'); QuizCore.noteCombo(combo); QuizCore.save();
+    if(store.kakiWrong[q.word]) delete store.kakiWrong[q.word];         // 復習で克服
+    // 共有進捗へ：図鑑に漢字を記録＋累計正解＋最高コンボ（全アプリ合算）
+    QuizCore.recordCorrect(q.word); QuizCore.bumpCorrect(); QuizCore.bumpApp('kaki'); QuizCore.noteCombo(combo); QuizCore.save();
   } else {
     combo = 0;
-    store.okuriWrong[q.answer] = true; QuizCore.save();                 // まちがいを 復習リストへ
+    store.kakiWrong[q.word] = true; QuizCore.save();                    // まちがいを 復習リストへ
   }
-  document.querySelectorAll('#choices .choice').forEach(b=>{
-    b.disabled = true;
-    if(b.textContent === q.answer) b.classList.add('ok');
-    else if(b===btn) b.classList.add('ng');
-  });
-  $('combo').textContent = combo>=2 ? `🔥 ${combo}` : '';
-  $('score').textContent = `正かい ${scoreCount()}`;
   playSound(ok ? 'correct' : 'wrong');
-  showFeedback(ok);
+  renderQ();   // 答えたあとの表示（正解の字＋フィードバック）に切りかえ
 }
 
+/* フィードバック共通部（読み・正解の語・字の情報・別解） */
+function fbCommon(q){
+  $('fbBody').innerHTML = '「'+q.reading+'」＝ <b>'+q.word+'</b>';
+  const info = KANJI[q.kanji];
+  const on = (info.on||[]).join('・'), kun = (info.kun||[]).join('・');
+  $('fbKanji').innerHTML = `<b>${q.kanji}</b>（${info.s}画）` + [on?'音 '+on:'', kun?'訓 '+kun:''].filter(Boolean).join(' ／ ');
+  $('fbAlt').textContent = (q.alts && q.alts.length) ? '※ '+q.alts.join('・')+' と書いても ⭕だよ' : '';
+}
 function showFeedback(ok){
   const q = deck[idx];
   const fb = $('feedback');
   fb.classList.add('show'); fb.classList.toggle('good', ok); fb.classList.toggle('bad', !ok);
-  $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.answer+'」';
-  $('fbBody').innerHTML = '「'+q.reading+'」＝ <b>'+q.answer+'</b>';
-  const info = KANJI[q.kanji];
-  const on = (info.on||[]).join('・'), kun = (info.kun||[]).join('・');
-  $('fbKanji').innerHTML = `<b>${q.kanji}</b>（${info.s}画）` + [on?'音 '+on:'', kun?'訓 '+kun:''].filter(Boolean).join(' ／ ');
+  $('fbHead').textContent = ok ? '⭕ せいかい！' : '❌ おしい！　正かいは「'+q.word+'」';
+  fbCommon(q);
+  $('selfgrade').style.display = 'none';
+  $('next').style.display = '';
   $('next').textContent = (idx >= deck.length-1) ? 'けっかを見る →' : 'つぎへ →';
 }
 
@@ -453,12 +420,11 @@ function showResult(){
     'だいじょうぶ、くりかえせば できるよ！';
   $('comboBest').textContent = sessionMaxCombo>=2 ? `さい高コンボ：🔥 ${sessionMaxCombo}れんぞく` : '';
 
-  // 共有進捗の更新（プレイ回数・全問正解・最高コンボ）→ メダル・称号（onajiと合算）
+  // 共有進捗の更新（プレイ回数・全問正解・最高コンボ）→ メダル・称号（全アプリ合算）
   QuizCore.notePlay();
   if(rate===1) QuizCore.notePerfect();
   QuizCore.noteCombo(sessionMaxCombo);
   if(isDaily) updateDailyStreak();   // きょうの チャレンジ クリアで 連続日数
-  const justUnlocked = checkUnlock();   // 図鑑がそろえば 学年かいきん（正解は choose() で記録ずみ）
   QuizCore.save();
   const tcAfter = QuizCore.store.totalCorrect||0, tcBefore = tcAfter - correct;
   const rankUp = QuizCore.rankStage(tcAfter) > QuizCore.rankStage(tcBefore);
@@ -466,20 +432,19 @@ function showResult(){
   const em = $('earned');
   const newRank = QuizCore.STAGES[QuizCore.rankStage(tcAfter)];
   const evo = rankUp ? `✨ 称号アップ！ ${newRank.icon}「${newRank.title}」に なった！　` : '';
-  const unlockMsg = justUnlocked ? `🎉 ${justUnlocked}年生が かいきん！　` : '';
-  if(unlockMsg || evo || newly.length){
+  if(evo || newly.length){
     em.style.display = 'block';
-    em.innerHTML = unlockMsg + evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
+    em.innerHTML = evo + (newly.length ? '🏅 あたらしいメダル：' + newly.map(m=>`${m.icon}${m.name}`).join('　') : '');
   } else { em.style.display = 'none'; }
 
   // まちがえた問題の振り返り
   const wrong = deck.filter((q,i)=> answers[i] && !answers[i].correct);
-  wrongWords = wrong.map(q => q.src);
+  wrongItems = wrong.map(q => q.src);
   const rv = $('review');
   if(wrong.length){
     rv.style.display = 'block';
     rv.innerHTML = `<div class="rv-h">まちがえた問題（${wrong.length}）</div>` +
-      wrong.map(q => `<div class="rv-i"><b>${q.kanji}</b> ＝ <b>${q.answer}</b>` +
+      wrong.map(q => `<div class="rv-i"><b>□${q.okuri}</b> ＝ <b>${q.word}</b>` +
         `<span style="color:#9a7b5e;font-size:.8rem">（${q.reading}）</span></div>`).join('');
     $('retryWrong').style.display = 'inline-block';
   } else {
@@ -490,11 +455,15 @@ function showResult(){
 
 /* ===== 初期化・イベント ===== */
 $('startBtn').onclick = start;
+$('kakiClear').onclick = kakiResetCanvas;
+$('kakiReveal').onclick = kakiReveal;
+$('sgOk').onclick = ()=> kakiGrade(true);
+$('sgNg').onclick = ()=> kakiGrade(false);
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('quizHome').onclick = goHome;
 $('retry').onclick = start;
-$('retryWrong').onclick = ()=> startWithDeck(wrongWords.map(makeQuestion));
+$('retryWrong').onclick = ()=> startWithDeck(wrongItems.map(makeQuestion));
 $('back').onclick = goHome;
 $('openHelp').onclick = ()=> showOnly('help');
 $('helpBack').onclick = goHome;
@@ -509,11 +478,10 @@ $('exportSave').onclick = ()=> QuizCore.exportSave('かん字クイズ-きろく
 $('importFile').onchange = (e)=>{ const f = e.target.files[0]; if(f) QuizCore.importSave(f); e.target.value=''; };
 $('soundToggle').onclick = ()=>{
   soundOn = !soundOn;
-  localStorage.setItem('okuriganaSoundOff', soundOn ? '0' : '1');
+  localStorage.setItem('kakiSoundOff', soundOn ? '0' : '1');
   refreshSoundBtn();
   if(soundOn) playSound('correct');
 };
-renderGradeSel();
 refreshSoundBtn();
 refreshHome();
 </script>

@@ -4,7 +4,7 @@
 DB・見た目・育成系（図鑑/称号/メダル）を `shared/` の共通モジュールに集約し、各アプリは
 それを**参照するだけ**。1か所直せば全アプリに反映される。
 
-公開: トップ https://mikushiba.github.io/kanji-quiz/ ／ 同じ読み `…/onaji/` ／ 送りがな `…/okurigana/` ／ 部首 `…/bushu/` ／ 画数 `…/kakusu/` ／ 四字熟語 `…/yoji/` ／ 音訓 `…/onkun/`
+公開: トップ https://mikushiba.github.io/kanji-quiz/ ／ 同じ読み `…/onaji/` ／ 送りがな `…/okurigana/` ／ かきとり `…/kaki/` ／ 部首 `…/bushu/` ／ 画数 `…/kakusu/` ／ 四字熟語 `…/yoji/` ／ 音訓 `…/onkun/`
 
 ※ `KANJI` の `on`/`kun` は**常用漢字表の公式音訓と一致**（出典: cjkvi-tables/joyo2010.txt＝Wikipedia常用漢字一覧。表外は含めない）。漢字を足すときも公式音訓で。
 
@@ -16,6 +16,7 @@ DB・見た目・育成系（図鑑/称号/メダル）を `shared/` の共通�
 /index.html            … トップ（メニュー＝ポータル）
 /onaji/index.html      … 同じ読み/使い分けクイズ（問題 BANK はここ）
 /okurigana/index.html  … 送りがな練習（KANJI から自動生成・手作りデータ無し）
+/kaki/index.html       … かきとりクイズ（□に入る漢字を手書き→自己採点。KANJI から自動生成・いまは2年生のみ）
 /bushu/index.html      … 部首クイズ（部首あて＋なかま分け。部首データ RADICALS はここ）
 /kakusu/index.html     … 画数クイズ（何画？＋何画目？/筆順）。筆順データは kakusu/strokes.js
 /kakusu/strokes.js     … 筆順ベクター STROKES（KanjiVG由来・CC BY-SA 3.0・全1026字）
